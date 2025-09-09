@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aviator - Professional Gaming</title>
+    <link rel="stylesheet" href="./style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body>
+    <!-- Navigation Bar -->
+    <nav id="navigation">
+        <div class="nav-left">
+            <div class="site-logo">
+                <i class="fas fa-plane"></i>
+                <span>ClassyBet</span>
+            </div>
+            <div class="nav-links">
+                <a href="#" class="nav-link active">Games</a>
+                <a href="#" class="nav-link">Sports</a>
+                <a href="#" class="nav-link">Casino</a>
+                <a href="#" class="nav-link">Promotions</a>
+            </div>
+        </div>
+        <div class="nav-right">
+            <div class="user-info">
+                <div class="user-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div class="user-details">
+                    <span class="username">Player123</span>
+                    <span class="user-balance">€3,000.00</span>
+                </div>
+            </div>
+            <button class="deposit-btn">
+                <i class="fas fa-plus"></i>
+                Deposit
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div id="main-container">
+        <!-- Left Sidebar - All Bets -->
+        <div id="left-sidebar">
+            <div class="sidebar-section">
+                <h3><i class="fas fa-users"></i> All Bets</h3>
+                <div class="bet-count-info">
+                    <span class="bet-count-label">Total Bets This Round:</span>
+                    <span class="bet-count" id="bet-count">0</span>
+                </div>
+                <div class="bet-list-header">
+                    <span class="bet-id-header">Bet ID</span>
+                    <span class="bet-amount-header">Amount</span>
+                    <span class="bet-status-header">Status</span>
+                </div>
+                <div id="all-bets">
+                    <!-- Live betting activity will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Center Game Area -->
+        <div id="game-container">
+            <!-- Previous Bets Header (restored to original position) -->
+            <div id="header">
+                <div class="balance-info">
+                    <div id="balance">BALANCE:</div>
+                    <div id="balance-amount">€3,000.00</div>
+                    <div class="game-menu-container">
+                        <button id="game-menu-btn" class="game-menu-btn">
+                            <i class="fas fa-bars"></i>
+                        </button>
+                        <div id="game-menu" class="game-menu">
+                            <div class="menu-item" data-action="sound">
+                                <i class="fas fa-volume-up"></i>
+                                <span>Sound</span>
+                                <div class="toggle-switch">
+                                    <input type="checkbox" id="sound-toggle" checked>
+                                    <label for="sound-toggle"></label>
+                                </div>
+                            </div>
+                            <div class="menu-item" data-action="animation">
+                                <i class="fas fa-play-circle"></i>
+                                <span>Animation</span>
+                                <div class="toggle-switch">
+                                    <input type="checkbox" id="animation-toggle" checked>
+                                    <label for="animation-toggle"></label>
+                                </div>
+                            </div>
+                            <div class="menu-item" data-action="bet-history">
+                                <i class="fas fa-history"></i>
+                                <span>My Bet History</span>
+                            </div>
+                            <div class="menu-item" data-action="how-to-play">
+                                <i class="fas fa-question-circle"></i>
+                                <span>How to Play</span>
+                            </div>
+                            <div class="menu-item" data-action="game-rules">
+                                <i class="fas fa-book"></i>
+                                <span>Game Rules</span>
+                            </div>
+                            <div class="menu-item" data-action="provably-fair">
+                                <i class="fas fa-shield-alt"></i>
+                                <span>Provably Fair</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Previous Rounds (positioned between header and game) -->
+            <div id="previous-rounds-container">
+                <div id="last-counters"></div>
+                <div id="show-more-rounds" class="show-more-btn">
+                    <i class="fas fa-ellipsis-h"></i>
+                </div>
+                <div id="hidden-rounds" class="hidden-rounds">
+                    <!-- Hidden multipliers will be shown here -->
+                </div>
+            </div>
+
+            <div id="counterWrapper">
+                <div id="bg-image"></div>
+                <canvas id="canvas"></canvas>
+                <div id="counter">1.00x</div>
+                <div id="game-info">
+                    <div class="round-info">Round #12345</div>
+                    <div class="next-round-timer" id="next-round-timer"></div>
+                </div>
+            </div>
+
+            <!-- Betting Controls -->
+            <div id="betting-controls">
+                <div class="bet-panel">
+                    <div class="bet-input-group">
+                        <label>Bet Amount</label>
+                        <div class="input-wrapper">
+                            <input type="number" id="bet-input-1" min="0" max="1000" value="10" />
+                            <span class="currency">€</span>
+                        </div>
+                        <div class="quick-amounts">
+                            <button class="quick-amount" data-amount="10">€10</button>
+                            <button class="quick-amount" data-amount="25">€25</button>
+                            <button class="quick-amount" data-amount="50">€50</button>
+                            <button class="quick-amount" data-amount="100">€100</button>
+                        </div>
+                    </div>
+                    <button id="bet-button-1" class="bet-button">BET</button>
+                </div>
+
+                <div class="bet-panel" id="second-bet-panel" style="display: none;">
+                    <div class="bet-input-group">
+                        <label>Bet Amount #2</label>
+                        <div class="input-wrapper">
+                            <input type="number" id="bet-input-2" min="0" max="1000" value="10" />
+                            <span class="currency">€</span>
+                        </div>
+                        <div class="quick-amounts">
+                            <button class="quick-amount" data-amount="10">€10</button>
+                            <button class="quick-amount" data-amount="25">€25</button>
+                            <button class="quick-amount" data-amount="50">€50</button>
+                            <button class="quick-amount" data-amount="100">€100</button>
+                        </div>
+                    </div>
+                    <button id="bet-button-2" class="bet-button">BET</button>
+                </div>
+
+                <button id="add-bet-button" class="add-bet-btn">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>
+
+            <div id="message-area">
+                <p id="message"></p>
+            </div>
+        </div>
+
+        <!-- Right Sidebar - Chat -->
+        <div id="right-sidebar">
+            <div class="chat-toggle" id="chat-toggle">
+                <i class="fas fa-comments"></i>
+                <span>Chat</span>
+            </div>
+            <div id="chat-container">
+                <div class="chat-header">
+                    <h3>Live Chat</h3>
+                    <div class="online-count">
+                        <i class="fas fa-circle online"></i>
+                        <span>247 online</span>
+                    </div>
+                </div>
+                <div class="chat-messages" id="chat-messages">
+                    <!-- Messages will be dynamically added here -->
+                </div>
+                <div class="chat-input-container">
+                    <input type="text" id="chat-input" placeholder="Type your message...">
+                    <button id="send-chat" class="send-btn">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="./script.js"></script>
+</body>
+
+</html>

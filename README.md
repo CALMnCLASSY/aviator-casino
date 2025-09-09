@@ -4,8 +4,8 @@ A collection of Aviator-themed casino games and betting interfaces.
 
 ## 🎮 Contents
 
-### Aviator Betting Game Clone
-- **Location**: `aviator-betting-game-clone/`
+### ClassyBet Aviator Game
+- **Location**: `classybet/`
 - **Description**: A fully functional Aviator game clone with betting mechanics
 - **Features**:
   - Real-time multiplier display
@@ -21,8 +21,8 @@ A collection of Aviator-themed casino games and betting interfaces.
 
 ## 🚀 Quick Start
 
-### Running the Aviator Game Clone
-1. Navigate to the `aviator-betting-game-clone` directory
+### Running the ClassyBet Aviator Game
+1. Navigate to the `classybet` directory
 2. Open `index.html` in your web browser
 3. Start playing with the betting interface
 
@@ -53,7 +53,7 @@ A collection of Aviator-themed casino games and betting interfaces.
 casino/
 ├── README.md                           # This file
 ├── base.html                          # Base template
-├── aviator-betting-game-clone/        # Main game
+├── classybet/                         # Main ClassyBet Aviator game
 │   ├── index.html                     # Game interface
 │   ├── script.js                      # Game logic
 │   ├── style.css                      # Game styling
