@@ -2117,7 +2117,10 @@ async function checkAuthenticationOnLoad() {
             // Verify token is still valid (only for real users, not demo)
             if (!isDemo) {
                 try {
-                    const response = await fetch('http://localhost:3001/api/auth/profile', {
+                    const apiBase = window.location.hostname === 'localhost' 
+                        ? 'http://localhost:3001' 
+                        : window.location.origin;
+                    const response = await fetch(`${apiBase}/api/auth/profile`, {
                         headers: {
                             'Authorization': `Bearer ${authToken}`
                         }
@@ -2515,7 +2518,10 @@ function setupModalEventListeners() {
     });
     
     document.getElementById('admin-btn').addEventListener('click', () => {
-        window.open('http://localhost:3001/admin', '_blank');
+        const adminUrl = window.location.hostname === 'localhost' 
+            ? 'http://localhost:3001/admin' 
+            : '/admin';
+        window.open(adminUrl, '_blank');
     });
     
     document.getElementById('logout-btn').addEventListener('click', () => {

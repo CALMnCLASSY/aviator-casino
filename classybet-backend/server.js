@@ -191,12 +191,18 @@ process.on('SIGTERM', () => {
   });
 });
 
-app.listen(PORT, () => {
-  console.log(`\n🚀 ClassyBet Backend Server is running!`);
-  console.log(`📍 Server: http://localhost:${PORT}`);
-  console.log(`🏥 Health: http://localhost:${PORT}/health`);
-  console.log(`👨‍💼 Admin: http://localhost:${PORT}/admin`);
-  console.log(`👤 Profile: http://localhost:${PORT}/profile`);
-  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log('='.repeat(50));
-});
+// Start server only if not in Vercel serverless environment
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`\n🚀 ClassyBet Backend Server is running!`);
+    console.log(`📍 Server: http://localhost:${PORT}`);
+    console.log(`🏥 Health: http://localhost:${PORT}/health`);
+    console.log(`👨‍💼 Admin: http://localhost:${PORT}/admin`);
+    console.log(`👤 Profile: http://localhost:${PORT}/profile`);
+    console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log('='.repeat(50));
+  });
+}
+
+// Export for Vercel serverless functions
+module.exports = app;

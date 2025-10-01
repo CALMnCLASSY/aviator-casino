@@ -1,0 +1,25 @@
+{
+  "name": "classybet-aviator-game",
+  "version": "1.0.0",
+  "description": "ClassyBet Aviator Betting Game - Complete implementation with authentication and demo mode",
+  "main": "classybet-backend/server.js",
+  "scripts": {
+    "start": "node classybet-backend/server.js",
+    "build": "echo 'Static files ready'",
+    "dev": "node classybet-backend/server.js"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "mongoose": "^7.5.0",
+    "jsonwebtoken": "^9.0.2",
+    "bcryptjs": "^2.4.3",
+    "express-validator": "^7.0.1",
+    "dotenv": "^16.3.1"
+  },
+  "author": "CALMnCLASSY",
+  "license": "MIT"
+}
