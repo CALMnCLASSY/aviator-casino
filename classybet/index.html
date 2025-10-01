@@ -1,212 +1,778 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aviator - Professional Gaming</title>
-    <link rel="stylesheet" href="./style.css">
+    <title>ClassyBet Aviator - Premium Gaming Experience</title>
+    <meta name="description" content="Join ClassyBet Aviator - The ultimate aviation-themed gaming experience with real-time multiplayer action">
+    <link rel="icon" type="image/svg+xml" href="images/classybetaviator-logo.svg">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="country-codes.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary-green: #30fcbe;
+            --primary-dark: #1e9e6b;
+            --background-dark: #111111;
+            --card-background: rgba(17, 17, 17, 0.95);
+            --border-color: #333;
+            --text-light: #ccc;
+            --text-muted: #888;
+            --error-color: #ff6b6b;
+            --success-color: #51cf66;
+            --warning-color: #ffa726;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #000000 0%, #1a1a1a 50%, #000000 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        /* Aviator Logo in body background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: "Arial Black", sans-serif;
+            font-size: 120px;
+            font-weight: 900;
+            color: rgba(48, 252, 190, 0.05);
+            text-transform: uppercase;
+            letter-spacing: 8px;
+            z-index: 0;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+        
+        /* Enhanced background effects */
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(48, 252, 190, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 107, 107, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 80%, rgba(255, 176, 55, 0.1) 0%, transparent 50%);
+            z-index: 0;
+            pointer-events: none;
+        }
+        
+        /* Company logo in header */
+        .header-logo {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 1000;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--primary-green);
+        }
+        
+        .header-logo img {
+            height: 40px;
+            width: auto;
+        }
+        
+        .auth-container {
+            position: relative;
+            z-index: 1;
+            background: var(--card-background);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 40px;
+            width: 100%;
+            max-width: 450px;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            animation: fadeInUp 0.8s ease-out;
+        }
+        
+        .logo-section {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .company-logo {
+            width: 120px;
+            height: 60px;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .brand-title {
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: var(--text-light);
+        }
+        
+        .brand-subtitle {
+            color: var(--text-muted);
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+        
+        /* Tab system */
+        .auth-tabs {
+            display: flex;
+            margin-bottom: 30px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 4px;
+        }
+        
+        .tab-btn {
+            flex: 1;
+            padding: 12px;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 14px;
+            font-weight: 500;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .tab-btn.active {
+            background: var(--primary-green);
+            color: #111;
+            font-weight: 600;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-light);
+            font-weight: 500;
+            font-size: 14px;
+        }
+        
+        .form-group .required {
+            color: var(--error-color);
+        }
+        
+        .input-wrapper {
+            position: relative;
+        }
+        
+        .input-wrapper i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666;
+            font-size: 16px;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 15px 15px 15px 45px;
+            background: #222;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            color: #fff;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+        
+        .form-input:focus {
+            border-color: var(--primary-green);
+            box-shadow: 0 0 0 3px rgba(48, 252, 190, 0.1);
+        }
+        
+        .form-input::placeholder {
+            color: #666;
+        }
+        
+        .form-input.error {
+            border-color: var(--error-color);
+        }
+        
+        /* Phone input with country code */
+        .phone-input-wrapper {
+            display: flex;
+            gap: 1px;
+        }
+        
+        .country-select {
+            background: #222;
+            border: 1px solid var(--border-color);
+            border-radius: 10px 0 0 10px;
+            color: #fff;
+            padding: 15px 10px;
+            font-size: 16px;
+            min-width: 120px;
+            cursor: pointer;
+            outline: none;
+        }
+        
+        .country-select:focus {
+            border-color: var(--primary-green);
+        }
+        
+        .phone-input {
+            flex: 1;
+            border-radius: 0 10px 10px 0;
+            border-left: none;
+            padding-left: 15px;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--primary-green);
+            margin-top: 2px;
+        }
+        
+        .checkbox-group label {
+            font-size: 13px;
+            line-height: 1.4;
+            color: var(--text-light);
+            margin-bottom: 0;
+        }
+        
+        .checkbox-group a {
+            color: var(--primary-green);
+            text-decoration: none;
+        }
+        
+        .checkbox-group a:hover {
+            text-decoration: underline;
+        }
+        
+        .password-toggle {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            font-size: 16px;
+            transition: color 0.2s;
+        }
+        
+        .password-toggle:hover {
+            color: var(--primary-green);
+        }
+        
+        .auth-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, var(--primary-green), var(--primary-dark));
+            border: none;
+            border-radius: 10px;
+            color: #111;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .auth-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(48, 252, 190, 0.3);
+        }
+        
+        .auth-btn:active {
+            transform: translateY(0);
+        }
+        
+        .auth-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .demo-section {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 20px 0;
+            border-top: 1px solid var(--border-color);
+        }
+        
+        .demo-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--border-color);
+            color: var(--text-light);
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+        }
+        
+        .demo-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+            transform: translateY(-1px);
+        }
+        
+        .demo-info {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 8px;
+        }
+        
+        .error-message, .success-message {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        .error-message {
+            background: rgba(255, 107, 107, 0.1);
+            border: 1px solid rgba(255, 107, 107, 0.3);
+            color: var(--error-color);
+        }
+        
+        .success-message {
+            background: rgba(81, 207, 102, 0.1);
+            border: 1px solid rgba(81, 207, 102, 0.3);
+            color: var(--success-color);
+        }
+        
+        /* Modal styles */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: 20px;
+        }
+        
+        .modal-content {
+            background: var(--card-background);
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+            animation: modalSlideIn 0.3s ease-out;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .modal-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--primary-green);
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 24px;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        
+        .modal-close:hover {
+            color: #fff;
+        }
+        
+        .modal-body {
+            line-height: 1.6;
+            color: var(--text-light);
+        }
+        
+        .modal-body h3 {
+            color: var(--primary-green);
+            margin: 20px 0 10px 0;
+        }
+        
+        .modal-body p {
+            margin-bottom: 15px;
+        }
+        
+        /* Responsive design */
+        @media (max-width: 480px) {
+            .auth-container {
+                margin: 20px;
+                padding: 30px 25px;
+            }
+            
+            .company-logo {
+                width: 100px;
+                height: 50px;
+            }
+            
+            .phone-input-wrapper {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .country-select {
+                border-radius: 10px;
+                min-width: auto;
+            }
+            
+            .phone-input {
+                border-radius: 10px;
+                border-left: 1px solid var(--border-color);
+            }
+            
+            .header-logo {
+                position: relative;
+                top: auto;
+                left: auto;
+                margin-bottom: 20px;
+            }
+        }
+        
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9) translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+        
+        /* User ID display */
+        .user-id-info {
+            background: rgba(48, 252, 190, 0.1);
+            border: 1px solid rgba(48, 252, 190, 0.3);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            text-align: center;
+        }
+        
+        .user-id-info .user-id {
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            color: var(--primary-green);
+            font-size: 16px;
+            letter-spacing: 1px;
+        }
+    </style>
 </head>
-
 <body>
-    <!-- Navigation Bar -->
-    <nav id="navigation">
-        <div class="nav-left">
-            <div class="site-logo">
-                <i class="fas fa-plane"></i>
-                <span>ClassyBet</span>
+    <!-- Aviator logo background text -->
+    <style>
+        body::before {
+            content: 'AVIATOR';
+        }
+    </style>
+    
+    <div class="header-logo">
+        <img src="images/classybetaviator-logo.svg" alt="ClassyBet Aviator">
+    </div>
+    
+    <div class="auth-container">
+        <div class="logo-section">
+            <div class="company-logo">
+                <img src="images/logo.svg" alt="Aviator" style="width: 100%; height: 100%; object-fit: contain;">
             </div>
-            <div class="nav-links">
-                <a href="#" class="nav-link active">Games</a>
-                <a href="#" class="nav-link">Sports</a>
-                <a href="#" class="nav-link">Casino</a>
-                <a href="#" class="nav-link">Promotions</a>
-            </div>
+            <h1 class="brand-title">Premium Gaming Experience</h1>
+            <p class="brand-subtitle">Join thousands of players in the ultimate aviation adventure</p>
         </div>
-        <div class="nav-right">
-            <div class="user-info">
-                <div class="user-avatar">
-                    <i class="fas fa-user"></i>
-                </div>
-                <div class="user-details">
-                    <span class="username">Player123</span>
-                    <span class="user-balance">€3,000.00</span>
-                </div>
-            </div>
-            <button class="deposit-btn">
-                <i class="fas fa-plus"></i>
-                Deposit
+        
+        <div class="auth-tabs">
+            <button class="tab-btn active" onclick="switchAuthTab('login')">
+                <i class="fas fa-sign-in-alt"></i> Login
+            </button>
+            <button class="tab-btn" onclick="switchAuthTab('register')">
+                <i class="fas fa-user-plus"></i> Register
             </button>
         </div>
-    </nav>
-
-    <!-- Main Content -->
-    <div id="main-container">
-        <!-- Left Sidebar - All Bets -->
-        <div id="left-sidebar">
-            <div class="sidebar-section">
-                <h3><i class="fas fa-users"></i> All Bets</h3>
-                <div class="bet-count-info">
-                    <span class="bet-count-label">Total Bets This Round:</span>
-                    <span class="bet-count" id="bet-count">0</span>
+        
+        <!-- Login Tab -->
+        <div id="loginTab" class="tab-content active">
+            <form id="loginForm">
+                <div class="error-message" id="loginError"></div>
+                <div class="success-message" id="loginSuccess"></div>
+                
+                <div class="form-group">
+                    <label for="loginIdentifier"> Phone or User ID</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-user"></i>
+                        <input type="text" id="loginIdentifier" class="form-input" placeholder="Enter your login credentials" required>
+                    </div>
                 </div>
-                <div class="bet-list-header">
-                    <span class="bet-id-header">Bet ID</span>
-                    <span class="bet-amount-header">Amount</span>
-                    <span class="bet-status-header">Status</span>
-                </div>
-                <div id="all-bets">
-                    <!-- Live betting activity will be populated here -->
-                </div>
-            </div>
-        </div>
-
-        <!-- Center Game Area -->
-        <div id="game-container">
-            <!-- Previous Bets Header (restored to original position) -->
-            <div id="header">
-                <div class="balance-info">
-                    <div id="balance">BALANCE:</div>
-                    <div id="balance-amount">€3,000.00</div>
-                    <div class="game-menu-container">
-                        <button id="game-menu-btn" class="game-menu-btn">
-                            <i class="fas fa-bars"></i>
+                
+                <div class="form-group">
+                    <label for="loginPassword">Password</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="loginPassword" class="form-input" placeholder="Enter your password" required>
+                        <button type="button" class="password-toggle" onclick="togglePassword('loginPassword')">
+                            <i class="fas fa-eye"></i>
                         </button>
-                        <div id="game-menu" class="game-menu">
-                            <div class="menu-item" data-action="sound">
-                                <i class="fas fa-volume-up"></i>
-                                <span>Sound</span>
-                                <div class="toggle-switch">
-                                    <input type="checkbox" id="sound-toggle" checked>
-                                    <label for="sound-toggle"></label>
-                                </div>
-                            </div>
-                            <div class="menu-item" data-action="animation">
-                                <i class="fas fa-play-circle"></i>
-                                <span>Animation</span>
-                                <div class="toggle-switch">
-                                    <input type="checkbox" id="animation-toggle" checked>
-                                    <label for="animation-toggle"></label>
-                                </div>
-                            </div>
-                            <div class="menu-item" data-action="bet-history">
-                                <i class="fas fa-history"></i>
-                                <span>My Bet History</span>
-                            </div>
-                            <div class="menu-item" data-action="how-to-play">
-                                <i class="fas fa-question-circle"></i>
-                                <span>How to Play</span>
-                            </div>
-                            <div class="menu-item" data-action="game-rules">
-                                <i class="fas fa-book"></i>
-                                <span>Game Rules</span>
-                            </div>
-                            <div class="menu-item" data-action="provably-fair">
-                                <i class="fas fa-shield-alt"></i>
-                                <span>Provably Fair</span>
-                            </div>
-                        </div>
                     </div>
                 </div>
-            </div>
-
-            <!-- Previous Rounds (positioned between header and game) -->
-            <div id="previous-rounds-container">
-                <div id="last-counters"></div>
-                <div id="show-more-rounds" class="show-more-btn">
-                    <i class="fas fa-ellipsis-h"></i>
+                
+                <div class="checkbox-group">
+                    <input type="checkbox" id="rememberMe">
+                    <label for="rememberMe">Keep me signed in for 7 days</label>
                 </div>
-                <div id="hidden-rounds" class="hidden-rounds">
-                    <!-- Hidden multipliers will be shown here -->
-                </div>
-            </div>
-
-            <div id="counterWrapper">
-                <div id="bg-image"></div>
-                <canvas id="canvas"></canvas>
-                <div id="counter">1.00x</div>
-                <div id="game-info">
-                    <div class="round-info">Round #12345</div>
-                    <div class="next-round-timer" id="next-round-timer"></div>
-                </div>
-            </div>
-
-            <!-- Betting Controls -->
-            <div id="betting-controls">
-                <div class="bet-panel">
-                    <div class="bet-input-group">
-                        <label>Bet Amount</label>
-                        <div class="input-wrapper">
-                            <input type="number" id="bet-input-1" min="0" max="1000" value="10" />
-                            <span class="currency">€</span>
-                        </div>
-                        <div class="quick-amounts">
-                            <button class="quick-amount" data-amount="10">€10</button>
-                            <button class="quick-amount" data-amount="25">€25</button>
-                            <button class="quick-amount" data-amount="50">€50</button>
-                            <button class="quick-amount" data-amount="100">€100</button>
-                        </div>
-                    </div>
-                    <button id="bet-button-1" class="bet-button">BET</button>
-                </div>
-
-                <div class="bet-panel" id="second-bet-panel" style="display: none;">
-                    <div class="bet-input-group">
-                        <label>Bet Amount #2</label>
-                        <div class="input-wrapper">
-                            <input type="number" id="bet-input-2" min="0" max="1000" value="10" />
-                            <span class="currency">€</span>
-                        </div>
-                        <div class="quick-amounts">
-                            <button class="quick-amount" data-amount="10">€10</button>
-                            <button class="quick-amount" data-amount="25">€25</button>
-                            <button class="quick-amount" data-amount="50">€50</button>
-                            <button class="quick-amount" data-amount="100">€100</button>
-                        </div>
-                    </div>
-                    <button id="bet-button-2" class="bet-button">BET</button>
-                </div>
-
-                <button id="add-bet-button" class="add-bet-btn">
-                    <i class="fas fa-plus"></i>
+                
+                <button type="submit" class="auth-btn" id="loginBtn">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Sign In
                 </button>
-            </div>
-
-            <div id="message-area">
-                <p id="message"></p>
-            </div>
+            </form>
         </div>
-
-        <!-- Right Sidebar - Chat -->
-        <div id="right-sidebar">
-            <div class="chat-toggle" id="chat-toggle">
-                <i class="fas fa-comments"></i>
-                <span>Chat</span>
-            </div>
-            <div id="chat-container">
-                <div class="chat-header">
-                    <h3>Live Chat</h3>
-                    <div class="online-count">
-                        <i class="fas fa-circle online"></i>
-                        <span>247 online</span>
+        
+        <!-- Register Tab -->
+        <div id="registerTab" class="tab-content">
+            <form id="registerForm">
+                <div class="error-message" id="registerError"></div>
+                <div class="success-message" id="registerSuccess"></div>
+                
+                <div class="user-id-info" id="userIdInfo" style="display: none;">
+                    Your User ID: <span class="user-id" id="generatedUserId"></span><br>
+                    <small>Save this ID - you can use it to login</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="username">Username <span class="required">*</span></label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-user"></i>
+                        <input type="text" id="username" class="form-input" placeholder="Choose a unique username" required maxlength="20">
                     </div>
                 </div>
-                <div class="chat-messages" id="chat-messages">
-                    <!-- Messages will be dynamically added here -->
+                
+                <div class="form-group">
+                    <label for="email">Email Address (Optional)</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-envelope"></i>
+                        <input type="email" id="email" class="form-input" placeholder="your@email.com">
+                    </div>
                 </div>
-                <div class="chat-input-container">
-                    <input type="text" id="chat-input" placeholder="Type your message...">
-                    <button id="send-chat" class="send-btn">
-                        <i class="fas fa-paper-plane"></i>
-                    </button>
+                
+                <div class="form-group">
+                    <label for="phone">Phone Number <span class="required">*</span></label>
+                    <div class="phone-input-wrapper">
+                        <select id="countryCode" class="country-select">
+                            <option value="+254">🇰🇪 +254</option>
+                        </select>
+                        <input type="tel" id="phone" class="form-input phone-input" placeholder="712345678" required>
+                    </div>
                 </div>
+                
+                <div class="form-group">
+                    <label for="registerPassword">Password <span class="required">*</span></label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="registerPassword" class="form-input" placeholder="Minimum 6 characters" required minlength="6">
+                        <button type="button" class="password-toggle" onclick="togglePassword('registerPassword')">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="confirmPassword">Confirm Password <span class="required">*</span></label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="confirmPassword" class="form-input" placeholder="Confirm your password" required>
+                        <button type="button" class="password-toggle" onclick="togglePassword('confirmPassword')">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="checkbox-group">
+                    <input type="checkbox" id="agreeTerms" required>
+                    <label for="agreeTerms">
+                        I agree to the <a href="#" onclick="openModal('termsModal')">Terms and Conditions</a>,
+                        <a href="#" onclick="openModal('privacyModal')">Privacy Policy</a>, and
+                        <a href="#" onclick="openModal('responsibleGamingModal')">Responsible Gaming</a> guidelines
+                    </label>
+                </div>
+                
+                <button type="submit" class="auth-btn" id="registerBtn">
+                    <i class="fas fa-user-plus"></i>
+                    Create Account
+                </button>
+            </form>
+        </div>
+        
+        <div class="demo-section">
+            <button class="demo-btn" id="demoBtn">
+                <i class="fas fa-play"></i>
+                Try Demo Version
+            </button>
+        </div>
+    </div>
+    
+    <!-- Legal Modals -->
+    <div id="termsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Terms and Conditions</h2>
+                <button class="modal-close" onclick="closeModal('termsModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <h3>1. Acceptance of Terms</h3>
+                <p>By using ClassyBet Aviator, you agree to these terms and conditions.</p>
+                
+                <h3>2. Eligibility</h3>
+                <p>You must be at least 18 years old and legally able to participate in gaming activities in your jurisdiction.</p>
+                
+                <h3>3. Account Security</h3>
+                <p>You are responsible for maintaining the security of your account and User ID.</p>
+                
+                <h3>4. Fair Play</h3>
+                <p>We ensure fair gaming through certified random number generation and transparent gameplay.</p>
+                
+                <h3>5. Prohibited Activities</h3>
+                <p>Cheating, exploiting bugs, or using automated systems is strictly prohibited.</p>
+                
+                <h3>6. Dispute Resolution</h3>
+                <p>Any disputes will be resolved through our customer support and arbitration process.</p>
             </div>
         </div>
     </div>
-
-    <script src="./script.js"></script>
+    
+    <div id="privacyModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Privacy Policy</h2>
+                <button class="modal-close" onclick="closeModal('privacyModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <h3>Data Collection</h3>
+                <p>We collect only necessary information: username, email (optional), phone number, and gameplay data.</p>
+                
+                <h3>Data Usage</h3>
+                <p>Your data is used to provide gaming services, process transactions, and ensure account security.</p>
+                
+                <h3>Data Protection</h3>
+                <p>All data is encrypted and stored securely. We never share personal information with third parties.</p>
+                
+                <h3>Your Rights</h3>
+                <p>You can request access to, correction of, or deletion of your personal data at any time.</p>
+            </div>
+        </div>
+    </div>
+    
+    <div id="responsibleGamingModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Responsible Gaming</h2>
+                <button class="modal-close" onclick="closeModal('responsibleGamingModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <h3>Gaming Responsibly</h3>
+                <p>Gaming should be fun and entertaining. Never bet more than you can afford to lose.</p>
+                
+                <h3>Set Limits</h3>
+                <p>Set time and spending limits for your gaming sessions and stick to them.</p>
+                
+                <h3>Take Breaks</h3>
+                <p>Regular breaks help maintain perspective and prevent excessive gaming.</p>
+                
+                <h3>Get Help</h3>
+                <p>If you feel gaming is becoming a problem, seek help from support organizations or contact our customer service.</p>
+                
+                <h3>Underage Gaming</h3>
+                <p>Gaming is strictly prohibited for users under 18 years of age.</p>
+            </div>
+        </div>
+    </div>
+    
+    <script src="auth.js"></script>
 </body>
-
 </html>

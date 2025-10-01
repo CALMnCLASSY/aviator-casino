@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClassyBet Admin Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0d1421 0%, #1a2332 100%);
+            color: white;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 1rem 2rem;
+            border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #30fcbe;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .stat-card {
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(48, 252, 190, 0.1), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .stat-card:hover::before {
+            left: 100%;
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #30fcbe;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: #ccc;
+            font-size: 1.1rem;
+        }
+
+        .actions-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        .action-section h3 {
+            color: #30fcbe;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #ccc;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #333;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1rem;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #30fcbe;
+            box-shadow: 0 0 0 2px rgba(48, 252, 190, 0.2);
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #30fcbe, #28d1a0);
+            color: #0a0f1a;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(48, 252, 190, 0.3);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #fb024c, #ff4081);
+            color: white;
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #ffa500, #ff6347);
+            color: white;
+        }
+
+        .users-table {
+            width: 100%;
+            margin-top: 2rem;
+            border-collapse: collapse;
+        }
+
+        .users-table th,
+        .users-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #333;
+        }
+
+        .users-table th {
+            background: rgba(48, 252, 190, 0.1);
+            color: #30fcbe;
+        }
+
+        .pending-transactions {
+            margin-top: 2rem;
+        }
+
+        .transaction-item {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .transaction-info {
+            flex: 1;
+        }
+
+        .transaction-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .status-active {
+            background: rgba(40, 169, 9, 0.2);
+            color: #28a909;
+        }
+
+        .status-inactive {
+            background: rgba(251, 2, 76, 0.2);
+            color: #fb024c;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #30fcbe;
+        }
+
+        .error {
+            background: rgba(251, 2, 76, 0.1);
+            border: 1px solid #fb024c;
+            color: #fb024c;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .success {
+            background: rgba(40, 169, 9, 0.1);
+            border: 1px solid #28a909;
+            color: #28a909;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .actions-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">
+            <i class="fas fa-shield-alt"></i> ClassyBet Admin
+        </div>
+        <div class="user-info">
+            <span id="admin-name">Admin</span>
+            <button class="btn btn-danger" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Login Form (initially shown) -->
+        <div id="login-section" class="card" style="max-width: 400px; margin: 5rem auto;">
+            <h2 style="text-align: center; color: #30fcbe; margin-bottom: 2rem;">
+                <i class="fas fa-lock"></i> Admin Login
+            </h2>
+            
+            <div id="login-error" class="error" style="display: none;"></div>
+            
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="login-email">Email</label>
+                    <input type="email" id="login-email" class="form-control" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="login-password">Password</label>
+                    <input type="password" id="login-password" class="form-control" required>
+                </div>
+                
+                <button type="submit" class="btn btn-primary" style="width: 100%;">
+                    <i class="fas fa-sign-in-alt"></i> Login
+                </button>
+            </form>
+        </div>
+
+        <!-- Dashboard (initially hidden) -->
+        <div id="dashboard-section" style="display: none;">
+            <!-- Stats Dashboard -->
+            <div class="dashboard-grid">
+                <div class="card stat-card">
+                    <div class="stat-number" id="total-users">0</div>
+                    <div class="stat-label">Total Users</div>
+                </div>
+                
+                <div class="card stat-card">
+                    <div class="stat-number" id="active-users">0</div>
+                    <div class="stat-label">Active Users</div>
+                </div>
+                
+                <div class="card stat-card">
+                    <div class="stat-number" id="pending-deposits">0</div>
+                    <div class="stat-label">Pending Deposits</div>
+                </div>
+                
+                <div class="card stat-card">
+                    <div class="stat-number">KES <span id="total-balance">0</span></div>
+                    <div class="stat-label">Total Balance</div>
+                </div>
+            </div>
+
+            <!-- Action Sections -->
+            <div class="actions-grid">
+                <!-- User Management -->
+                <div class="card action-section">
+                    <h3><i class="fas fa-users"></i> User Management</h3>
+                    
+                    <div class="form-group">
+                        <label for="user-search">Search User</label>
+                        <input type="text" id="user-search" class="form-control" placeholder="Enter username or email">
+                    </div>
+                    
+                    <button class="btn btn-primary" onclick="searchUsers()">
+                        <i class="fas fa-search"></i> Search Users
+                    </button>
+                    
+                    <div id="user-results" class="users-table-container"></div>
+                </div>
+
+                <!-- Balance Management -->
+                <div class="card action-section">
+                    <h3><i class="fas fa-money-bill-wave"></i> Balance Management</h3>
+                    
+                    <div id="balance-error" class="error" style="display: none;"></div>
+                    <div id="balance-success" class="success" style="display: none;"></div>
+                    
+                    <div class="form-group">
+                        <label for="balance-user-id">User ID</label>
+                        <input type="text" id="balance-user-id" class="form-control" placeholder="Enter user ID">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="balance-amount">Amount (KES)</label>
+                        <input type="number" id="balance-amount" class="form-control" min="1" step="0.01">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="balance-description">Description</label>
+                        <input type="text" id="balance-description" class="form-control" placeholder="Reason for balance change">
+                    </div>
+                    
+                    <div style="display: flex; gap: 1rem;">
+                        <button class="btn btn-primary" onclick="updateBalance('add')">
+                            <i class="fas fa-plus"></i> Add Balance
+                        </button>
+                        <button class="btn btn-warning" onclick="updateBalance('subtract')">
+                            <i class="fas fa-minus"></i> Subtract Balance
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pending Transactions -->
+            <div class="card pending-transactions">
+                <h3><i class="fas fa-clock"></i> Pending Deposits</h3>
+                <div id="pending-transactions-list"></div>
+            </div>
+
+            <!-- All Users Table -->
+            <div class="card">
+                <h3><i class="fas fa-users-cog"></i> All Users</h3>
+                <div id="all-users-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3001/api';
+        let authToken = localStorage.getItem('admin_token');
+
+        // Check if already logged in
+        if (authToken) {
+            showDashboard();
+            loadDashboardData();
+        }
+
+        // Login form handler
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            
+            try {
+                const response = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ login: email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    if (data.user.isAdmin) {
+                        authToken = data.token;
+                        localStorage.setItem('admin_token', authToken);
+                        document.getElementById('admin-name').textContent = data.user.username;
+                        showDashboard();
+                        loadDashboardData();
+                    } else {
+                        showError('login-error', 'Access denied. Admin privileges required.');
+                    }
+                } else {
+                    showError('login-error', data.error);
+                }
+            } catch (error) {
+                showError('login-error', 'Login failed. Please try again.');
+            }
+        });
+
+        function showDashboard() {
+            document.getElementById('login-section').style.display = 'none';
+            document.getElementById('dashboard-section').style.display = 'block';
+        }
+
+        function logout() {
+            localStorage.removeItem('admin_token');
+            authToken = null;
+            document.getElementById('login-section').style.display = 'block';
+            document.getElementById('dashboard-section').style.display = 'none';
+        }
+
+        async function loadDashboardData() {
+            try {
+                // Load dashboard stats
+                const statsResponse = await fetch(`${API_BASE}/admin/dashboard-stats`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                
+                if (statsResponse.ok) {
+                    const stats = await statsResponse.json();
+                    document.getElementById('total-users').textContent = stats.totalUsers;
+                    document.getElementById('active-users').textContent = stats.activeUsers;
+                    document.getElementById('pending-deposits').textContent = stats.pendingDeposits;
+                    document.getElementById('total-balance').textContent = stats.totalBalance.toFixed(2);
+                }
+
+                // Load pending transactions
+                loadPendingTransactions();
+                
+                // Load all users
+                loadAllUsers();
+
+            } catch (error) {
+                console.error('Dashboard load error:', error);
+            }
+        }
+
+        async function loadPendingTransactions() {
+            try {
+                const response = await fetch(`${API_BASE}/admin/transactions/pending`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                
+                if (response.ok) {
+                    const transactions = await response.json();
+                    const container = document.getElementById('pending-transactions-list');
+                    
+                    if (transactions.length === 0) {
+                        container.innerHTML = '<p>No pending transactions</p>';
+                        return;
+                    }
+                    
+                    container.innerHTML = transactions.map(tx => `
+                        <div class="transaction-item">
+                            <div class="transaction-info">
+                                <strong>${tx.user.username}</strong> - KES ${tx.amount}<br>
+                                <small>Phone: ${tx.mpesaPhoneNumber} | ${new Date(tx.createdAt).toLocaleString()}</small><br>
+                                <small>Ref: ${tx.reference}</small>
+                            </div>
+                            <div class="transaction-actions">
+                                <button class="btn btn-primary" onclick="confirmDeposit('${tx.reference}')">
+                                    <i class="fas fa-check"></i> Confirm
+                                </button>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Pending transactions error:', error);
+            }
+        }
+
+        async function loadAllUsers() {
+            try {
+                const response = await fetch(`${API_BASE}/admin/users`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    const container = document.getElementById('all-users-list');
+                    
+                    container.innerHTML = `
+                        <table class="users-table">
+                            <thead>
+                                <tr>
+                                    <th>Username</th>
+                                    <th>Email</th>
+                                    <th>Balance</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.users.map(user => `
+                                    <tr>
+                                        <td>${user.username}</td>
+                                        <td>${user.email}</td>
+                                        <td>KES ${user.balance.toFixed(2)}</td>
+                                        <td>
+                                            <span class="status-badge ${user.isActive ? 'status-active' : 'status-inactive'}">
+                                                ${user.isActive ? 'Active' : 'Inactive'}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-primary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;" onclick="copyUserId('${user._id}')">
+                                                Copy ID
+                                            </button>
+                                            <button class="btn ${user.isActive ? 'btn-danger' : 'btn-primary'}" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;" onclick="toggleUserStatus('${user._id}')">
+                                                ${user.isActive ? 'Deactivate' : 'Activate'}
+                                            </button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                }
+            } catch (error) {
+                console.error('Load users error:', error);
+            }
+        }
+
+        function copyUserId(userId) {
+            navigator.clipboard.writeText(userId).then(() => {
+                alert('User ID copied to clipboard');
+            });
+        }
+
+        async function toggleUserStatus(userId) {
+            try {
+                const response = await fetch(`${API_BASE}/admin/users/${userId}/toggle-status`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                
+                if (response.ok) {
+                    loadAllUsers();
+                    loadDashboardData();
+                }
+            } catch (error) {
+                console.error('Toggle status error:', error);
+            }
+        }
+
+        async function updateBalance(type) {
+            const userId = document.getElementById('balance-user-id').value;
+            const amount = document.getElementById('balance-amount').value;
+            const description = document.getElementById('balance-description').value;
+            
+            if (!userId || !amount || !description) {
+                showError('balance-error', 'All fields are required');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/admin/users/${userId}/balance`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ amount: parseFloat(amount), type, description })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showSuccess('balance-success', `Balance ${type === 'add' ? 'added' : 'subtracted'} successfully`);
+                    document.getElementById('balance-user-id').value = '';
+                    document.getElementById('balance-amount').value = '';
+                    document.getElementById('balance-description').value = '';
+                    loadDashboardData();
+                } else {
+                    showError('balance-error', data.error);
+                }
+            } catch (error) {
+                showError('balance-error', 'Balance update failed');
+            }
+        }
+
+        async function confirmDeposit(transactionId) {
+            const receiptNumber = prompt('Enter M-Pesa receipt number:');
+            if (!receiptNumber) return;
+            
+            try {
+                const response = await fetch(`${API_BASE}/payments/confirm-deposit`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ transactionId, mpesaReceiptNumber: receiptNumber })
+                });
+                
+                if (response.ok) {
+                    alert('Deposit confirmed successfully');
+                    loadPendingTransactions();
+                    loadDashboardData();
+                } else {
+                    const data = await response.json();
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                alert('Confirmation failed');
+            }
+        }
+
+        function showError(elementId, message) {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.style.display = 'block';
+            setTimeout(() => element.style.display = 'none', 5000);
+        }
+
+        function showSuccess(elementId, message) {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.style.display = 'block';
+            setTimeout(() => element.style.display = 'none', 5000);
+        }
+
+        // Auto-refresh every 30 seconds
+        setInterval(() => {
+            if (authToken && document.getElementById('dashboard-section').style.display !== 'none') {
+                loadDashboardData();
+            }
+        }, 30000);
+    </script>
+</body>
+</html>

@@ -19,12 +19,15 @@ class AviatorGame {
         this.isFlying = true;
         this.hoverOffset = 0; // For vertical hovering animation
         this.animationId = null;
+        this.pathX = 0; // Separate variable for path progression
+        this.pathY = this.canvas.height; // Path Y position
+        this.isHovering = false; // Track if plane is in hovering mode
         this.gameState = 'waiting'; // 'waiting', 'flying', 'crashed'
         this.roundNumber = 12345;
         this.lastUpdateTime = 0; // For controlling multiplier update frequency
         
-        // Betting state
-        this.playerBalance = 3000;
+        // Betting state - will be set by authentication system
+        this.playerBalance = 0;
         this.bets = {
             bet1: { placed: false, amount: 0, cashedOut: false, pending: false },
             bet2: { placed: false, amount: 0, cashedOut: false, pending: false }
@@ -44,11 +47,72 @@ class AviatorGame {
         this.startGame();
         this.initializeAllBets();
         this.setupGameMenu();
-        this.setupResponsiveHandler();
+        this.setupResponsiveLayout();
         this.setupBetsTabs();
         this.generateMockBets();
         this.setupQuickAmountButtons();
         this.setupAutoBetting();
+        this.setupResponsiveLayout();
+        
+        // Preserve user balance from localStorage on initialization
+        this.initializeUserBalance();
+    }
+    
+    // Initialize user balance from session data
+    initializeUserBalance() {
+        const userData = localStorage.getItem('userData');
+        const isDemo = localStorage.getItem('isDemo') === 'true';
+        
+        if (userData) {
+            const user = JSON.parse(userData);
+            // Set balance based on user type - use saved balance for demo users too
+            this.playerBalance = user.balance || (isDemo ? 3000 : 0);
+            this.currentUser = user;
+            
+            // Update the display
+            this.updateBalance();
+            
+            console.log('Balance initialized:', this.playerBalance, 'Demo:', isDemo);
+        }
+    }
+    
+    // Method to safely update player balance and sync with server
+    async updatePlayerBalance(newBalance, reason = 'update') {
+        const isDemo = localStorage.getItem('isDemo') === 'true';
+        
+        // Ensure balance doesn't go below 0
+        newBalance = Math.max(0, newBalance);
+        
+        if (isDemo) {
+            // For demo users, update locally and maintain in localStorage
+            this.playerBalance = newBalance;
+            
+            // Update user data in localStorage for demo
+            const userData = localStorage.getItem('userData');
+            if (userData) {
+                const user = JSON.parse(userData);
+                user.balance = newBalance;
+                localStorage.setItem('userData', JSON.stringify(user));
+            }
+            
+            this.updateBalance();
+            console.log(`Demo balance updated to ${newBalance} (${reason})`);
+            return;
+        }
+        
+        // For real users, update locally and sync with server
+        this.playerBalance = newBalance;
+        this.updateBalance();
+        
+        // Update user data in localStorage
+        const userData = localStorage.getItem('userData');
+        if (userData) {
+            const user = JSON.parse(userData);
+            user.balance = newBalance;
+            localStorage.setItem('userData', JSON.stringify(user));
+        }
+        
+        console.log(`Real user balance updated to ${newBalance} (${reason})`);
     }
 
     // Currency formatting method
@@ -58,27 +122,51 @@ class AviatorGame {
     }
 
     updateCounterGlow(counterElement, multiplier) {
-        // Remove all existing glow classes
+        // Remove all existing glow classes from counter
         counterElement.classList.remove('blue-glow', 'purple-glow', 'pink-glow');
+        
+        // Get game container for canvas-wide glow effects
+        const gameContainer = document.querySelector('.game-container') || document.body;
+        gameContainer.classList.remove('blue-glow', 'purple-glow', 'pink-glow');
         
         // Apply color glow based on multiplier ranges
         if (multiplier >= 1.00 && multiplier < 2.00) {
             counterElement.classList.add('blue-glow');
+            gameContainer.classList.add('blue-glow');
         } else if (multiplier >= 2.00 && multiplier < 10.00) {
             counterElement.classList.add('purple-glow');
+            gameContainer.classList.add('purple-glow');
         } else if (multiplier >= 10.00) {
             counterElement.classList.add('pink-glow');
+            gameContainer.classList.add('pink-glow');
         }
     }
 
-    setupResponsiveHandler() {
-        // Update counter display on window resize
+    setupResponsiveLayout() {
+        const handleResize = () => {
+            const isMobile = window.innerWidth <= 768;
+            const leftSidebar = document.getElementById('left-sidebar');
+            const mobileBets = document.getElementById('mobile-bets-section');
+            
+            if (isMobile) {
+                // Mobile: Hide sidebar, show mobile bets
+                if (leftSidebar) leftSidebar.style.display = 'none';
+                if (mobileBets) mobileBets.style.display = 'block';
+            } else {
+                // Desktop: Show sidebar, hide mobile bets
+                if (leftSidebar) leftSidebar.style.display = 'flex';
+                if (mobileBets) mobileBets.style.display = 'none';
+            }
+        };
+        
+        // Initial call
+        handleResize();
+        
+        // Add resize listener with debouncing
         let resizeTimeout;
         window.addEventListener('resize', () => {
             clearTimeout(resizeTimeout);
-            resizeTimeout = setTimeout(() => {
-                this.updateCounterDisplay();
-            }, 100); // Debounce resize events
+            resizeTimeout = setTimeout(handleResize, 100);
         });
     }
 
@@ -231,16 +319,15 @@ class AviatorGame {
         this.allBetsData = [];
         this.allBetsHistory = []; // Store all bets for the "show more" feature
         this.betCount = 0;
-        
-        // Generate initial set of bets
-        for (let i = 0; i < 15; i++) {
-            this.generateRandomBet();
-        }
-        
-        // Generate random betting activity during rounds
+
+        // Do not seed here; we populate during the 'waiting' phase only
+        // Background timer: trickle in bets only while waiting for next round
         setInterval(() => {
-            if (this.gameState === 'flying') {
-                this.generateRandomBet();
+            if (this.gameState === 'waiting') {
+                const bursts = Math.floor(Math.random() * 3) + 1; // 1-3 bets per tick
+                for (let i = 0; i < bursts; i++) {
+                    this.generateRandomBet();
+                }
             }
         }, 1500);
 
@@ -318,8 +405,9 @@ class AviatorGame {
             this.allBetsData.pop();
         }
 
-        // Simulate realistic cash out timing based on current multiplier
-        if (willCashOut && this.gameState === 'flying') {
+    // Simulate realistic cash out timing based on current multiplier
+    // Note: during 'waiting' we just collect bets; no cashouts are processed then
+    if (willCashOut && this.gameState === 'flying') {
             setTimeout(() => {
                 if (bet.status === '' && this.gameState === 'flying' && this.counter <= this.randomStop) {
                     // Cash out at current multiplier with slight randomization
@@ -332,38 +420,11 @@ class AviatorGame {
             }, Math.random() * 5000 + 1000); // Cash out between 1-6 seconds
         }
 
-        this.updateAllBetsDisplay();
-        this.updateBetCount();
-    }
-
-    updateBetCount() {
-        document.getElementById('bet-count').textContent = this.betCount;
-    }
-
-    updateAllBetsDisplay() {
-        const isExpanded = this.allBetsContainer.classList.contains('expanded');
-        const betsToShow = isExpanded ? this.allBetsHistory : this.allBetsData;
-        
-        this.allBetsContainer.innerHTML = betsToShow.map(bet => {
-            let statusClass = '';
-            let statusText = bet.status || '';
-
-            if (bet.cashedOut && bet.multiplier) {
-                statusClass = 'cashout';
-                statusText = `${bet.multiplier}x`;
-            } else if (bet.crashed) {
-                statusClass = 'crashed';
-                statusText = '';
-            }
-
-            return `
-                <div class="all-bet-item ${statusClass}">
-                    <div class="bet-id">${bet.id}</div>
-                    <div class="bet-amount">${this.formatCurrency(bet.amount)}</div>
-                    <div class="bet-status ${statusClass}">${statusText}</div>
-                </div>
-            `;
-        }).join('');
+        // Only redraw the All Bets list live during 'waiting'.
+        if (this.gameState === 'waiting') {
+            this.updateAllBetsDisplay();
+            this.updateBetCount();
+        }
     }
 
     loadImage() {
@@ -722,7 +783,8 @@ class AviatorGame {
             return;
         }
 
-        this.playerBalance -= amount;
+        // Update balance using the proper method
+        this.updatePlayerBalance(this.playerBalance - amount, 'bet');
         
         if (this.gameState === 'waiting') {
             // Place bet immediately for current round
@@ -745,8 +807,6 @@ class AviatorGame {
             button.className = 'bet-button cancel';
             this.messageElement.textContent = `Bet queued for next round: ${this.formatCurrency(amount)}`;
         }
-        
-        this.updateBalance();
     }
 
     cancelBet(betType) {
@@ -805,26 +865,30 @@ class AviatorGame {
         }
 
         const winnings = bet.amount * this.counter;
-        this.playerBalance += winnings;
         bet.cashedOut = true;
         bet.placed = false;
+        bet.multiplier = this.counter;
+
+        // Update balance using the proper method
+        this.updatePlayerBalance(this.playerBalance + winnings, 'cashout');
 
         button.textContent = 'BET';
         button.className = 'bet-button';
-        this.updateBalance();
-    this.messageElement.textContent = `Cashed out: ${this.formatCurrency(winnings)} (${this.counter.toFixed(2)}x)`;
+        this.messageElement.textContent = `Cashed out: ${this.formatCurrency(winnings)} (${this.counter.toFixed(2)}x)`;
         
         // Add to chat
     }
 
     updateBalance() {
+        // Update game header balance
         if (this.balanceElement) {
             this.balanceElement.textContent = this.formatCurrency(this.playerBalance);
         }
-        // Also update the navigation balance
-        const userBalance = document.querySelector('.user-balance');
-        if (userBalance) {
-            userBalance.textContent = this.formatCurrency(this.playerBalance);
+        
+        // Update navigation balance as well for consistency
+        const navBalance = document.getElementById('nav-balance');
+        if (navBalance) {
+            navBalance.textContent = this.formatCurrency(this.playerBalance);
         }
     }
 
@@ -970,6 +1034,8 @@ class AviatorGame {
                 if (this.x < 5) {
                     this.x += this.speedX;
                     this.y = this.startY; // Stay at ground level
+                    this.pathX = this.x;
+                    this.pathY = this.y;
                 } else {
                     // Phase 2: Curved upward trajectory moving toward hovering position
                     this.x += this.speedX;
@@ -983,16 +1049,37 @@ class AviatorGame {
                     const curveFactor = 1 - Math.pow(1 - horizontalProgress, 1.5); // Steep initial rise
                     
                     this.y = this.startY - (curveHeight * curveFactor);
+                    this.pathX = this.x;
+                    this.pathY = this.y;
                 }
             } else {
-                // Phase 3: Hovering - vertical movement up and down
-                this.hoverOffset += 0.1; // Speed of hovering animation
+                // Phase 3: Hovering - plane hovers at fixed position while path continues smoothly
+                if (!this.isHovering) {
+                    // First time entering hover mode - set fixed plane position
+                    this.isHovering = true;
+                    this.planeHoverX = hoverPoint;
+                    this.planeHoverY = this.y; // Current Y position becomes hover center
+                    // Ensure the path has a terminal point at the baseline hover position
+                    if (this.dotPath.length === 0) {
+                        this.dotPath.push({ x: this.planeHoverX, y: this.planeHoverY });
+                    }
+                }
+                
+                // Don't continue extending path during hovering - make path and plane move together
+                // Calculate hover movement
+                this.hoverOffset += 0.05; // Reduced speed of hovering animation for smoother, slower bobbing
                 const hoverAmplitude = 30; // How far up/down to hover
                 const verticalOffset = Math.sin(this.hoverOffset) * hoverAmplitude;
                 
-                // Keep plane at hover position with vertical movement
-                this.x = hoverPoint;
-                this.y = this.startY - 100 + verticalOffset; // Base hover height + oscillation
+                // Both plane and path endpoint move together in perfect sync
+                this.x = this.planeHoverX;
+                this.y = this.planeHoverY + verticalOffset;
+                
+                // Update the last path point to exactly match plane position
+                // Store baseline (no verticalOffset) to avoid double-offset when rendering
+                if (this.dotPath.length > 0) {
+                    this.dotPath[this.dotPath.length - 1] = { x: this.planeHoverX, y: this.planeHoverY };
+                }
             }
             this.isFlying = true;
         } else {
@@ -1002,77 +1089,117 @@ class AviatorGame {
         }
 
         // Draw path and plane
-        this.dotPath.push({ x: this.x, y: this.y });
+        if (!this.isHovering) {
+            // Normal flight - path follows plane, continue extending
+            this.dotPath.push({ x: this.x, y: this.y });
+        }
+        // During hovering, don't add new path points - the existing path will move with hover offset in drawPlaneShadow and drawGame
         this.drawGame();
 
         // Continue animation
         this.animationId = requestAnimationFrame(() => this.draw());
     }
 
+    generateRandomBet() {
+        // Generate player name in format 'a***d'
+        const playerName = this.generateRandomPlayerName();
+        const avatar = this.pickRandomAvatar();
+        const betAmount = (Math.random() * 200 + 10).toFixed(2);
+        
+        // Randomly decide if this bet will cash out or crash
+        const willCashOut = Math.random() > 0.3; // 70% chance to cash out
+        
+        // Use a consistent schema with other bet lists to avoid undefineds
+        const bet = {
+            player: playerName,
+            avatar,
+            amount: parseFloat(betAmount),
+            cashedOut: false,
+            crashed: false,
+            multiplier: null,
+            win: null,
+            status: ''
+        };
+
+        this.allBetsData.unshift(bet);
+        this.allBetsHistory.unshift(bet);
+        this.betCount++;
+        
+        // Keep only a recent window visible in main list for performance
+        if (this.allBetsData.length > 80) {
+            this.allBetsData.pop();
+        }
+
+        // Simulate realistic cash out timing based on current multiplier
+        if (willCashOut && this.gameState === 'flying') {
+            setTimeout(() => {
+                if (bet.status === '' && this.gameState === 'flying' && this.counter <= this.randomStop) {
+                    // Cash out at current multiplier with slight randomization
+                    const cashOutMultiplier = Math.min(this.counter + (Math.random() * 0.2 - 0.1), this.randomStop - 0.1);
+                    bet.cashedOut = true;
+                    bet.multiplier = Math.max(1.0, parseFloat(cashOutMultiplier.toFixed(2)));
+                    bet.win = parseFloat((bet.amount * bet.multiplier).toFixed(2));
+                    bet.status = `${bet.multiplier}x`;
+                    this.updateAllBetsDisplay();
+                }
+            }, Math.random() * 5000 + 1000); // Cash out between 1-6 seconds
+        }
+
+        this.updateAllBetsDisplay();
+        this.updateBetCount();
+    }
+
     drawPlaneShadow() {
         if (this.dotPath.length > 2) {
-            // Create path for shadow area under the curve
-            this.ctx.beginPath();
-            
-            // Start from the first point
-            this.ctx.moveTo(this.dotPath[0].x, this.dotPath[0].y);
-            
-            // Follow the curve path
-            for (let i = 1; i < this.dotPath.length; i++) {
-                this.ctx.lineTo(this.dotPath[i].x, this.dotPath[i].y);
+            // Calculate hover offset to apply to entire shadow curve during hovering
+            let shadowOffset = 0;
+            if (this.isHovering) {
+                const hoverAmplitude = 30;
+                shadowOffset = Math.sin(this.hoverOffset) * hoverAmplitude;
             }
-            
-            // Create shadow by drawing down to the bottom edge of canvas
-            // Go straight down from the last point to bottom
+            this.ctx.beginPath();
+            this.ctx.moveTo(this.dotPath[0].x, this.dotPath[0].y + shadowOffset);
+            for (let i = 1; i < this.dotPath.length; i++) {
+                this.ctx.lineTo(this.dotPath[i].x, this.dotPath[i].y + shadowOffset);
+            }
             this.ctx.lineTo(this.dotPath[this.dotPath.length - 1].x, this.canvas.height);
-            
-            // Draw line across bottom to below the starting point
             this.ctx.lineTo(this.dotPath[0].x, this.canvas.height);
-            
-            // Close path back to start point
             this.ctx.closePath();
-            
-            // Fill with red translucent shadow - always below the path
-            this.ctx.fillStyle = 'rgba(220, 53, 69, 0.1)'; // Red with low opacity
+            this.ctx.fillStyle = 'rgba(220, 53, 69, 0.1)';
             this.ctx.fill();
         }
     }
 
     drawGame() {
         this.ctx.save();
-
         // Draw path with gradient trail effect
         if (this.dotPath.length > 1) {
             this.ctx.beginPath();
             this.ctx.lineWidth = 4;
-            
-            // Create gradient trail effect
+            // Calculate hover offset to apply to entire curve during hovering
+            let curveOffset = 0;
+            if (this.isHovering) {
+                const hoverAmplitude = 30;
+                curveOffset = Math.sin(this.hoverOffset) * hoverAmplitude;
+            }
+            // Create gradient trail effect with hover offset applied to entire curve
             for (let i = 1; i < this.dotPath.length; i++) {
                 const opacity = Math.min(1, (i / this.dotPath.length) * 2); // Fade in effect
                 this.ctx.strokeStyle = `rgba(220, 53, 69, ${opacity})`; // Red with varying opacity
                 this.ctx.beginPath();
-                this.ctx.moveTo(this.dotPath[i - 1].x, this.dotPath[i - 1].y);
-                this.ctx.lineTo(this.dotPath[i].x, this.dotPath[i].y);
+                this.ctx.moveTo(this.dotPath[i - 1].x, this.dotPath[i - 1].y + curveOffset);
+                this.ctx.lineTo(this.dotPath[i].x, this.dotPath[i].y + curveOffset);
                 this.ctx.stroke();
             }
-            
-            // Draw red translucent shadow under the curve
-            this.drawPlaneShadow();
-        }
-
-        // Draw plane at its actual position following the trajectory
-        if (this.image.complete) {
-            // Add subtle up-down hovering animation only when plane has stopped
-            let hoverOffset = 0;
-            if (!this.isFlying) {
-                const time = Date.now() * 0.003; // Control animation speed
-                hoverOffset = Math.sin(time) * 3; // 3px up-down movement when crashed/hovering
+            // Draw red translucent shadow under the curve only during flight
+            if (this.isFlying) {
+                this.drawPlaneShadow();
             }
-            
-            // Draw plane at its actual trajectory position
-            this.ctx.drawImage(this.image, this.x - 22, this.y - 65 + hoverOffset, 150, 70);
         }
-
+        // Draw plane at its current position (already includes hover movement)
+        if (this.image.complete) {
+            this.ctx.drawImage(this.image, this.x - 22, this.y - 65, 150, 70);
+        }
         this.ctx.restore();
     }
 
@@ -1086,6 +1213,12 @@ class AviatorGame {
             bgImage.classList.remove('rotating');
         }
         
+        // Remove any canvas-wide glow classes on crash
+        const gameContainer = document.querySelector('.game-container') || document.body;
+        if (gameContainer) {
+            gameContainer.classList.remove('blue-glow', 'purple-glow', 'pink-glow');
+        }
+        
         // Start crash animation - plane disappears upwards quickly
         this.animateCrash();
         
@@ -1095,10 +1228,11 @@ class AviatorGame {
         // Update counter to show "FLEW AWAY" above the multiplier
         const counterElement = document.getElementById('counter');
         counterElement.innerHTML = `
-            <div style="color: white; font-size: 0.8em; margin-bottom: 8px; text-shadow: 0 0 15px rgba(255, 255, 255, 0.8); font-weight: bold;">FLEW AWAY</div>
-            <div style="color: #ff4444; text-shadow: 0 0 15px rgba(255, 68, 68, 0.8);">${crashMultiplier}x</div>
+            <div style="color: white; font-size: 0.8em; margin-bottom: 8px; font-weight: bold;">FLEW AWAY</div>
+            <div style="color: #ff4444;">${crashMultiplier}x</div>
         `;
-        counterElement.className = 'crashed';
+        // Keep existing glow class, just add crashed for sizing/animation
+        counterElement.classList.add('crashed');
         
         // Mark all active bets as crashed (leave status empty)
         this.allBetsData.forEach(bet => {
@@ -1144,14 +1278,21 @@ class AviatorGame {
     animateCrash() {
         const crashSpeed = 20; // pixels per frame - very fast upward movement
         
+        // Ensure no lingering path/shadow gets drawn during crash
+        const drawCrashedFrame = () => {
+            // Only draw the plane sprite at its current position
+            if (this.image && this.image.complete) {
+                this.ctx.drawImage(this.image, this.x - 22, this.y - 65, 150, 70);
+            }
+        };
+        
         const animateCrashFrame = () => {
             // Move plane upwards rapidly
             this.y -= crashSpeed;
             
             // Clear canvas and redraw
             this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-            this.drawPlaneShadow();
-            this.drawGame();
+            drawCrashedFrame();
             
             // Continue animation until plane is off-screen
             if (this.y > -50) { // Continue until well above canvas
@@ -1159,7 +1300,7 @@ class AviatorGame {
             } else {
                 // Clear canvas completely when plane is gone
                 this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-                this.drawPlaneShadow();
+                // Do not draw path or shadow after crash
             }
         };
         
@@ -1198,6 +1339,16 @@ class AviatorGame {
 
     startCountdown() {
         this.gameState = 'waiting';
+
+        // Reset and seed All Bets for the upcoming round during waiting only
+        this.allBetsData = [];
+        this.betCount = 0;
+        // Initial seed so the list isn't empty at the start of waiting
+        for (let i = 0; i < 15; i++) {
+            this.generateRandomBet();
+        }
+        this.updateAllBetsDisplay();
+        this.updateBetCount();
         let countdown = 5; // Extended to 5 seconds
         
         // Clear the main counter display
@@ -1224,17 +1375,17 @@ class AviatorGame {
             <div style="
                 display: flex;
                 justify-content: center;
-                margin-bottom: 15px;
+                margin-bottom: 20px;
             ">
-                <img src="ufc.svg" alt="UFC" height="60" style="opacity: 0.8;">
+                <img src="ufc.svg" alt="UFC" height="100" style="opacity: 0.9;">
             </div>
             
             <!-- Loading Bar -->
             <div style="
-                width: 300px;
-                height: 10px;
+                width: 200px;
+                height: 6px;
                 background: rgba(255, 255, 255, 0.3);
-                border-radius: 5px;
+                border-radius: 3px;
                 margin: 0 auto;
                 overflow: hidden;
                 box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
@@ -1244,7 +1395,7 @@ class AviatorGame {
                     background: linear-gradient(90deg, #ff4444, #ff6666);
                     width: 0%;
                     transition: width 0.3s ease;
-                    border-radius: 5px;
+                    border-radius: 3px;
                 "></div>
             </div>
             
@@ -1252,9 +1403,9 @@ class AviatorGame {
             <div style="
                 display: flex;
                 justify-content: center;
-                margin-top: 15px;
+                margin-top: 20px;
             ">
-                <img src="spribe.svg" alt="Spribe" height="30" style="opacity: 0.7;">
+                <img src="spribe.svg" alt="Spribe" height="55" style="opacity: 0.8;">
             </div>
         `;
         
@@ -1315,6 +1466,10 @@ class AviatorGame {
         this.counter = 1.0;
         this.x = this.startX; // Reset to starting position (bottom left)
         this.y = this.startY; // Reset to starting position (bottom left)
+        this.pathX = 0; // Reset path X position
+        this.pathY = this.canvas.height; // Reset path Y position
+        this.isHovering = false; // Reset hovering state
+        this.hoverOffset = 0; // Reset hover animation
         this.dotPath = [];
         this.isFlying = true;
         this.messageElement.textContent = '';
@@ -1385,6 +1540,22 @@ class AviatorGame {
                 }
             });
         });
+
+        // Top Results submenu handlers
+        const topContent = document.getElementById('top-results-content');
+        if (topContent) {
+            topContent.querySelectorAll('.top-filter-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    topContent.querySelectorAll('.top-filter-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    this.loadTopResults();
+                });
+            });
+            const periodEl = document.getElementById('top-period');
+            if (periodEl) {
+                periodEl.addEventListener('change', () => this.loadTopResults());
+            }
+        }
     }
 
     switchTab(tabType) {
@@ -1408,15 +1579,11 @@ class AviatorGame {
     }
 
     generateRandomPlayerName() {
-        // Generate random letters for first and last position
+        // Always return a username in the format a***d (avoid undefined)
         const letters = 'abcdefghijklmnopqrstuvwxyz';
-        const firstLetter = letters[Math.floor(Math.random() * letters.length)];
-        const lastLetter = letters[Math.floor(Math.random() * letters.length)];
-        
-        // Generate 4 asterisks
-        const asterisks = '****';
-        
-        return firstLetter + asterisks + lastLetter;
+        const first = letters[Math.floor(Math.random() * letters.length)] || 'a';
+        const last = letters[Math.floor(Math.random() * letters.length)] || 'd';
+        return `${first}***${last}`;
     }
 
     generateMockBets() {
@@ -1424,95 +1591,179 @@ class AviatorGame {
         this.previousBetsData = [];
         this.topResultsData = [];
 
-        // Generate 600-800 mock bets for current round
-        const betCount = Math.floor(Math.random() * 200) + 600;
+        // Ensure 600+ bets per round
+        const betCount = 600 + Math.floor(Math.random() * 250);
         for (let i = 0; i < betCount; i++) {
-            // Generate player name in format 'a****u'
             const playerName = this.generateRandomPlayerName();
-            const amount = (Math.random() * 500 + 5).toFixed(2);
-            // 70% will not cash out, 30% will cash out at a random multiplier
-            const didCashOut = Math.random() < 0.3;
+            const amount = parseFloat((Math.random() * 500 + 5).toFixed(2));
+            const didCashOut = Math.random() < 0.35; // ~35% cash out
+            const multiplier = didCashOut ? parseFloat((Math.random() * 5 + 1).toFixed(2)) : null;
+            const win = multiplier ? parseFloat((amount * multiplier).toFixed(2)) : null;
             this.allBetsData.push({
                 id: i + 1,
                 player: playerName,
-                amount: parseFloat(amount),
-                multiplier: didCashOut ? (Math.random() * 5 + 1).toFixed(2) : null
+                avatar: this.pickRandomAvatar(),
+                amount,
+                multiplier,
+                win,
+                cashedOut: !!multiplier
             });
         }
 
-        // Generate previous rounds data
-        for (let round = 1; round <= 20; round++) {
+        // Previous round simulated results: same schema as all-bets
+        const prevCount = 600 + Math.floor(Math.random() * 250);
+        for (let i = 0; i < prevCount; i++) {
+            const playerName = this.generateRandomPlayerName();
+            const amount = parseFloat((Math.random() * 500 + 5).toFixed(2));
+            const multiplier = parseFloat((Math.random() * 5 + 1).toFixed(2));
+            const win = parseFloat((amount * multiplier).toFixed(2));
             this.previousBetsData.push({
-                round: this.roundNumber - round,
-                multiplier: (Math.random() * 20 + 1).toFixed(2),
-                winnings: (Math.random() * 1000 + 50).toFixed(2)
+                id: i + 1,
+                player: playerName,
+                avatar: this.pickRandomAvatar(),
+                amount,
+                multiplier,
+                win
             });
         }
 
-        // Generate top results
+        // Top results: randomize by current filter later
         for (let i = 0; i < 50; i++) {
             const playerName = this.generateRandomPlayerName();
+            const amount = parseFloat((Math.random() * 700 + 20).toFixed(2));
+            const multiplier = parseFloat((Math.random() * 90 + 10).toFixed(2));
+            const win = parseFloat((amount * Math.max(1.1, multiplier)).toFixed(2));
             this.topResultsData.push({
                 player: playerName,
-                multiplier: (Math.random() * 100 + 10).toFixed(2),
-                winnings: (Math.random() * 5000 + 100).toFixed(2)
+                avatar: this.pickRandomAvatar(),
+                amount,
+                multiplier,
+                win
             });
         }
 
-        // Sort top results by multiplier
-        this.topResultsData.sort((a, b) => parseFloat(b.multiplier) - parseFloat(a.multiplier));
+        // Default sort by multiplier
+        this.topResultsData.sort((a, b) => b.multiplier - a.multiplier);
 
         this.updateAllBetsDisplay();
         this.updateBetCount();
+        this.loadPreviousBets();
+        this.loadTopResults();
+    }
+
+    pickRandomAvatar() {
+        // Avatars are 1..72 according to list_dir; pick safely within range
+        const max = 72; 
+        const idx = 1 + Math.floor(Math.random() * max);
+        return `images/avtar/av-${idx}.png`;
+    }
+    
+    getAvatarWithFallback(avatar) {
+        // Create img element to test if avatar loads
+        const img = new Image();
+        img.onerror = () => {
+            // If image fails to load, use a default avatar or icon
+            img.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMTIiIGZpbGw9IiMzMGZjYmUiLz4KPGF2YXRhciBmaWxsPSIjMTkxOTE5IiBkPSJNMTIgMTJjMi4yIDAgNC0xLjggNC00cy0xLjgtNC00LTQtNCAxLjgtNCA0IDEuOCA0IDQgNHptMCAyYy0yLjY3IDAtOCAxLjM0LTggNHYyaDE2di0yYzAtMi42Ni01LjMzLTQtOC00eiIvPgo8L3N2Zz4K';
+        };
+        img.src = avatar;
+        return avatar;
     }
 
     updateAllBetsDisplay() {
         const allBetsContainer = document.getElementById('all-bets');
         const mobileAllBetsContainer = document.getElementById('mobile-all-bets');
         
-        // Only show cashout value if player cashed out, otherwise show nothing in status
-        const betsHTML = this.allBetsData.slice(0, 50).map(bet => `
-            <div class="bet-item">
-                <span class="bet-player">${bet.player}</span>
+        const betsHTML = this.allBetsData.slice(0, 50).map(bet => {
+            const classes = ['bet-item'];
+            if (bet.cashedOut) classes.push('cashed-glow');
+            const x = bet.multiplier ? `${(bet.multiplier.toFixed ? bet.multiplier.toFixed(2) : bet.multiplier)}x` : '';
+            const win = bet.win != null ? this.formatCurrency(bet.win) : '';
+            const player = bet.player || bet.id || this.generateRandomPlayerName();
+            const avatar = bet.avatar || this.pickRandomAvatar();
+            return `
+            <div class="${classes.join(' ')}">
+                <span class="bet-player">
+                    <img class="avatar" src="${avatar}" alt="${player}" 
+                         onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMTIiIGZpbGw9IiMzMGZjYmUiLz4KPHRleHQgeD0iMTIiIHk9IjE2IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjMTkxOTE5IiBmb250LXNpemU9IjEwIj7wn5G3PC90ZXh0Pgo8L3N2Zz4K'" 
+                         loading="lazy"> 
+                    ${player}
+                </span>
                 <span class="bet-amount">${this.formatCurrency(bet.amount)}</span>
-                <span class="bet-status">${bet.multiplier ? bet.multiplier + 'x' : ''}</span>
-            </div>
-        `).join('');
+                <span class="bet-multiplier">${x}</span>
+                <span class="bet-status ${bet.cashedOut ? 'cashed-out' : ''}">${win}</span>
+            </div>`;
+        }).join('');
 
-    if (allBetsContainer) allBetsContainer.innerHTML = betsHTML;
-    if (mobileAllBetsContainer) mobileAllBetsContainer.innerHTML = betsHTML;
+        if (allBetsContainer) allBetsContainer.innerHTML = betsHTML;
+        if (mobileAllBetsContainer) mobileAllBetsContainer.innerHTML = betsHTML;
     }
 
     loadPreviousBets() {
         const previousBetsContainer = document.getElementById('previous-bets');
         const mobilePreviousBetsContainer = document.getElementById('mobile-previous-bets');
-        
-        const betsHTML = this.previousBetsData.map(bet => `
+        const betsHTML = this.previousBetsData.slice(0, 100).map(bet => {
+            const player = bet.player || this.generateRandomPlayerName();
+            const avatar = bet.avatar || this.pickRandomAvatar();
+            const mult = bet.multiplier.toFixed ? bet.multiplier.toFixed(2) : bet.multiplier;
+            return `
             <div class="bet-item">
-                <span class="bet-player">${bet.round}</span>
-                <span class="bet-amount">${bet.multiplier}x</span>
-                <span class="bet-status">${this.formatCurrency(bet.winnings || 0)}</span>
-            </div>
-        `).join('');
-
+                <span class="bet-player">
+                    <img class="avatar" src="${avatar}" alt="${player}" 
+                         onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMTIiIGZpbGw9IiMzMGZjYmUiLz4KPHRleHQgeD0iMTIiIHk9IjE2IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjMTkxOTE5IiBmb250LXNpemU9IjEwIj7wn5G3PC90ZXh0Pgo8L3N2Zz4K'" 
+                         loading="lazy"> 
+                    ${player}
+                </span>
+                <span class="bet-amount">${this.formatCurrency(bet.amount)}</span>
+                <span class="bet-multiplier">${mult}x</span>
+                <span class="bet-status">${this.formatCurrency(bet.win)}</span>
+            </div>`;
+        }).join('');
         if (previousBetsContainer) previousBetsContainer.innerHTML = betsHTML;
         if (mobilePreviousBetsContainer) mobilePreviousBetsContainer.innerHTML = betsHTML;
+        const countEl = document.getElementById('previous-bet-count');
+        if (countEl) countEl.textContent = this.previousBetsData.length;
     }
 
     loadTopResults() {
         const topResultsContainer = document.getElementById('top-results');
         const mobileTopResultsContainer = document.getElementById('mobile-top-results');
         
-        const betsHTML = this.topResultsData.slice(0, 30).map(bet => `
+        // Decide current view
+        const activeBtn = document.querySelector('#top-results-content .top-filter-btn.active');
+        const view = activeBtn ? activeBtn.dataset.view : 'multipliers';
+        const periodEl = document.getElementById('top-period');
+        const period = periodEl ? periodEl.value : 'day';
+        
+        // Create a randomized list according to the view
+        let list = [...this.topResultsData];
+        if (view === 'multipliers') {
+            list.sort((a, b) => b.multiplier - a.multiplier);
+        } else if (view === 'wins') {
+            list.sort((a, b) => b.win - a.win);
+        } else {
+            // rounds: simulate by sorting by amount as a proxy
+            list.sort((a, b) => b.amount - a.amount);
+        }
+        
+        // Optionally slice differently by period
+        const sliceSize = period === 'day' ? 30 : period === 'month' ? 40 : 50;
+        const betsHTML = list.slice(0, sliceSize).map(bet => {
+            const player = bet.player || this.generateRandomPlayerName();
+            const avatar = bet.avatar || this.pickRandomAvatar();
+            const mult = bet.multiplier.toFixed ? bet.multiplier.toFixed(2) : bet.multiplier;
+            return `
             <div class="bet-item">
-                <span class="bet-player">${bet.player}</span>
-                <span class="bet-amount">${bet.multiplier}x</span>
-                <span class="bet-status">${this.formatCurrency(bet.winnings || 0)}</span>
-            </div>
-        `).join('');
+                <span class="bet-player"><img class="avatar" src="${avatar}" alt="avatar"> ${player}</span>
+                <span class="bet-amount">${this.formatCurrency(bet.amount)}</span>
+                <span class="bet-multiplier">${mult}x</span>
+                <span class="bet-status">${this.formatCurrency(bet.win)}</span>
+            </div>`;
+        }).join('');
 
         if (topResultsContainer) topResultsContainer.innerHTML = betsHTML;
         if (mobileTopResultsContainer) mobileTopResultsContainer.innerHTML = betsHTML;
+        const countEl = document.getElementById('top-results-count');
+        if (countEl) countEl.textContent = list.length;
     }
 
     updateBetCount() {
@@ -1521,53 +1772,6 @@ class AviatorGame {
         
         if (betCountElement) betCountElement.textContent = this.allBetsData.length;
         if (mobileBetCountElement) mobileBetCountElement.textContent = this.allBetsData.length;
-    }
-
-    resetGame() {
-        this.randomStop = Math.random() * (10 - 0.8) + 0.8;
-        this.counter = 1.0;
-        this.x = this.startX; // Reset to starting position (bottom left)
-        this.y = this.startY; // Reset to starting position (bottom left)
-        this.dotPath = [];
-        this.isFlying = true;
-        this.messageElement.textContent = '';
-        
-        // Reset counter display
-        const counterElement = document.getElementById('counter');
-        counterElement.textContent = '1.00x';
-        counterElement.className = '';
-        
-        // Convert pending bets to active bets FIRST, then reset other bets
-        Object.keys(this.bets).forEach(betType => {
-            const bet = this.bets[betType];
-            const button = betType === 'bet1' ? this.betButton1 : this.betButton2;
-            
-            if (bet.pending) {
-                // Convert pending bet to active bet
-                bet.pending = false;
-                bet.placed = true;
-                bet.cashedOut = false;
-                
-                button.textContent = `${this.formatCurrency(bet.amount)} PLACED`;
-                button.className = 'bet-button placed';
-            } else if (!bet.placed) {
-                // Reset empty bet slots
-                bet.placed = false;
-                bet.cashedOut = false;
-                bet.amount = 0;
-                
-                button.textContent = 'BET';
-                button.className = 'bet-button';
-            }
-        });
-        
-        // Only generate/populate all bets before round starts, not after
-        this.generateMockBets();
-        
-        // Execute auto-bets for new round
-        this.executeAutoBets();
-        
-        this.startGame();
     }
 
     setupQuickAmountButtons() {
@@ -1703,14 +1907,22 @@ class AviatorGame {
             if (!bet.placed || bet.cashedOut) return;
             
             const betNumber = betType === 'bet1' ? '1' : '2';
+            
+            // Check if auto-cashout is enabled for this bet
+            const autoCashoutToggle = document.getElementById(`auto-cashout-toggle-${betNumber}`);
+            if (!autoCashoutToggle || !autoCashoutToggle.checked) {
+                return; // Auto-cashout is not enabled for this bet
+            }
+            
             const autoCashoutValue = parseFloat(document.getElementById(`auto-cashout-value-${betNumber}`).value);
             
-            if (this.counter >= autoCashoutValue) {
+            // Only auto-cashout if the value is valid and the multiplier has reached it
+            if (autoCashoutValue > 1.0 && this.counter >= autoCashoutValue) {
                 this.cashOut(betType);
                 
                 // Update auto-bet stats if auto-betting is active
                 const state = this.autoBetState[betType];
-                if (state.active) {
+                if (state && state.active) {
                     state.wins++;
                     const winAmount = bet.amount * autoCashoutValue - bet.amount;
                     state.profit += winAmount;
@@ -1731,26 +1943,33 @@ class AviatorGame {
         }
         
         ['bet1', 'bet2'].forEach(betType => {
-            const state = this.autoBetState[betType];
             const betNumber = betType === 'bet1' ? '1' : '2';
             const autoToggle = document.getElementById(`auto-bet-toggle-${betNumber}`);
             
-            if (state && state.active && autoToggle && autoToggle.checked) {
-                const input = document.getElementById(`bet-input-${betNumber}`);
-                const amount = parseFloat(input.value);
-                
-                if (amount > 0 && amount <= this.playerBalance) {
-                    this.placeBet(betType, amount);
-                    state.count++;
-                    this.updateAutoBetStats(betType);
-                } else if (amount > this.playerBalance) {
-                    // Stop auto-betting if insufficient funds
-                    state.active = false;
-                    autoToggle.checked = false;
-                    const statsElement = document.getElementById(`auto-stats-${betNumber}`);
-                    if (statsElement) statsElement.style.display = 'none';
-                    this.messageElement.textContent = 'Auto-betting stopped: Insufficient funds';
-                }
+            // Only execute auto-bet if toggle is enabled
+            if (!autoToggle || !autoToggle.checked) {
+                return; // Auto-bet is not enabled for this bet
+            }
+            
+            const state = this.autoBetState[betType];
+            if (!state || !state.active) {
+                return; // Auto-bet state is not active
+            }
+            
+            const input = document.getElementById(`bet-input-${betNumber}`);
+            const amount = parseFloat(input.value);
+            
+            if (amount > 0 && amount <= this.playerBalance) {
+                this.placeBet(betType, amount);
+                state.count++;
+                this.updateAutoBetStats(betType);
+            } else if (amount > this.playerBalance) {
+                // Stop auto-betting if insufficient funds
+                state.active = false;
+                autoToggle.checked = false;
+                const statsElement = document.getElementById(`auto-stats-${betNumber}`);
+                if (statsElement) statsElement.style.display = 'none';
+                this.messageElement.textContent = 'Auto-betting stopped: Insufficient funds';
             }
         });
     }
@@ -1820,6 +2039,30 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
         try {
             game = new AviatorGame();
+            
+            // Make switchTab globally accessible
+            window.switchTab = function(tabType) {
+                if (game && game.switchTab) {
+                    game.switchTab(tabType);
+                }
+            };
+            
+            // Add authentication tab switching function
+            window.switchAuthTab = function(tabType) {
+                // Remove active class from all tabs and contents
+                document.querySelectorAll('.auth-tabs .tab-btn').forEach(btn => btn.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+                
+                // Add active class to clicked tab and corresponding content
+                document.querySelector(`[onclick="switchAuthTab('${tabType}')"]`).classList.add('active');
+                document.getElementById(`${tabType}-tab`).classList.add('active');
+            };
+            
+            // Initialize authentication system
+            window.classyBetAPI = new ClassyBetAPI();
+            setupAuthEventListeners();
+            setupModalEventListeners();
+            
             console.log('Game initialized successfully');
             
             // Hide preloader after game is initialized
@@ -1835,75 +2078,553 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }, 3000);
     
-    // Initialize profile modal functionality
-    initializeProfileModal();
+    // Check for existing authentication on page load
+    checkAuthenticationOnLoad();
 });
 
-// Profile Modal Functions
-function initializeProfileModal() {
-    // Wire user info click to open profile modal
-    const userInfo = document.querySelector('.user-info');
-    if (userInfo) {
-        userInfo.addEventListener('click', () => {
-            openProfileModal();
-        });
-        userInfo.style.cursor = 'pointer';
-    }
+// Authentication Event Listeners
+function setupAuthEventListeners() {
+    // Set up API event listeners
+    classyBetAPI.on('onAuthChange', (data) => {
+        if (data.authenticated) {
+            showUserView();
+            updateUserDisplay(data.user);
+        } else {
+            showGuestView();
+        }
+    });
+
+    classyBetAPI.on('onBalanceUpdate', (balance) => {
+        updateBalanceDisplay(balance);
+    });
+
+    classyBetAPI.on('onBetUpdate', (data) => {
+        updateBetDisplay(data);
+    });
+}
+
+// Enhanced session management - Authentication check on page load
+async function checkAuthenticationOnLoad() {
+    // Check for new JWT token system
+    const authToken = localStorage.getItem('authToken');
+    const userData = localStorage.getItem('userData');
+    const isDemo = localStorage.getItem('isDemo') === 'true';
     
-    // Close modal when clicking outside
-    const modalOverlay = document.getElementById('profile-modal');
-    if (modalOverlay) {
-        modalOverlay.addEventListener('click', (e) => {
-            if (e.target === modalOverlay) {
-                closeProfileModal();
+    if (authToken && userData) {
+        try {
+            const user = JSON.parse(userData);
+            
+            // Verify token is still valid (only for real users, not demo)
+            if (!isDemo) {
+                try {
+                    const response = await fetch('http://localhost:3001/api/auth/profile', {
+                        headers: {
+                            'Authorization': `Bearer ${authToken}`
+                        }
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('Token invalid');
+                    }
+                    
+                    // Update user data from server (this will have the real balance)
+                    const profileData = await response.json();
+                    localStorage.setItem('userData', JSON.stringify(profileData));
+                    updateUserDisplay(profileData);
+                    showUserView(profileData);
+                    console.log('Real user balance loaded:', profileData.balance);
+                } catch (serverError) {
+                    console.log('Server not available for profile check:', serverError.message);
+                    // Use stored user data if server is not available
+                    updateUserDisplay(user);
+                    showUserView(user);
+                }
+            } else {
+                // Demo user - preserve existing balance or set to 3000 if first time
+                if (!user.balance || user.balance <= 0) {
+                    user.balance = 3000;
+                }
+                user.isDemo = true;
+                localStorage.setItem('userData', JSON.stringify(user));
+                localStorage.setItem('isDemo', 'true');
+                updateUserDisplay(user);
+                showUserView(user);
+                showDemoIndicator();
+                console.log('Demo user balance preserved/initialized:', user.balance);
             }
-        });
+            
+            console.log('User session restored:', user.username || user.userId);
+            
+        } catch (error) {
+            console.log('Session validation failed:', error);
+            clearAuthSession();
+            redirectToLogin();
+        }
+    } else {
+        // No authentication found, redirect to login
+        redirectToLogin();
     }
 }
 
-function openProfileModal() {
-    const modal = document.getElementById('profile-modal');
-    const modalUsername = document.getElementById('modal-username');
-    const modalBalance = document.getElementById('modal-balance');
-    
-    // Update modal with current user data
-    const username = document.querySelector('.username').textContent;
-    const balance = document.querySelector('.user-balance').textContent;
-    
-    if (modalUsername) modalUsername.textContent = username;
-    if (modalBalance) modalBalance.textContent = balance;
-    
-    if (modal) {
-        modal.classList.add('active');
-        document.body.style.overflow = 'hidden'; // Prevent background scrolling
+function clearAuthSession() {
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('userData');
+    localStorage.removeItem('isDemo');
+    // Also clear old token format
+    localStorage.removeItem('user_token');
+}
+
+function redirectToLogin() {
+    // Only redirect if not already on index page
+    if (!window.location.pathname.includes('index.html') && window.location.pathname !== '/') {
+        window.location.href = 'index.html';
     }
 }
 
-function closeProfileModal() {
-    const modal = document.getElementById('profile-modal');
-    if (modal) {
-        modal.classList.remove('active');
-        document.body.style.overflow = ''; // Restore scrolling
+function showDemoIndicator() {
+    // Show demo mode bar
+    const demoBar = document.getElementById('demo-mode-bar');
+    if (demoBar) {
+        demoBar.style.display = 'block';
+    }
+    
+    // Hide left sidebar for demo users
+    const leftSidebar = document.getElementById('left-sidebar');
+    if (leftSidebar) {
+        leftSidebar.style.display = 'none';
+    }
+    
+    // Hide sidebar toggle button for demo users
+    const sidebarToggle = document.getElementById('sidebar-toggle');
+    if (sidebarToggle) {
+        sidebarToggle.style.display = 'none';
+    }
+    
+    // Expand main content to full width
+    const mainContent = document.querySelector('.main-content');
+    if (mainContent) {
+        mainContent.style.marginLeft = '0';
+        mainContent.style.width = '100%';
+    }
+    
+    // Add demo mode class to body for styling
+    document.body.classList.add('demo-mode');
+    
+    // Update page title to indicate demo mode
+    document.title = 'ClassyBet Aviator - Demo Mode';
+    
+    // Replace user navigation with demo navigation
+    const userNav = document.getElementById('user-nav');
+    const guestNav = document.getElementById('guest-nav');
+    
+    if (userNav) {
+        userNav.style.display = 'none';
+    }
+    
+    if (guestNav) {
+        guestNav.style.display = 'flex';
+        // Update guest nav for demo mode
+        const loginBtn = document.getElementById('login-btn');
+        const registerBtn = document.getElementById('register-btn');
+        
+        if (loginBtn) {
+            loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Exit Demo';
+            loginBtn.onclick = () => {
+                if (confirm('Exit demo mode and go to login?')) {
+                    localStorage.clear();
+                    window.location.href = 'index.html';
+                }
+            };
+        }
+        
+        if (registerBtn) {
+            registerBtn.innerHTML = '<i class="fas fa-user-plus"></i> Sign Up';
+            registerBtn.onclick = () => {
+                if (confirm('Exit demo mode and register?')) {
+                    localStorage.clear();
+                    window.location.href = 'index.html#register';
+                }
+            };
+        }
+    }
+    
+    console.log('Demo mode activated - sidebar hidden, layout expanded');
+}
+
+function hideDemoIndicator() {
+    // Hide demo mode bar
+    const demoBar = document.getElementById('demo-mode-bar');
+    if (demoBar) {
+        demoBar.style.display = 'none';
+    }
+    
+    // Show left sidebar for real users
+    const leftSidebar = document.getElementById('left-sidebar');
+    if (leftSidebar) {
+        leftSidebar.style.display = 'block';
+    }
+    
+    // Show sidebar toggle button for real users
+    const sidebarToggle = document.getElementById('sidebar-toggle');
+    if (sidebarToggle) {
+        sidebarToggle.style.display = 'block';
+    }
+    
+    // Remove demo mode class from body
+    document.body.classList.remove('demo-mode');
+    
+    // Reset page title
+    document.title = 'ClassyBet Aviator - Premium Gaming';
+}
+
+function showUserView(user) {
+    // Check if navigation elements exist (they might not in all page layouts)
+    const guestNav = document.getElementById('guest-nav');
+    const userNav = document.getElementById('user-nav');
+    const adminBtn = document.getElementById('admin-btn');
+    
+    if (guestNav) guestNav.style.display = 'none';
+    if (userNav) userNav.style.display = 'flex';
+    
+    // Show/hide admin button based on user role
+    if (adminBtn) {
+        if (user && user.isAdmin) {
+            adminBtn.style.display = 'block';
+        } else {
+            adminBtn.style.display = 'none';
+        }
+    }
+    
+    // Show betting controls
+    document.querySelectorAll('.bet-controls').forEach(el => {
+        el.style.display = 'block';
+    });
+    
+    // Handle demo vs real user display and initialize balance
+    if (user && user.isDemo) {
+        // Demo user - ensure 3000 balance and show demo indicator
+        user.balance = 3000;
+        showDemoIndicator();
+        initializeGameBalance(user);
+    } else if (user) {
+        // Real user - hide demo indicator, use their actual balance
+        hideDemoIndicator();
+        initializeGameBalance(user);
+    }
+    
+    // Update game instance with user data if available
+    if (window.game && user) {
+        window.game.currentUser = user;
+        window.game.playerBalance = user.balance || 0; // Default to 0 for real users, 3000 for demo set above
+        window.game.updateBalance();
+        console.log(`Game balance set to: ${window.game.playerBalance} for ${user.isDemo ? 'demo' : 'real'} user`);
     }
 }
 
-function switchTab(tabName) {
-    // Remove active class from all tabs and tab panes
-    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-    document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
+function showGuestView() {
+    document.getElementById('guest-nav').style.display = 'flex';
+    document.getElementById('user-nav').style.display = 'none';
+    document.getElementById('admin-btn').style.display = 'none';
     
-    // Add active class to clicked tab and corresponding pane
-    const activeBtn = document.querySelector(`.tab-btn[onclick="switchTab('${tabName}')"]`);
-    const activePane = document.getElementById(`tab-${tabName}`);
-    
-    if (activeBtn) activeBtn.classList.add('active');
-    if (activePane) activePane.classList.add('active');
+    // Hide betting controls
+    document.querySelectorAll('.bet-controls').forEach(el => {
+        el.style.display = 'none';
+    });
 }
 
-// Close modal with Escape key
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-        closeProfileModal();
+function updateUserDisplay(user) {
+    // Update username display - check if elements exist
+    const navUsername = document.getElementById('nav-username');
+    if (navUsername) {
+        navUsername.textContent = user.username || user.userId || 'Player';
+    }
+    
+    // Update User ID display if element exists
+    const userIdDisplay = document.getElementById('nav-userid');
+    if (userIdDisplay && user.userId) {
+        userIdDisplay.textContent = `ID: ${user.userId}`;
+    }
+    
+    // Update balance display
+    const isDemo = localStorage.getItem('isDemo') === 'true';
+    updateBalanceDisplay(isDemo ? 3000 : (user.balance || 0));
+    
+    // Update demo status if applicable
+    if (user.isDemo) {
+        const balanceElement = document.getElementById('nav-balance');
+        if (balanceElement) {
+            balanceElement.style.color = '#ffa726'; // Orange for demo
+            balanceElement.title = 'Demo Balance - Virtual Money';
+        }
+    }
+    
+    // Update game balance
+    if (window.game) {
+        const isDemo = localStorage.getItem('isDemo') === 'true';
+        window.game.playerBalance = isDemo ? 3000 : (user.balance || 0);
+        window.game.currentUser = user;
+        window.game.updateBalance();
+    }
+}
+
+function updateBalanceDisplay(balance) {
+    // Update navigation balance
+    const navBalance = document.getElementById('nav-balance');
+    if (navBalance) {
+        navBalance.textContent = `KES ${balance.toFixed(2)}`;
+    }
+    
+    // Update game header balance
+    const gameHeaderBalance = document.getElementById('balance-amount');
+    if (gameHeaderBalance) {
+        gameHeaderBalance.textContent = `KES ${balance.toFixed(2)}`;
+    }
+    
+    // Update game instance balance
+    if (window.game) {
+        window.game.playerBalance = balance;
+        // The game's updateBalance will also update navigation, but we already did it above
+    }
+}
+
+function initializeGameBalance(user) {
+    if (user) {
+        const balance = user.balance || (user.isDemo ? 3000 : 0);
+        
+        // Update game instance if available
+        if (window.game) {
+            window.game.playerBalance = balance;
+        }
+        
+        // Update all balance displays using the centralized function
+        updateBalanceDisplay(balance);
+        console.log('Game balance initialized:', balance);
+    }
+}
+
+function updateBetDisplay(data) {
+    // Update game bet state based on API response
+    if (data.bet && window.game) {
+        // Handle bet placement or cashout updates
+        console.log('Bet updated:', data);
+    }
+}
+
+// Enhanced logout functionality
+function logout() {
+    // Clear all authentication data
+    clearAuthSession();
+    
+    // Remove demo indicator if present
+    const demoIndicator = document.getElementById('demo-indicator');
+    if (demoIndicator) demoIndicator.remove();
+    
+    // Show confirmation message
+    const confirmed = confirm('Are you sure you want to logout?');
+    if (confirmed) {
+        // Redirect to login page
+        window.location.href = 'index.html';
+    }
+}
+
+// Session management utilities
+function getCurrentUser() {
+    const userData = localStorage.getItem('userData');
+    return userData ? JSON.parse(userData) : null;
+}
+
+function isUserLoggedIn() {
+    return !!localStorage.getItem('authToken') && !!localStorage.getItem('userData');
+}
+
+function isDemo() {
+    return localStorage.getItem('isDemo') === 'true';
+}
+
+function setupModalEventListeners() {
+    // Login form
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const login = document.getElementById('login-email').value;
+        const password = document.getElementById('login-password').value;
+        
+        const result = await classyBetAPI.login(login, password);
+        
+        if (result.success) {
+            closeModal('login-modal');
+            document.getElementById('login-form').reset();
+        } else {
+            showError('login-error', result.error);
+        }
+    });
+
+    // Register form
+    document.getElementById('register-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const userData = {
+            username: document.getElementById('register-username').value,
+            email: document.getElementById('register-email').value,
+            phone: document.getElementById('register-phone').value,
+            password: document.getElementById('register-password').value
+        };
+        
+        const result = await classyBetAPI.register(userData);
+        
+        if (result.success) {
+            closeModal('register-modal');
+            document.getElementById('register-form').reset();
+        } else {
+            showError('register-error', result.error);
+        }
+    });
+
+    // Deposit form
+    document.getElementById('deposit-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const amount = document.getElementById('deposit-amount').value;
+        const phoneNumber = document.getElementById('deposit-phone').value;
+        
+        const result = await classyBetAPI.depositSTK(parseFloat(amount), phoneNumber);
+        
+        if (result.success) {
+            showSuccess('deposit-success', `STK Push sent! Transaction ID: ${result.transactionId}`);
+            document.getElementById('deposit-form').reset();
+        } else {
+            showError('deposit-error', result.error);
+        }
+    });
+
+    // Navigation button events
+    document.getElementById('login-btn').addEventListener('click', () => showModal('login-modal'));
+    document.getElementById('register-btn').addEventListener('click', () => showModal('register-modal'));
+    document.getElementById('deposit-btn').addEventListener('click', () => {
+        if (classyBetAPI.isAuthenticated()) {
+            showModal('deposit-modal');
+            // Pre-fill phone number
+            if (classyBetAPI.user && classyBetAPI.user.phone) {
+                document.getElementById('deposit-phone').value = classyBetAPI.user.phone;
+            }
+        }
+    });
+    
+    document.getElementById('profile-btn').addEventListener('click', () => {
+        window.open('profile.html', '_blank');
+    });
+    
+    document.getElementById('admin-btn').addEventListener('click', () => {
+        window.open('http://localhost:3001/admin', '_blank');
+    });
+    
+    document.getElementById('logout-btn').addEventListener('click', () => {
+        logout();
+    });
+}
+
+// Modal utility functions
+function showModal(modalId) {
+    document.getElementById(modalId).style.display = 'block';
+}
+
+function closeModal(modalId) {
+    document.getElementById(modalId).style.display = 'none';
+    
+    // Clear error messages
+    const errorElements = document.querySelectorAll('.error-message, .success-message');
+    errorElements.forEach(el => el.style.display = 'none');
+}
+
+function switchModal(fromModal, toModal) {
+    closeModal(fromModal);
+    showModal(toModal);
+}
+
+function showError(elementId, message) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        element.textContent = message;
+        element.style.display = 'block';
+        setTimeout(() => element.style.display = 'none', 5000);
+    }
+}
+
+function showSuccess(elementId, message) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        element.textContent = message;
+        element.style.display = 'block';
+        setTimeout(() => element.style.display = 'none', 8000);
+    }
+}
+
+// Enhanced game integration
+function integrateGameWithAPI() {
+    if (window.game && classyBetAPI.isAuthenticated()) {
+        // Generate new game round ID
+        const roundId = classyBetAPI.generateGameRound();
+        classyBetAPI.setGameRound(roundId);
+        game.roundNumber = roundId;
+        
+        // Override game betting functions to use API
+        const originalPlaceBet = game.placeBet;
+        game.placeBet = async function(betSlot, amount, autoCashout = null) {
+            if (!classyBetAPI.isAuthenticated()) {
+                alert('Please login to place bets');
+                return false;
+            }
+            
+            const result = await classyBetAPI.placeBet(amount, autoCashout);
+            if (result.success) {
+                // Update local game state
+                this.bets[betSlot] = {
+                    placed: true,
+                    amount: amount,
+                    cashedOut: false,
+                    pending: false,
+                    apiId: result.bet._id
+                };
+                this.updateBetControls();
+                return true;
+            } else {
+                alert(result.error);
+                return false;
+            }
+        };
+        
+        const originalCashOut = game.cashOut;
+        game.cashOut = async function(betSlot) {
+            const bet = this.bets[betSlot];
+            if (!bet.placed || bet.cashedOut || !bet.apiId) return;
+            
+            const result = await classyBetAPI.cashout(this.counter);
+            if (result.success) {
+                this.bets[betSlot].cashedOut = true;
+                this.updateBetControls();
+                return true;
+            } else {
+                console.error('Cashout failed:', result.error);
+                return false;
+            }
+        };
+    }
+}
+
+// Initialize everything when page loads
+document.addEventListener('DOMContentLoaded', () => {
+    checkAuthenticationOnLoad();
+    
+    // Wait for game to initialize, then integrate
+    setTimeout(() => {
+        integrateGameWithAPI();
+    }, 1000);
+});
+
+// Close modals when clicking outside
+window.addEventListener('click', (e) => {
+    if (e.target.classList.contains('modal')) {
+        e.target.style.display = 'none';
     }
 });
 

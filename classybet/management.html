@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClassyBet Admin Management</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="./style.css">
+    <style>
+        /* Admin-specific styles */
+        .admin-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+            background: rgba(13, 20, 33, 0.95);
+            min-height: 100vh;
+        }
+
+        .admin-header {
+            background: rgba(251, 2, 76, 0.1);
+            border: 1px solid #fb024c;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .admin-header h1 {
+            color: #fb024c;
+            margin-bottom: 1rem;
+            font-size: 2.5rem;
+        }
+
+        .back-to-game {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            background: linear-gradient(135deg, #30fcbe, #28d1a0);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            color: #0a0f1a;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .back-to-game:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(48, 252, 190, 0.3);
+        }
+
+        .admin-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(251, 2, 76, 0.1), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .stat-card:hover::before {
+            left: 100%;
+        }
+
+        .stat-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: #fb024c;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #30fcbe;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: #ccc;
+            font-size: 1rem;
+        }
+
+        .admin-tabs {
+            display: flex;
+            margin-bottom: 2rem;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            padding: 0.5rem;
+            overflow-x: auto;
+        }
+
+        .admin-tab-button {
+            flex: 1;
+            background: none;
+            border: none;
+            color: #ccc;
+            padding: 1rem;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            white-space: nowrap;
+            min-width: 150px;
+        }
+
+        .admin-tab-button.active {
+            background: #fb024c;
+            color: white;
+            font-weight: bold;
+        }
+
+        .admin-tab-content {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            display: none;
+        }
+
+        .admin-tab-content.active {
+            display: block;
+        }
+
+        .admin-login {
+            max-width: 400px;
+            margin: 5rem auto;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #ccc;
+            font-weight: 500;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1rem;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #fb024c;
+            box-shadow: 0 0 0 2px rgba(251, 2, 76, 0.2);
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #fb024c, #ff4081);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(251, 2, 76, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #30fcbe, #28d1a0);
+            color: #0a0f1a;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(48, 252, 190, 0.3);
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 2rem;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .data-table th {
+            background: rgba(251, 2, 76, 0.2);
+            color: #fb024c;
+            font-weight: bold;
+        }
+
+        .data-table tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .user-status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .status-active {
+            background: rgba(40, 169, 9, 0.2);
+            color: #28a909;
+        }
+
+        .status-suspended {
+            background: rgba(251, 2, 76, 0.2);
+            color: #fb024c;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .btn-sm {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+        }
+
+        .error-message {
+            background: rgba(251, 2, 76, 0.1);
+            border: 1px solid #fb024c;
+            color: #fb024c;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        .success-message {
+            background: rgba(40, 169, 9, 0.1);
+            border: 1px solid #28a909;
+            color: #28a909;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #fb024c;
+        }
+
+        .search-box {
+            margin-bottom: 2rem;
+        }
+
+        .balance-adjustment {
+            background: rgba(48, 252, 190, 0.1);
+            border: 1px solid #30fcbe;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+
+        @media (max-width: 768px) {
+            .admin-container {
+                padding: 1rem;
+            }
+            
+            .admin-tabs {
+                flex-wrap: wrap;
+            }
+            
+            .admin-tab-button {
+                min-width: 120px;
+            }
+
+            .data-table {
+                font-size: 0.875rem;
+            }
+
+            .data-table th,
+            .data-table td {
+                padding: 0.5rem;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .back-to-game {
+                position: static;
+                margin: 1rem auto;
+                display: inline-flex;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="base.html" class="back-to-game">
+        <i class="fas fa-arrow-left"></i> Back to Game
+    </a>
+
+    <div class="admin-container">
+        <!-- Admin Login Section -->
+        <div id="admin-login-section">
+            <div class="admin-login">
+                <h2 style="text-align: center; color: #fb024c; margin-bottom: 2rem;">
+                    <i class="fas fa-shield-alt"></i> Admin Login
+                </h2>
+                
+                <div id="admin-login-error" class="error-message"></div>
+                
+                <form id="admin-login-form">
+                    <div class="form-group">
+                        <label for="admin-email">Admin Email</label>
+                        <input type="email" id="admin-email" class="form-control" value="admin@classybet.com" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="admin-password">Password</label>
+                        <input type="password" id="admin-password" class="form-control" value="admin123" required>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">
+                        <i class="fas fa-sign-in-alt"></i> Login as Admin
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Admin Dashboard (initially hidden) -->
+        <div id="admin-dashboard" style="display: none;">
+            <div class="admin-header">
+                <h1><i class="fas fa-cogs"></i> Admin Management</h1>
+                <p>Manage users, transactions, and system settings</p>
+                <button id="admin-logout-btn" class="btn btn-primary" style="margin-top: 1rem;">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+
+            <!-- Admin Stats -->
+            <div class="admin-stats">
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-users"></i></div>
+                    <div class="stat-number" id="total-users">0</div>
+                    <div class="stat-label">Total Users</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-coins"></i></div>
+                    <div class="stat-number" id="total-balance">KES 0</div>
+                    <div class="stat-label">Total User Balance</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-exchange-alt"></i></div>
+                    <div class="stat-number" id="total-transactions">0</div>
+                    <div class="stat-label">Total Transactions</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-chart-line"></i></div>
+                    <div class="stat-number" id="total-bets">0</div>
+                    <div class="stat-label">Total Bets</div>
+                </div>
+            </div>
+
+            <!-- Admin Tabs -->
+            <div class="admin-tabs">
+                <button class="admin-tab-button active" onclick="switchAdminTab('users')">
+                    <i class="fas fa-users"></i> Users
+                </button>
+                <button class="admin-tab-button" onclick="switchAdminTab('transactions')">
+                    <i class="fas fa-history"></i> Transactions
+                </button>
+                <button class="admin-tab-button" onclick="switchAdminTab('bets')">
+                    <i class="fas fa-dice"></i> Bets
+                </button>
+                <button class="admin-tab-button" onclick="switchAdminTab('settings')">
+                    <i class="fas fa-cog"></i> Settings
+                </button>
+            </div>
+
+            <!-- Users Tab -->
+            <div id="admin-users-tab" class="admin-tab-content active">
+                <div class="search-box">
+                    <input type="text" id="user-search" class="form-control" placeholder="Search users by username or email..." onkeyup="searchUsers()">
+                </div>
+
+                <div id="users-error" class="error-message"></div>
+                <div id="users-success" class="success-message"></div>
+
+                <div class="loading" id="users-loading">Loading users...</div>
+                <div id="users-table-container" style="display: none;">
+                    <table class="data-table" id="users-table">
+                        <thead>
+                            <tr>
+                                <th>Username</th>
+                                <th>Email</th>
+                                <th>Balance</th>
+                                <th>Status</th>
+                                <th>Joined</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-tbody">
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Balance Adjustment Modal (inline) -->
+                <div id="balance-modal" class="balance-adjustment" style="display: none;">
+                    <h4 style="color: #30fcbe; margin-bottom: 1rem;">Adjust User Balance</h4>
+                    <div class="form-group">
+                        <label>User: <span id="balance-user-name"></span></label>
+                        <label>Current Balance: KES <span id="balance-current"></span></label>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label for="balance-amount">Amount</label>
+                            <input type="number" id="balance-amount" class="form-control" step="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="balance-type">Type</label>
+                            <select id="balance-type" class="form-control">
+                                <option value="add">Add Funds</option>
+                                <option value="subtract">Subtract Funds</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="balance-description">Description</label>
+                        <input type="text" id="balance-description" class="form-control" placeholder="Reason for adjustment">
+                    </div>
+                    <div style="display: flex; gap: 1rem;">
+                        <button class="btn btn-success" onclick="submitBalanceAdjustment()">Apply</button>
+                        <button class="btn" style="background: #666; color: white;" onclick="closeBalanceModal()">Cancel</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Transactions Tab -->
+            <div id="admin-transactions-tab" class="admin-tab-content">
+                <div class="loading" id="transactions-loading">Loading transactions...</div>
+                <div id="transactions-table-container" style="display: none;">
+                    <table class="data-table" id="transactions-table">
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Type</th>
+                                <th>Amount</th>
+                                <th>Description</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transactions-tbody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Bets Tab -->
+            <div id="admin-bets-tab" class="admin-tab-content">
+                <div class="loading" id="bets-loading">Loading bets...</div>
+                <div id="bets-table-container" style="display: none;">
+                    <table class="data-table" id="bets-table">
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Round</th>
+                                <th>Amount</th>
+                                <th>Multiplier</th>
+                                <th>Win Amount</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bets-tbody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Settings Tab -->
+            <div id="admin-settings-tab" class="admin-tab-content">
+                <h4 style="color: #fb024c; margin-bottom: 2rem;">System Settings</h4>
+                
+                <div style="background: rgba(255, 165, 0, 0.1); padding: 1.5rem; border-radius: 8px;">
+                    <h5 style="color: #ffa500; margin-bottom: 1rem;">⚙️ Configuration</h5>
+                    <p style="color: #ccc;">System settings and configuration options will be available in future updates.</p>
+                    
+                    <div style="margin-top: 2rem;">
+                        <h6 style="color: #30fcbe;">Quick Actions:</h6>
+                        <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                            <button class="btn btn-success" onclick="refreshAllData()">
+                                <i class="fas fa-sync"></i> Refresh Data
+                            </button>
+                            <button class="btn btn-primary" onclick="exportData()">
+                                <i class="fas fa-download"></i> Export Data
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3001/api';
+        let adminToken = null;
+        let allUsers = [];
+        let currentBalanceUserId = null;
+
+        // Admin login form handler
+        document.getElementById('admin-login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('admin-email').value;
+            const password = document.getElementById('admin-password').value;
+            
+            try {
+                const response = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ login: email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.user.isAdmin) {
+                    adminToken = data.token;
+                    showAdminDashboard();
+                    loadAdminData();
+                } else {
+                    showError('admin-login-error', data.error || 'Access denied. Admin privileges required.');
+                }
+            } catch (error) {
+                showError('admin-login-error', 'Login failed. Please try again.');
+            }
+        });
+
+        // Admin logout
+        document.getElementById('admin-logout-btn').addEventListener('click', () => {
+            adminToken = null;
+            document.getElementById('admin-login-section').style.display = 'block';
+            document.getElementById('admin-dashboard').style.display = 'none';
+            document.getElementById('admin-login-form').reset();
+        });
+
+        async function loadAdminData() {
+            loadUsers();
+            loadTransactions();
+            loadStats();
+        }
+
+        async function loadUsers() {
+            try {
+                const response = await fetch(`${API_BASE}/admin/users`, {
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
+                
+                if (response.ok) {
+                    allUsers = await response.json();
+                    displayUsers(allUsers);
+                } else {
+                    showError('users-error', 'Failed to load users');
+                }
+            } catch (error) {
+                showError('users-error', 'Error loading users');
+            } finally {
+                document.getElementById('users-loading').style.display = 'none';
+                document.getElementById('users-table-container').style.display = 'block';
+            }
+        }
+
+        function displayUsers(users) {
+            const tbody = document.getElementById('users-tbody');
+            tbody.innerHTML = users.map(user => `
+                <tr>
+                    <td>${user.username}</td>
+                    <td>${user.email}</td>
+                    <td>KES ${user.balance.toFixed(2)}</td>
+                    <td>
+                        <span class="user-status ${user.isActive ? 'status-active' : 'status-suspended'}">
+                            ${user.isActive ? 'Active' : 'Suspended'}
+                        </span>
+                    </td>
+                    <td>${new Date(user.createdAt).toLocaleDateString()}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn btn-success btn-sm" onclick="adjustBalance('${user._id}', '${user.username}', ${user.balance})">
+                                <i class="fas fa-coins"></i> Balance
+                            </button>
+                            <button class="btn btn-primary btn-sm" onclick="toggleUserStatus('${user._id}', ${user.isActive})">
+                                <i class="fas fa-user-${user.isActive ? 'slash' : 'check'}"></i> ${user.isActive ? 'Suspend' : 'Activate'}
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function loadTransactions() {
+            try {
+                const response = await fetch(`${API_BASE}/admin/transactions`, {
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
+                
+                if (response.ok) {
+                    const transactions = await response.json();
+                    displayTransactions(transactions);
+                } else {
+                    console.error('Failed to load transactions');
+                }
+            } catch (error) {
+                console.error('Error loading transactions');
+            } finally {
+                document.getElementById('transactions-loading').style.display = 'none';
+                document.getElementById('transactions-table-container').style.display = 'block';
+            }
+        }
+
+        function displayTransactions(transactions) {
+            const tbody = document.getElementById('transactions-tbody');
+            tbody.innerHTML = transactions.map(tx => `
+                <tr>
+                    <td>${tx.userId?.username || 'N/A'}</td>
+                    <td>${tx.type.toUpperCase()}</td>
+                    <td style="color: ${tx.amount >= 0 ? '#30fcbe' : '#fb024c'};">
+                        ${tx.amount >= 0 ? '+' : ''}KES ${Math.abs(tx.amount).toFixed(2)}
+                    </td>
+                    <td>${tx.description}</td>
+                    <td>
+                        <span class="user-status ${tx.status === 'completed' ? 'status-active' : 'status-suspended'}">
+                            ${tx.status}
+                        </span>
+                    </td>
+                    <td>${new Date(tx.createdAt).toLocaleString()}</td>
+                </tr>
+            `).join('');
+        }
+
+        async function loadStats() {
+            try {
+                const [usersResponse, transactionsResponse] = await Promise.all([
+                    fetch(`${API_BASE}/admin/users`, { headers: { 'Authorization': `Bearer ${adminToken}` } }),
+                    fetch(`${API_BASE}/admin/transactions`, { headers: { 'Authorization': `Bearer ${adminToken}` } })
+                ]);
+
+                const users = await usersResponse.json();
+                const transactions = await transactionsResponse.json();
+
+                const totalBalance = users.reduce((sum, user) => sum + user.balance, 0);
+                const totalBets = users.reduce((sum, user) => sum + (user.totalBets || 0), 0);
+
+                document.getElementById('total-users').textContent = users.length;
+                document.getElementById('total-balance').textContent = `KES ${totalBalance.toFixed(2)}`;
+                document.getElementById('total-transactions').textContent = transactions.length;
+                document.getElementById('total-bets').textContent = totalBets;
+
+            } catch (error) {
+                console.error('Error loading stats');
+            }
+        }
+
+        function searchUsers() {
+            const searchTerm = document.getElementById('user-search').value.toLowerCase();
+            const filteredUsers = allUsers.filter(user => 
+                user.username.toLowerCase().includes(searchTerm) || 
+                user.email.toLowerCase().includes(searchTerm)
+            );
+            displayUsers(filteredUsers);
+        }
+
+        function adjustBalance(userId, username, currentBalance) {
+            currentBalanceUserId = userId;
+            document.getElementById('balance-user-name').textContent = username;
+            document.getElementById('balance-current').textContent = currentBalance.toFixed(2);
+            document.getElementById('balance-modal').style.display = 'block';
+        }
+
+        async function submitBalanceAdjustment() {
+            const amount = parseFloat(document.getElementById('balance-amount').value);
+            const type = document.getElementById('balance-type').value;
+            const description = document.getElementById('balance-description').value;
+
+            if (!amount || amount <= 0) {
+                alert('Please enter a valid amount');
+                return;
+            }
+
+            try {
+                const adjustmentAmount = type === 'add' ? amount : -amount;
+                
+                const response = await fetch(`${API_BASE}/admin/user/${currentBalanceUserId}/balance`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${adminToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        adjustment: adjustmentAmount,
+                        description: description || `Admin ${type} balance adjustment`
+                    })
+                });
+
+                if (response.ok) {
+                    showSuccess('users-success', 'Balance updated successfully');
+                    closeBalanceModal();
+                    loadUsers();
+                    loadStats();
+                } else {
+                    const data = await response.json();
+                    showError('users-error', data.error || 'Failed to update balance');
+                }
+            } catch (error) {
+                showError('users-error', 'Error updating balance');
+            }
+        }
+
+        function closeBalanceModal() {
+            document.getElementById('balance-modal').style.display = 'none';
+            document.getElementById('balance-amount').value = '';
+            document.getElementById('balance-description').value = '';
+            currentBalanceUserId = null;
+        }
+
+        async function toggleUserStatus(userId, currentStatus) {
+            // This would require implementing the endpoint in the backend
+            alert('User status toggle feature to be implemented');
+        }
+
+        function switchAdminTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.admin-tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remove active class from all buttons
+            document.querySelectorAll('.admin-tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(`admin-${tabName}-tab`).classList.add('active');
+            event.target.classList.add('active');
+
+            // Load data if needed
+            if (tabName === 'bets') {
+                loadBets();
+            }
+        }
+
+        async function loadBets() {
+            // This would require implementing the bets endpoint
+            document.getElementById('bets-loading').style.display = 'none';
+            document.getElementById('bets-table-container').style.display = 'block';
+            document.getElementById('bets-tbody').innerHTML = '<tr><td colspan="7">Bet history feature to be implemented</td></tr>';
+        }
+
+        function refreshAllData() {
+            loadAdminData();
+            showSuccess('users-success', 'Data refreshed successfully');
+        }
+
+        function exportData() {
+            alert('Data export feature to be implemented');
+        }
+
+        function showAdminDashboard() {
+            document.getElementById('admin-login-section').style.display = 'none';
+            document.getElementById('admin-dashboard').style.display = 'block';
+        }
+
+        function showError(elementId, message) {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.style.display = 'block';
+            setTimeout(() => element.style.display = 'none', 5000);
+        }
+
+        function showSuccess(elementId, message) {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.style.display = 'block';
+            setTimeout(() => element.style.display = 'none', 5000);
+        }
+    </script>
+</body>
+</html>

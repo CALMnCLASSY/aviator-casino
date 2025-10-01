@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClassyBet API Test Suite</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0d1421 0%, #1a2332 100%);
+            color: white;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            color: #30fcbe;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .test-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .test-section h2 {
+            color: #30fcbe;
+            margin-bottom: 1rem;
+        }
+        
+        .test-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #30fcbe, #28d1a0);
+            border: none;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            color: #0a0f1a;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(48, 252, 190, 0.3);
+        }
+        
+        .btn.danger {
+            background: linear-gradient(135deg, #fb024c, #ff4081);
+            color: white;
+        }
+        
+        .test-results {
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 8px;
+            padding: 1rem;
+            min-height: 100px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+        
+        .success {
+            color: #30fcbe;
+        }
+        
+        .error {
+            color: #fb024c;
+        }
+        
+        .info {
+            color: #4facfe;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #ccc;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1rem;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+        }
+        
+        .status-online {
+            background: #30fcbe;
+        }
+        
+        .status-offline {
+            background: #fb024c;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 ClassyBet API Test Suite</h1>
+        
+        <!-- Connection Status -->
+        <div class="test-section">
+            <h2><span id="connection-status" class="status-indicator status-offline"></span>Backend Connection</h2>
+            <div class="test-controls">
+                <button class="btn" onclick="testConnection()">Test Connection</button>
+                <button class="btn" onclick="testHealthCheck()">Health Check</button>
+            </div>
+            <div id="connection-results" class="test-results">
+                <div class="info">Click 'Test Connection' to check if backend server is running...</div>
+            </div>
+        </div>
+        
+        <!-- Authentication Tests -->
+        <div class="test-section">
+            <h2>🔐 Authentication Tests</h2>
+            <div class="test-controls">
+                <button class="btn" onclick="testRegister()">Test Register</button>
+                <button class="btn" onclick="testLogin()">Test Login</button>
+                <button class="btn" onclick="testProfile()">Test Profile</button>
+                <button class="btn danger" onclick="testLogout()">Test Logout</button>
+            </div>
+            
+            <div class="form-group">
+                <label>Test User Credentials:</label>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <input type="email" id="test-email" class="form-control" placeholder="test@example.com" value="testuser@classybet.com">
+                    <input type="password" id="test-password" class="form-control" placeholder="password" value="password123">
+                </div>
+            </div>
+            
+            <div id="auth-results" class="test-results">
+                <div class="info">Authentication test results will appear here...</div>
+            </div>
+        </div>
+        
+        <!-- Payment Tests -->
+        <div class="test-section">
+            <h2>💳 Payment Tests</h2>
+            <div class="test-controls">
+                <button class="btn" onclick="testSTKPush()">Test STK Push</button>
+                <button class="btn" onclick="testTransactionHistory()">Transaction History</button>
+            </div>
+            
+            <div class="form-group">
+                <label>STK Push Details:</label>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <input type="number" id="deposit-amount" class="form-control" placeholder="Amount" value="100">
+                    <input type="tel" id="deposit-phone" class="form-control" placeholder="254700000000" value="254700000000">
+                </div>
+            </div>
+            
+            <div id="payment-results" class="test-results">
+                <div class="info">Payment test results will appear here...</div>
+            </div>
+        </div>
+        
+        <!-- Game Integration Tests -->
+        <div class="test-section">
+            <h2>🎮 Game Integration Tests</h2>
+            <div class="test-controls">
+                <button class="btn" onclick="testPlaceBet()">Test Place Bet</button>
+                <button class="btn" onclick="testCashout()">Test Cashout</button>
+                <button class="btn" onclick="testActiveBets()">Active Bets</button>
+                <button class="btn" onclick="testEndRound()">End Round</button>
+            </div>
+            
+            <div class="form-group">
+                <label>Game Test Parameters:</label>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+                    <input type="number" id="bet-amount" class="form-control" placeholder="Bet Amount" value="50">
+                    <input type="number" id="cashout-multiplier" class="form-control" placeholder="Auto-Cashout" value="2.0" step="0.01">
+                    <input type="text" id="game-round" class="form-control" placeholder="Round ID" value="test-round-123">
+                </div>
+            </div>
+            
+            <div id="game-results" class="test-results">
+                <div class="info">Game integration test results will appear here...</div>
+            </div>
+        </div>
+        
+        <!-- Admin Tests -->
+        <div class="test-section">
+            <h2>👨‍💼 Admin Tests</h2>
+            <div class="test-controls">
+                <button class="btn" onclick="testAdminLogin()">Admin Login</button>
+                <button class="btn" onclick="testUsersList()">Users List</button>
+                <button class="btn" onclick="testBalanceUpdate()">Balance Update</button>
+            </div>
+            
+            <div id="admin-results" class="test-results">
+                <div class="info">Admin test results will appear here...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3001/api';
+        let authToken = null;
+        let adminToken = null;
+        let currentBetId = null;
+
+        // Utility functions
+        function log(message, type = 'info', containerId = null) {
+            const timestamp = new Date().toLocaleTimeString();
+            const color = type === 'success' ? 'success' : type === 'error' ? 'error' : 'info';
+            const logMessage = `[${timestamp}] ${message}`;
+            
+            if (containerId) {
+                const container = document.getElementById(containerId);
+                container.innerHTML += `<div class="${color}">${logMessage}</div>`;
+                container.scrollTop = container.scrollHeight;
+            }
+            console.log(logMessage);
+        }
+
+        function clearResults(containerId) {
+            document.getElementById(containerId).innerHTML = '';
+        }
+
+        // Connection Tests
+        async function testConnection() {
+            clearResults('connection-results');
+            log('Testing backend connection...', 'info', 'connection-results');
+            
+            try {
+                const response = await fetch(`${API_BASE}/../health`);
+                if (response.ok) {
+                    const data = await response.json();
+                    log(`✅ Backend is online! Status: ${data.status}`, 'success', 'connection-results');
+                    document.getElementById('connection-status').className = 'status-indicator status-online';
+                } else {
+                    log(`❌ Backend responded with error: ${response.status}`, 'error', 'connection-results');
+                }
+            } catch (error) {
+                log(`❌ Connection failed: ${error.message}`, 'error', 'connection-results');
+                log('Make sure backend server is running on http://localhost:3001', 'error', 'connection-results');
+            }
+        }
+
+        async function testHealthCheck() {
+            clearResults('connection-results');
+            log('Checking health endpoint...', 'info', 'connection-results');
+            
+            try {
+                const response = await fetch(`${API_BASE}/../health`);
+                const data = await response.json();
+                log(`Health check response: ${JSON.stringify(data, null, 2)}`, 'success', 'connection-results');
+            } catch (error) {
+                log(`Health check failed: ${error.message}`, 'error', 'connection-results');
+            }
+        }
+
+        // Authentication Tests
+        async function testRegister() {
+            clearResults('auth-results');
+            log('Testing user registration...', 'info', 'auth-results');
+            
+            const userData = {
+                username: `testuser${Date.now()}`,
+                email: document.getElementById('test-email').value,
+                phone: '254700000000',
+                password: document.getElementById('test-password').value
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(userData)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    log(`✅ Registration successful! Token received.`, 'success', 'auth-results');
+                    log(`User: ${data.user.username} (${data.user.email})`, 'success', 'auth-results');
+                    authToken = data.token;
+                } else {
+                    log(`❌ Registration failed: ${data.error}`, 'error', 'auth-results');
+                }
+            } catch (error) {
+                log(`❌ Registration error: ${error.message}`, 'error', 'auth-results');
+            }
+        }
+
+        async function testLogin() {
+            clearResults('auth-results');
+            log('Testing user login...', 'info', 'auth-results');
+            
+            try {
+                const response = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        login: document.getElementById('test-email').value,
+                        password: document.getElementById('test-password').value
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    log(`✅ Login successful!`, 'success', 'auth-results');
+                    log(`Welcome ${data.user.username}! Balance: KES ${data.user.balance}`, 'success', 'auth-results');
+                    authToken = data.token;
+                } else {
+                    log(`❌ Login failed: ${data.error}`, 'error', 'auth-results');
+                }
+            } catch (error) {
+                log(`❌ Login error: ${error.message}`, 'error', 'auth-results');
+            }
+        }
+
+        async function testProfile() {
+            if (!authToken) {
+                log('❌ Please login first', 'error', 'auth-results');
+                return;
+            }
+
+            clearResults('auth-results');
+            log('Testing profile fetch...', 'info', 'auth-results');
+            
+            try {
+                const response = await fetch(`${API_BASE}/auth/profile`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    log(`✅ Profile loaded successfully!`, 'success', 'auth-results');
+                    log(`Username: ${data.username}`, 'success', 'auth-results');
+                    log(`Email: ${data.email}`, 'success', 'auth-results');
+                    log(`Balance: KES ${data.balance}`, 'success', 'auth-results');
+                    log(`Total Bets: ${data.totalBets || 0}`, 'success', 'auth-results');
+                } else {
+                    log(`❌ Profile fetch failed: ${data.error}`, 'error', 'auth-results');
+                }
+            } catch (error) {
+                log(`❌ Profile error: ${error.message}`, 'error', 'auth-results');
+            }
+        }
+
+        function testLogout() {
+            authToken = null;
+            log('✅ Logged out successfully!', 'success', 'auth-results');
+        }
+
+        // Payment Tests
+        async function testSTKPush() {
+            if (!authToken) {
+                log('❌ Please login first', 'error', 'payment-results');
+                return;
+            }
+
+            clearResults('payment-results');
+            log('Testing STK Push...', 'info', 'payment-results');
+            
+            const amount = document.getElementById('deposit-amount').value;
+            const phoneNumber = document.getElementById('deposit-phone').value;
+
+            try {
+                const response = await fetch(`${API_BASE}/payments/stk-push`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ amount: parseFloat(amount), phoneNumber })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    log(`✅ STK Push sent successfully!`, 'success', 'payment-results');
+                    log(`Transaction ID: ${data.transactionId}`, 'success', 'payment-results');
+                    log(`Amount: KES ${amount}`, 'success', 'payment-results');
+                } else {
+                    log(`❌ STK Push failed: ${data.error}`, 'error', 'payment-results');
+                }
+            } catch (error) {
+                log(`❌ STK Push error: ${error.message}`, 'error', 'payment-results');
+            }
+        }
+
+        async function testTransactionHistory() {
+            if (!authToken) {
+                log('❌ Please login first', 'error', 'payment-results');
+                return;
+            }
+
+            clearResults('payment-results');
+            log('Testing transaction history...', 'info', 'payment-results');
+            
+            try {
+                const response = await fetch(`${API_BASE}/auth/transactions?limit=5`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    log(`✅ Transaction history loaded!`, 'success', 'payment-results');
+                    log(`Total transactions: ${data.total}`, 'success', 'payment-results');
+                    
+                    data.transactions.forEach((tx, index) => {
+                        log(`${index + 1}. ${tx.type.toUpperCase()}: KES ${tx.amount} - ${tx.description}`, 'info', 'payment-results');
+                    });
+                } else {
+                    log(`❌ Transaction history failed: ${data.error}`, 'error', 'payment-results');
+                }
+            } catch (error) {
+                log(`❌ Transaction history error: ${error.message}`, 'error', 'payment-results');
+            }
+        }
+
+        // Game Tests
+        async function testPlaceBet() {
+            if (!authToken) {
+                log('❌ Please login first', 'error', 'game-results');
+                return;
+            }
+
+            clearResults('game-results');
+            log('Testing place bet...', 'info', 'game-results');
+            
+            const amount = parseFloat(document.getElementById('bet-amount').value);
+            const cashoutMultiplier = parseFloat(document.getElementById('cashout-multiplier').value);
+            const gameRound = document.getElementById('game-round').value;
+
+            try {
+                const response = await fetch(`${API_BASE}/game/bet`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        amount,
+                        cashoutMultiplier,
+                        gameRound
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    log(`✅ Bet placed successfully!`, 'success', 'game-results');
+                    log(`Bet ID: ${data.bet._id}`, 'success', 'game-results');
+                    log(`Amount: KES ${amount}`, 'success', 'game-results');
+                    log(`New Balance: KES ${data.newBalance}`, 'success', 'game-results');
+                    currentBetId = data.bet._id;
+                } else {
+                    log(`❌ Place bet failed: ${data.error}`, 'error', 'game-results');
+                }
+            } catch (error) {
+                log(`❌ Place bet error: ${error.message}`, 'error', 'game-results');
+            }
+        }
+
+        async function testCashout() {
+            if (!authToken || !currentBetId) {
+                log('❌ Please login and place a bet first', 'error', 'game-results');
+                return;
+            }
+
+            clearResults('game-results');
+            log('Testing cashout...', 'info', 'game-results');
+            
+            try {
+                const response = await fetch(`${API_BASE}/game/cashout`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        betId: currentBetId,
+                        multiplier: 1.5
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    log(`✅ Cashout successful!`, 'success', 'game-results');
+                    log(`Win Amount: KES ${data.winAmount}`, 'success', 'game-results');
+                    log(`New Balance: KES ${data.newBalance}`, 'success', 'game-results');
+                } else {
+                    log(`❌ Cashout failed: ${data.error}`, 'error', 'game-results');
+                }
+            } catch (error) {
+                log(`❌ Cashout error: ${error.message}`, 'error', 'game-results');
+            }
+        }
+
+        async function testActiveBets() {
+            clearResults('game-results');
+            log('Testing active bets...', 'info', 'game-results');
+            
+            const gameRound = document.getElementById('game-round').value;
+
+            try {
+                const response = await fetch(`${API_BASE}/game/active-bets/${gameRound}`);
+                const bets = await response.json();
+
+                if (response.ok) {
+                    log(`✅ Active bets loaded!`, 'success', 'game-results');
+                    log(`Total active bets: ${bets.length}`, 'success', 'game-results');
+                    
+                    bets.forEach((bet, index) => {
+                        log(`${index + 1}. ${bet.username}: KES ${bet.amount}`, 'info', 'game-results');
+                    });
+                } else {
+                    log(`❌ Active bets failed: ${bets.error}`, 'error', 'game-results');
+                }
+            } catch (error) {
+                log(`❌ Active bets error: ${error.message}`, 'error', 'game-results');
+            }
+        }
+
+        async function testEndRound() {
+            if (!authToken) {
+                log('❌ Please login first', 'error', 'game-results');
+                return;
+            }
+
+            clearResults('game-results');
+            log('Testing end round...', 'info', 'game-results');
+            
+            const gameRound = document.getElementById('game-round').value;
+
+            try {
+                const response = await fetch(`${API_BASE}/game/end-round`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        gameRound,
+                        crashMultiplier: 2.5
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    log(`✅ Round ended successfully!`, 'success', 'game-results');
+                    log(`Processed bets: ${data.processedBets}`, 'success', 'game-results');
+                } else {
+                    log(`❌ End round failed: ${data.error}`, 'error', 'game-results');
+                }
+            } catch (error) {
+                log(`❌ End round error: ${error.message}`, 'error', 'game-results');
+            }
+        }
+
+        // Admin Tests
+        async function testAdminLogin() {
+            clearResults('admin-results');
+            log('Testing admin login...', 'info', 'admin-results');
+            
+            try {
+                const response = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        login: 'admin@classybet.com',
+                        password: 'admin123'
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    log(`✅ Admin login successful!`, 'success', 'admin-results');
+                    adminToken = data.token;
+                } else {
+                    log(`❌ Admin login failed: ${data.error}`, 'error', 'admin-results');
+                }
+            } catch (error) {
+                log(`❌ Admin login error: ${error.message}`, 'error', 'admin-results');
+            }
+        }
+
+        async function testUsersList() {
+            if (!adminToken) {
+                log('❌ Please login as admin first', 'error', 'admin-results');
+                return;
+            }
+
+            clearResults('admin-results');
+            log('Testing users list...', 'info', 'admin-results');
+            
+            try {
+                const response = await fetch(`${API_BASE}/admin/users`, {
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    log(`✅ Users list loaded!`, 'success', 'admin-results');
+                    log(`Total users: ${data.length}`, 'success', 'admin-results');
+                    
+                    data.forEach((user, index) => {
+                        log(`${index + 1}. ${user.username} (${user.email}) - KES ${user.balance}`, 'info', 'admin-results');
+                    });
+                } else {
+                    log(`❌ Users list failed: ${data.error}`, 'error', 'admin-results');
+                }
+            } catch (error) {
+                log(`❌ Users list error: ${error.message}`, 'error', 'admin-results');
+            }
+        }
+
+        async function testBalanceUpdate() {
+            log('Balance update test - feature to be implemented', 'info', 'admin-results');
+        }
+
+        // Auto-run connection test on page load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                testConnection();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

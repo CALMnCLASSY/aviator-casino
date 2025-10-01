@@ -24,7 +24,8 @@ body {
 /* Main Content Wrapper */
 .main-content-wrapper {
     flex: 0 0 auto;
-    min-height: 100vh;
+    /* Let content height define footer position so it comes right after the game container */
+    min-height: auto;
 }
 
 input::-webkit-outer-spin-button,
@@ -246,7 +247,8 @@ input[type=number] {
 #main-container {
     display: flex;
     flex-direction: column;
-    min-height: calc(100vh - 140px); /* Reduce height to account for footer */
+    /* Allow the container to size to its contents so the footer follows directly after */
+    min-height: auto;
     max-height: none; /* Allow content to expand */
     background: #000000;
     padding: 0;
@@ -263,6 +265,10 @@ input[type=number] {
     flex-direction: column;
     background: #000000;
     position: relative;
+    /* Fixed responsive footprint so footer comes immediately after */
+    width: min(1200px, 100%);
+    height: clamp(700px, 80vh, 900px);
+    margin: 0 auto;
 }
 
 /* Game Header - spans full width with separator */
@@ -284,9 +290,18 @@ input[type=number] {
     overflow: hidden;
 }
 
-/* Left Sidebar - Now inside game container */
+/* Game Content Layout - Desktop */
+#game-content {
+    display: flex;
+    gap: 0;
+    flex: 1;
+    min-height: 0; /* Allow flex items to shrink */
+    overflow: hidden;
+}
+
+/* Left Sidebar - Desktop */
 #left-sidebar {
-    width: 280px;
+    width: 320px;
     background: #1a1a1a;
     border-right: 1px solid #333;
     padding: 0;
@@ -294,6 +309,22 @@ input[type=number] {
     display: flex;
     flex-direction: column;
     height: 100%;
+    flex-shrink: 0; /* Prevent sidebar from shrinking */
+}
+
+@media (min-width: 769px) {
+    #left-sidebar {
+        display: flex !important;
+    }
+}
+
+/* Game Main Area */
+#game-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0; /* Allow it to shrink */
+    overflow: hidden;
 }
 
 .sidebar-content {
@@ -444,14 +475,9 @@ input[type=number] {
 }
 
 /* All Bets Area */
-#all-bets {
-    max-height: 400px;
+#all-bets { /* allow to fill sidebar area fully */
     overflow-y: auto;
     flex: 1;
-}
-
-#all-bets.expanded {
-    max-height: none;
 }
 
 .show-more-bets-btn:hover {
@@ -482,7 +508,7 @@ input[type=number] {
 
 .bet-list-header {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-columns: 1.5fr 1fr 0.6fr 1fr; /* a touch wider for better fit */
     gap: 10px;
     padding: 8px 12px;
     background: rgba(255, 255, 255, 0.1);
@@ -567,6 +593,12 @@ input[type=number] {
     background: #141414;
     position: relative;
     overflow: hidden;
+}
+
+/* Ensure the game header remains within the game container layout */
+#game-header {
+    position: relative;
+    z-index: 10;
 }
 
 .game-logo {
@@ -1298,14 +1330,13 @@ input[type=number] {
     font-size: 84px;
     font-weight: bold;
     color: #ffffff;
-    text-shadow: none;
     z-index: 10;
     transition: all 0.3s ease;
+    text-shadow: none; /* Remove any default text shadow */
 }
 
 #counter.crashed {
     font-size: 56px;
-    text-shadow: none;
     animation: crashPulse 0.5s ease-in-out;
     line-height: 1.2;
     text-align: center;
@@ -1313,27 +1344,75 @@ input[type=number] {
 
 #counter.waiting {
     color: #ffa500;
-    text-shadow: none;
     background: radial-gradient(ellipse at center, rgba(255, 165, 0, 0.3) 0%, rgba(255, 165, 0, 0.1) 50%, transparent 100%);
 }
 
-/* Multiplier Color Glow System - Background Glow */
+/* Multiplier Color Glow System - Enhanced Canvas Lighting */
 #counter.blue-glow {
     color: #ffffff;
-    text-shadow: none;
-    background: radial-gradient(ellipse at center, rgba(79, 172, 254, 0.4) 0%, rgba(79, 172, 254, 0.2) 30%, rgba(79, 172, 254, 0.1) 60%, transparent 100%);
+    text-shadow: 
+        0 0 20px rgba(79, 172, 254, 1.0),
+        0 0 40px rgba(79, 172, 254, 0.8),
+        0 0 60px rgba(79, 172, 254, 0.6),
+        0 0 80px rgba(79, 172, 254, 0.4);
+    background: radial-gradient(ellipse at center, rgba(79, 172, 254, 0.8) 0%, rgba(79, 172, 254, 0.4) 30%, rgba(79, 172, 254, 0.2) 60%, rgba(79, 172, 254, 0.1) 80%, transparent 100%);
+    /* faint colored outer glow (no dark shadow) */
+    box-shadow: 
+        0 0 40px rgba(79, 172, 254, 0.35),
+        0 0 100px rgba(79, 172, 254, 0.25);
 }
 
 #counter.purple-glow {
     color: #ffffff;
-    text-shadow: none;
-    background: radial-gradient(ellipse at center, rgba(192, 132, 252, 0.4) 0%, rgba(192, 132, 252, 0.2) 30%, rgba(192, 132, 252, 0.1) 60%, transparent 100%);
+    text-shadow: 
+        0 0 20px rgba(192, 132, 252, 1.0),
+        0 0 40px rgba(192, 132, 252, 0.8),
+        0 0 60px rgba(192, 132, 252, 0.6),
+        0 0 80px rgba(192, 132, 252, 0.4);
+    background: radial-gradient(ellipse at center, rgba(192, 132, 252, 0.8) 0%, rgba(192, 132, 252, 0.4) 30%, rgba(192, 132, 252, 0.2) 60%, rgba(192, 132, 252, 0.1) 80%, transparent 100%);
+    /* faint colored outer glow (no dark shadow) */
+    box-shadow: 
+        0 0 40px rgba(192, 132, 252, 0.35),
+        0 0 100px rgba(192, 132, 252, 0.25);
 }
 
 #counter.pink-glow {
     color: #ffffff;
-    text-shadow: none;
-    background: radial-gradient(ellipse at center, rgba(240, 96, 216, 0.4) 0%, rgba(240, 96, 216, 0.2) 30%, rgba(240, 96, 216, 0.1) 60%, transparent 100%);
+    text-shadow: 
+        0 0 20px rgba(240, 96, 216, 1.0),
+        0 0 40px rgba(240, 96, 216, 0.8),
+        0 0 60px rgba(240, 96, 216, 0.6),
+        0 0 80px rgba(240, 96, 216, 0.4);
+    background: radial-gradient(ellipse at center, rgba(240, 96, 216, 0.8) 0%, rgba(240, 96, 216, 0.4) 30%, rgba(240, 96, 216, 0.2) 60%, rgba(240, 96, 216, 0.1) 80%, transparent 100%);
+    /* faint colored outer glow (no dark shadow) */
+    box-shadow: 
+        0 0 40px rgba(240, 96, 216, 0.35),
+        0 0 100px rgba(240, 96, 216, 0.25);
+}
+
+/* Canvas-wide glow effects that light up the entire area */
+.game-container.blue-glow {
+    /* faint canvas-wide colored glow (no dark shadow) */
+    box-shadow: 
+        0 0 60px rgba(79, 172, 254, 0.18),
+        0 0 140px rgba(79, 172, 254, 0.12);
+    background: radial-gradient(circle at center, rgba(79, 172, 254, 0.1) 0%, transparent 70%);
+}
+
+.game-container.purple-glow {
+    /* faint canvas-wide colored glow (no dark shadow) */
+    box-shadow: 
+        0 0 60px rgba(192, 132, 252, 0.18),
+        0 0 140px rgba(192, 132, 252, 0.12);
+    background: radial-gradient(circle at center, rgba(192, 132, 252, 0.1) 0%, transparent 70%);
+}
+
+.game-container.pink-glow {
+    /* faint canvas-wide colored glow (no dark shadow) */
+    box-shadow: 
+        0 0 60px rgba(240, 96, 216, 0.18),
+        0 0 140px rgba(240, 96, 216, 0.12);
+    background: radial-gradient(circle at center, rgba(240, 96, 216, 0.1) 0%, transparent 70%);
 }
 
 @keyframes crashPulse {
@@ -1346,10 +1425,10 @@ input[type=number] {
     top: 60%;
     left: 50%;
     transform: translateX(-50%);
-    width: 200px;
-    height: 4px;
+    width: 150px;
+    height: 3px;
     background: rgba(255, 255, 255, 0.2);
-    border-radius: 2px;
+    border-radius: 1.5px;
     overflow: hidden;
     z-index: 9;
 }
@@ -1358,7 +1437,7 @@ input[type=number] {
     height: 100%;
     background: linear-gradient(90deg, #30fcbe, #4facfe);
     width: 0%;
-    border-radius: 2px;
+    border-radius: 1.5px;
     animation: loadingProgress 3s linear;
 }
 
@@ -1942,6 +2021,49 @@ input[type=number] {
 
 /* Responsive Design - Spribe Mobile Layout */
 
+/* Mobile: stack game area first, then betting controls, then the left sidebar under them */
+@media (max-width: 768px) {
+    /* Make game container smaller to fit phones nicely */
+    #game-container {
+        width: 100%;
+        height: clamp(560px, 78vh, 720px);
+    }
+
+    /* Stack content: game above, sidebar below */
+    #game-content {
+        flex-direction: column;
+        overflow: visible;
+    }
+
+    /* Keep header inside game container without interfering with site header */
+    #game-header {
+        position: sticky; /* within game container block */
+        top: 0;
+        z-index: 5;
+    }
+
+    /* Main game takes precedence on top */
+    #game-main {
+        order: 1;
+        min-height: 360px;
+    }
+
+    /* Move left sidebar under the canvas and betting area, increase its height */
+    #left-sidebar {
+        order: 3;
+        width: 100%;
+        height: auto; /* allow content height to push footer down */
+        max-height: none;
+        border-right: none;
+        border-top: 1px solid #333;
+    }
+
+    /* Betting controls remain between game and sidebar */
+    #betting-controls {
+        order: 2;
+    }
+}
+
 #right-sidebar::before {
     content: '';
     position: absolute;
@@ -2146,9 +2268,48 @@ input[type=number] {
         margin-bottom: 20px; /* Add space before footer */
     }
     
-    /* Hide left sidebar on mobile since mobile bets section is shown at bottom */
+@media (max-width: 768px) {
+    /* Mobile Layout */
+    .main-content-wrapper {
+        display: grid;
+        grid-template-areas: 
+            "header"
+            "game"
+            "mobile-bets";
+        grid-template-rows: auto 1fr auto;
+        min-height: 100vh;
+        gap: 10px;
+        padding: 10px;
+    }
+    
+    #navigation {
+        grid-area: header;
+        border-radius: 12px;
+        margin-bottom: 10px;
+    }
+    
+    #game-container {
+        grid-area: game;
+        order: 1;
+    }
+    
+    /* Hide left sidebar completely on mobile */
     #left-sidebar {
         display: none !important;
+    }
+    
+    /* Mobile game content - single column layout */
+    #game-content {
+        flex-direction: column;
+    }
+    
+    #game-main {
+        width: 100%;
+    }
+    
+    /* Ensure mobile bets section is visible on mobile */
+    #mobile-bets-section {
+        display: block !important;
     }
     
     /* Chat covers entire game container on mobile */
@@ -2226,7 +2387,7 @@ input[type=number] {
         border-right: 1px solid rgba(48, 252, 190, 0.3);
     }
     
-    /* Mobile bets section - consistent with message area design */
+    /* Mobile bets section - appears at bottom */
     #mobile-bets-section {
         display: block;
         grid-area: mobile-bets;
@@ -2239,10 +2400,19 @@ input[type=number] {
             0 4px 15px rgba(48, 252, 190, 0.1),
             inset 0 1px 0 rgba(255, 255, 255, 0.1);
         backdrop-filter: blur(15px);
-        max-height: 350px;
+        max-height: 400px;
         overflow-y: auto;
-        margin-top: 10px;
-        margin-bottom: 30px; /* Extra space before footer */
+        margin-top: 15px;
+        margin-bottom: 20px;
+        /* Allow scrolling on mobile */
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* Desktop - Hide mobile bets section and ensure proper layout */
+@media (min-width: 769px) {
+    #mobile-bets-section {
+        display: none !important;
     }
     
     /* Enhanced chat positioning and design */
@@ -2352,13 +2522,19 @@ input[type=number] {
         border: 1px solid rgba(48, 252, 190, 0.3);
         box-shadow: 0 4px 15px rgba(48, 252, 190, 0.1);
     }
+    
+    #left-sidebar {
+        display: flex !important;
+    }
+}
 }
 
 /* Bet Items Styling */
 .bet-item {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: 1.5fr 1fr 0.6fr 1fr; /* keep in sync with header */
     align-items: center;
+    gap: 10px;
     padding: 8px 12px;
     margin-bottom: 6px;
     background: rgba(255, 255, 255, 0.05);
@@ -2373,22 +2549,53 @@ input[type=number] {
 }
 
 .bet-player {
-    flex: 1;
     font-size: 12px;
     color: #ffffff;
     font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
-.bet-amount {
-    flex: 1;
-    text-align: center;
+.bet-player .avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+    border: 2px solid rgba(48, 252, 190, 0.3);
+    background: rgba(48, 252, 190, 0.1);
+    transition: all 0.3s ease;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.bet-player .avatar:hover {
+    border-color: rgba(48, 252, 190, 0.6);
+    box-shadow: 0 0 10px rgba(48, 252, 190, 0.2);
+    transform: scale(1.1);
+}
+
+.bet-player .avatar[src*="data:image"] {
+    background: linear-gradient(135deg, #30fcbe, #4facfe);
+    border-color: #30fcbe;
+}
+
+.bet-amount { 
+    text-align: left;
     font-size: 12px;
     color: #30fcbe;
     font-weight: 600;
 }
 
+.bet-multiplier {
+    text-align: center;
+    font-size: 12px;
+    color: #ffd700;
+    font-weight: 600;
+}
+
 .bet-status {
-    flex: 1;
     text-align: right;
     font-size: 11px;
     font-weight: 500;
@@ -2400,6 +2607,17 @@ input[type=number] {
 
 .bet-status.cashed-out {
     color: #30fcbe;
+}
+
+/* Green glow animation for cashed-out items */
+.bet-item.cashed-glow {
+    animation: cashedGlow 1.2s ease-in-out;
+}
+
+@keyframes cashedGlow {
+    0% { box-shadow: 0 0 0 rgba(48,252,190,0); }
+    40% { box-shadow: 0 0 16px rgba(48,252,190,0.55); }
+    100% { box-shadow: 0 0 0 rgba(48,252,190,0); }
 }
 
 /* Mobile Bet List */
@@ -2788,7 +3006,7 @@ input[type=number] {
     background: rgba(48, 252, 190, 0.1);
 }
 
-.tab-content {
+.modal-container .tab-content {
     padding: 20px;
     max-height: 400px;
     overflow-y: auto;
@@ -2998,5 +3216,471 @@ input[type=number] {
     
     .tab-content {
         padding: 15px;
+    }
+}
+
+/* Authentication Styles */
+.guest-controls {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.auth-btn {
+    background: linear-gradient(135deg, #30fcbe, #28d1a0);
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    color: #0a0f1a;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+}
+
+.auth-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(48, 252, 190, 0.3);
+}
+
+.auth-btn.register {
+    background: linear-gradient(135deg, #4facfe, #00c9ff);
+}
+
+.profile-btn, .admin-btn, .logout-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-left: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.profile-btn:hover, .admin-btn:hover, .logout-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.admin-btn {
+    background: linear-gradient(135deg, #ff9500, #ffb347);
+    border: none;
+    color: #0a0f1a;
+    font-weight: 600;
+}
+
+.admin-btn:hover {
+    background: linear-gradient(135deg, #ffb347, #ffc470);
+    box-shadow: 0 4px 15px rgba(255, 149, 0, 0.3);
+}
+
+.logout-btn {
+    background: linear-gradient(135deg, #fb024c, #ff4081);
+    border: none;
+}
+
+/* Modal Styles */
+.modal {
+    position: fixed;
+    z-index: 10000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(5px);
+}
+
+.modal-content {
+    background: linear-gradient(135deg, #0d1421 0%, #1a2332 100%);
+    margin: 5% auto;
+    padding: 0;
+    border: 1px solid rgba(48, 252, 190, 0.3);
+    border-radius: 12px;
+    width: 90%;
+    max-width: 500px;
+    position: relative;
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modal-header {
+    background: rgba(48, 252, 190, 0.1);
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid rgba(48, 252, 190, 0.3);
+    border-radius: 12px 12px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h3 {
+    margin: 0;
+    color: #30fcbe;
+    font-size: 1.5rem;
+}
+
+.modal-body {
+    padding: 2rem;
+}
+
+.modal-footer {
+    text-align: center;
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.modal-footer a {
+    color: #30fcbe;
+    text-decoration: none;
+}
+
+.modal-footer a:hover {
+    text-decoration: underline;
+}
+
+.close {
+    color: #ccc;
+    font-size: 2rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.close:hover {
+    color: #fb024c;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #ccc;
+    font-weight: 500;
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: #30fcbe;
+    box-shadow: 0 0 0 2px rgba(48, 252, 190, 0.2);
+}
+
+.form-control::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.btn {
+    width: 100%;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #30fcbe, #28d1a0);
+    color: #0a0f1a;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(48, 252, 190, 0.3);
+}
+
+.error-message {
+    background: rgba(251, 2, 76, 0.1);
+    border: 1px solid #fb024c;
+    color: #fb024c;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+.success-message {
+    background: rgba(40, 169, 9, 0.1);
+    border: 1px solid #28a909;
+    color: #28a909;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+.deposit-instructions {
+    background: rgba(48, 252, 190, 0.1);
+    border: 1px solid #30fcbe;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.deposit-instructions h4 {
+    color: #30fcbe;
+    margin-bottom: 1rem;
+}
+
+.paybill-info {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 1rem;
+    border-radius: 8px;
+}
+
+.paybill-item {
+    text-align: center;
+}
+
+.paybill-item span {
+    color: #ccc;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.paybill-item strong {
+    color: #30fcbe;
+    font-size: 1.2rem;
+}
+
+@media (max-width: 768px) {
+    .guest-controls {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .auth-btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.8rem;
+    }
+    
+    .paybill-info {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+    }
+    
+    .modal-content {
+        width: 95%;
+        margin: 10% auto;
+    }
+    
+    .modal-header, .modal-body {
+        padding: 1rem;
+    }
+}
+
+/* Demo Mode Bar Styles */
+.demo-mode-bar {
+    background: linear-gradient(90deg, #ff6b35, #f7931e);
+    padding: 8px 0;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 107, 53, 0.3);
+    position: relative;
+    z-index: 10;
+    box-shadow: 0 2px 10px rgba(255, 107, 53, 0.2);
+    margin-bottom: 5px;
+}
+
+.demo-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: #fff;
+    font-weight: 600;
+}
+
+.demo-content i {
+    font-size: 16px;
+    animation: pulse-demo 2s infinite;
+}
+
+.demo-content span {
+    font-size: 14px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.demo-content small {
+    font-size: 11px;
+    opacity: 0.9;
+    font-weight: 400;
+    margin-left: 5px;
+}
+
+@keyframes pulse-demo {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.7;
+        transform: scale(1.1);
+    }
+}
+
+/* Demo mode specific styling for game elements */
+.demo-mode .user-balance {
+    color: #ffa726 !important;
+    position: relative;
+}
+
+.demo-mode .user-balance::after {
+    content: " (DEMO)";
+    font-size: 10px;
+    opacity: 0.8;
+}
+
+.demo-mode #counter {
+    border-color: #ff6b35 !important;
+    box-shadow: 0 0 20px rgba(255, 107, 53, 0.3) !important;
+}
+
+.demo-mode .bet-panel {
+    border-top: 2px solid #ff6b35;
+}
+
+/* Hide sidebar in demo mode and expand game area */
+.demo-mode #left-sidebar {
+    display: none !important;
+}
+
+.demo-mode .main-content {
+    margin-left: 0 !important;
+    width: 100% !important;
+}
+
+.demo-mode .game-container {
+    max-width: 100% !important;
+    margin: 0 auto !important;
+}
+
+    /* Demo mode mobile improvements */
+    @media (max-width: 768px) {
+        .demo-mode .betting-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .demo-mode .bet-panel {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        
+        .demo-mode #betting-controls {
+            padding: 15px;
+            min-height: auto;
+        }
+        
+        .demo-mode .main-content-wrapper {
+            height: 100vh;
+            overflow-y: auto;
+        }
+        
+        .demo-mode .main-content {
+            margin-left: 0 !important;
+            width: 100% !important;
+        }
+    }/* Mobile responsive improvements */
+@media (max-width: 768px) {
+    .demo-content {
+        gap: 5px;
+    }
+    
+    .demo-content span {
+        font-size: 12px;
+    }
+    
+    .demo-content small {
+        font-size: 10px;
+    }
+    
+    /* Stack betting controls vertically on mobile */
+    #betting-controls {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        padding: 10px;
+        min-height: auto;
+        height: auto;
+    }
+    
+    .bet-panel {
+        width: 100%;
+        margin-bottom: 0;
+    }
+    
+    /* Adjust main content wrapper for mobile */
+    .main-content-wrapper {
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .main-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+    
+    #game-main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    #counterWrapper {
+        flex: 1;
+        min-height: 200px;
+    }
+    
+    /* Ensure betting controls are always visible at bottom */
+    #betting-controls {
+        flex-shrink: 0;
+        position: relative;
+        background: rgba(0, 0, 0, 0.9);
+        border-top: 1px solid #333;
+    }
+    
+    /* Hide sidebar on mobile for demo */
+    body.demo-mode #left-sidebar {
+        display: none !important;
+    }
+    
+    body.demo-mode .main-content {
+        margin-left: 0 !important;
+        width: 100% !important;
     }
 }

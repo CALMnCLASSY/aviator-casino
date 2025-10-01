@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aviator - Professional Gaming</title>
+    <link rel="stylesheet" href="./style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body>
+    <!-- Main Content Wrapper -->
+    <div class="main-content-wrapper">
+        <!-- Navigation Bar -->
+        <nav id="navigation">
+        <div class="nav-left">
+            <button id="sidebar-toggle" class="mobile-toggle-btn">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="site-logo">
+                <img src="images/classybetaviator-logo.svg" alt="ClassyBet Aviator" height="40">
+            </div>
+        </div>
+        <div class="nav-right">
+            <!-- Guest View -->
+            <div id="guest-nav" class="guest-controls">
+                <button id="login-btn" class="auth-btn">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Login
+                </button>
+                <button id="register-btn" class="auth-btn register">
+                    <i class="fas fa-user-plus"></i>
+                    Register
+                </button>
+            </div>
+            
+            <!-- Authenticated User View -->
+            <div id="user-nav" class="user-info" style="display: none;">
+                <div class="user-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div class="user-details">
+                    <span class="username" id="nav-username">Guest</span>
+                    <span class="user-id" id="nav-userid" style="font-size: 11px; color: #888;">ID: ----</span>
+                    <span class="user-balance" id="nav-balance">KES 0.00</span>
+                </div>
+                <button id="profile-btn" class="profile-btn">
+                    <i class="fas fa-user-circle"></i>
+                    Profile
+                </button>
+                <button id="admin-btn" class="admin-btn" style="display: none;">
+                    <i class="fas fa-shield-alt"></i>
+                    Admin
+                </button>
+                <button id="deposit-btn" class="deposit-btn">
+                    <i class="fas fa-plus"></i>
+                    Deposit
+                </button>
+                <button id="logout-btn" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Logout
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div id="spribe-custom-preloader" class="spribe-preloader-container">
+        <div class="spribe-preloader-content">
+            <div class="spribe-preloader-powered-by">
+            <img src="cbpoweredby.png" alt="Powered by Spribe" width="80" height="10" draggable="false">
+            </div>
+            <div class="spribe-preloader-logo">
+            <img src="poweredbyspribe.png" alt="Logo" width="155" height="55" draggable="false">
+            </div>
+            <div class="spribe-preloader-spinner">
+            <div class="spribe-bounce-1"></div>
+            <div class="spribe-bounce-2"></div>
+            <div class="spribe-bounce-3"></div>
+            </div>
+            <div class="spribe-connecting-text" style="display: none;">Connection...</div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div id="main-container">
+        <!-- Center Game Area -->
+        <div id="game-container">
+            <!-- Game Header spanning full width -->
+            <div id="game-header">
+                <div class="game-logo">
+                    <img src="images/logo.svg" alt="Aviator" height="35" class="aviator-logo-image">
+                </div>
+                <div class="balance-info">
+                    <div id="balance"></div>
+                    <div id="balance-amount">KES 3,000.00</div>
+                    <div class="header-controls">
+                        
+                        <div class="game-menu-container">
+                            <button id="game-menu-btn" class="game-menu-btn">
+                                <i class="fas fa-bars"></i>
+                            </button>
+                        <div id="game-menu" class="game-menu">
+                            <div class="menu-item" data-action="sound">
+                                <i class="fas fa-volume-up"></i>
+                                <span>Sound</span>
+                                <div class="toggle-switch">
+                                    <input type="checkbox" id="sound-toggle" checked>
+                                    <label for="sound-toggle"></label>
+                                </div>
+                            </div>
+                            <div class="menu-item" data-action="animation">
+                                <i class="fas fa-play-circle"></i>
+                                <span>Animation</span>
+                                <div class="toggle-switch">
+                                    <input type="checkbox" id="animation-toggle" checked>
+                                    <label for="animation-toggle"></label>
+                                </div>
+                            </div>
+                            <div class="menu-item" data-action="bet-history">
+                                <i class="fas fa-history"></i>
+                                <span>My Bet History</span>
+                            </div>
+                            <div class="menu-item" data-action="how-to-play">
+                                <i class="fas fa-question-circle"></i>
+                                <span>How to Play</span>
+                            </div>
+                            <div class="menu-item" data-action="game-rules">
+                                <i class="fas fa-book"></i>
+                                <span>Game Rules</span>
+                            </div>
+                            <div class="menu-item" data-action="provably-fair">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Provably Fair</span>
+                            </div>
+                        </div>
+                    </div>
+                    </div> <!-- End header-controls -->
+                </div>
+            </div>
+            
+            <!-- Game Content Area with Left Sidebar and Main Game -->
+            <div id="game-content">
+                <!-- Left Sidebar - All Bets -->
+                <div id="left-sidebar">
+                    <div class="sidebar-content">
+                        <div class="sidebar-section">
+                            <!-- Tabs Navigation -->
+                            <div class="bets-tabs">
+                                <button class="tab-btn active" data-tab="all-bets">
+                                <!-- Removed Bet Amount label -->
+                                </button>
+                                <button class="tab-btn" data-tab="previous-bets">
+                                    <i class="fas fa-history"></i> Previous
+                                </button>
+                                <button class="tab-btn" data-tab="top-results">
+                                    <i class="fas fa-trophy"></i> Top Results
+                                </button>
+                            </div>
+
+                            <!-- All Bets Tab Content -->
+                            <div id="all-bets-content" class="tab-content active">
+                                <div class="bet-count-info">
+                                    <span class="bet-count-label">Total Bets This Round:</span>
+                                    <span class="bet-count" id="bet-count">0</span>
+                                    <button class="show-all-toggle" id="show-all-bets">Show All</button>
+                                </div>
+                                <div class="bet-list-header">
+                                    <span class="bet-id-header">Player</span>
+                                    <span class="bet-amount-header">Bet (KES)</span>
+                                    <span class="bet-multiplier-header">x</span>
+                                    <span class="bet-win-header">Win (KES)</span>
+                                </div>
+                                <div id="all-bets" class="bet-list">
+                                    <!-- Live betting activity will be populated here -->
+                                </div>
+                            </div>
+
+                            <!-- Previous Bets Tab Content -->
+                            <div id="previous-bets-content" class="tab-content">
+                                <div class="bet-count-info">
+                                    <span class="bet-count-label">Previous Round Results:</span>
+                                    <span class="bet-count" id="previous-bet-count">0</span>
+                                </div>
+                                <div class="bet-list-header">
+                                    <span class="bet-id-header">Player</span>
+                                    <span class="bet-amount-header">Bet (KES)</span>
+                                    <span class="bet-multiplier-header">x</span>
+                                    <span class="bet-win-header">Win (KES)</span>
+                                </div>
+                                <div id="previous-bets" class="bet-list">
+                                    <!-- Previous round results will be populated here -->
+                                </div>
+                            </div>
+
+                            <!-- Top Results Tab Content -->
+                            <div id="top-results-content" class="tab-content">
+                                <div class="bet-count-info">
+                                    <span class="bet-count-label">Top Results</span>
+                                    <div class="top-submenu">
+                                        <div class="top-filters">
+                                            <button class="top-filter-btn active" data-view="multipliers">x</button>
+                                            <button class="top-filter-btn" data-view="wins">Win</button>
+                                            <button class="top-filter-btn" data-view="rounds">Rounds</button>
+                                        </div>
+                                        <select id="top-period" class="top-period">
+                                            <option value="day">Day</option>
+                                            <option value="month">Month</option>
+                                            <option value="year">Year</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="bet-list-header">
+                                    <span class="bet-id-header">Player</span>
+                                    <span class="bet-amount-header">Bet (KES)</span>
+                                    <span class="bet-multiplier-header">x</span>
+                                    <span class="bet-win-header">Win (KES)</span>
+                                </div>
+                                <div id="top-results" class="bet-list">
+                                    <!-- Top results will be populated here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Sidebar Footer -->
+                    <div class="sidebar-footer">
+                        <div class="footer-item">
+                            <i class="fas fa-check-circle"></i>
+                            <span>Provably Fair</span>
+                        </div>
+                        <div class="footer-item">
+                            <span>Powered by</span>
+                            <img src="spribe.svg" alt="Spribe" height="12">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Main Game Canvas Area -->
+                <div id="game-main">
+                    <!-- Previous Rounds (positioned between header and game) -->
+                    <div id="previous-rounds-container">
+                        <div id="last-counters"></div>
+                        <div id="show-more-rounds" class="show-more-btn">
+                            <i class="fas fa-ellipsis-h"></i>
+                        </div>
+                        <div id="hidden-rounds" class="hidden-rounds">
+                            <!-- Hidden multipliers will be shown here -->
+                        </div>
+                    </div>
+
+                    <!-- Demo Mode Bar (hidden by default, shown for demo users) -->
+                    <div id="demo-mode-bar" class="demo-mode-bar" style="display: none;">
+                        <div class="demo-content">
+                            <i class="fas fa-play-circle"></i>
+                            <span>DEMO MODE</span>
+                            <small>Playing with virtual money</small>
+                        </div>
+                    </div>
+
+                    <div id="counterWrapper">
+                        <div id="bg-image"></div>
+                        <canvas id="canvas"></canvas>
+                        <div id="counter">1.00x</div>
+                    </div>
+
+                    <!-- Betting Controls -->
+                    <div id="betting-controls">
+                <div class="bet-panel">
+                    <div class="bet-input-group">
+                        <!-- Bet/Auto Mode Toggle -->
+                        <div class="bet-mode-selector">
+                            <label class="mode-toggle-label small-toggle">
+                                <input type="checkbox" id="mode-toggle-1" class="mode-toggle-checkbox" />
+                                <span class="mode-toggle-switch small-switch"></span>
+                                <span class="mode-text small-text">
+                                    <span class="bet-text">Bet</span>
+                                    <span class="auto-text">Auto</span>
+                                </span>
+                            </label>
+                        </div>
+                        
+                        <label></label>
+                        <div class="input-wrapper">
+                            <input type="number" id="bet-input-1" min="0" max="1000" value="10" />
+                            <span class="currency">KES</span>
+                        </div>
+                        <div class="quick-amounts">
+                            <button class="quick-amount" data-amount="10">KES 10</button>
+                            <button class="quick-amount" data-amount="25">KES 25</button>
+                            <button class="quick-amount" data-amount="50">KES 50</button>
+                            <button class="quick-amount" data-amount="100">KES 100</button>
+                        </div>
+                    </div>
+                    
+                    <div class="bet-button-container">
+                        <button id="bet-button-1" class="bet-button">BET</button>
+                        <button id="add-bet-button" class="add-bet-btn-inline">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Auto Features (hidden by default) -->
+                    <div class="auto-features" id="auto-features-1" style="display: none;">
+                        <div class="auto-option">
+                            <label class="auto-option-label">
+                                <input type="checkbox" id="auto-bet-toggle-1" class="auto-option-checkbox" />
+                                <span class="auto-option-switch"></span>
+                                <span class="auto-option-text">Auto Bet</span>
+                            </label>
+                        </div>
+                        
+                        <div class="auto-option">
+                            <label class="auto-option-label">
+                                <input type="checkbox" id="auto-cashout-toggle-1" class="auto-option-checkbox" />
+                                <span class="auto-option-switch"></span>
+                                <span class="auto-option-text">Auto Cashout at:</span>
+                            </label>
+                            <div class="input-wrapper cashout-input">
+                                <input type="number" id="auto-cashout-value-1" min="1.01" max="1000" value="2.00" step="0.01" />
+                                <span class="currency">x</span>
+                            </div>
+                        </div>
+                        
+                        <div class="auto-bet-stats" id="auto-stats-1" style="display: none;">
+                            <div class="stat-item">
+                                <span class="stat-label">Bets:</span>
+                                <span class="stat-value" id="auto-bet-count-1">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Wins:</span>
+                                <span class="stat-value" id="auto-win-count-1">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Profit:</span>
+                                <span class="stat-value" id="auto-profit-1">KES 0.00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bet-panel" id="second-bet-panel" style="display: none;">
+                    <div class="bet-input-group">
+                        <!-- Bet/Auto Mode Toggle -->
+                        <div class="bet-mode-selector">
+                            <label class="mode-toggle-label small-toggle">
+                                <input type="checkbox" id="mode-toggle-2" class="mode-toggle-checkbox" />
+                                <span class="mode-toggle-switch small-switch"></span>
+                                <span class="mode-text small-text">
+                                    <span class="bet-text">Bet</span>
+                                    <span class="auto-text">Auto</span>
+                                </span>
+                            </label>
+                        </div>
+                        
+                        <label></label>
+                        <div class="input-wrapper">
+                            <input type="number" id="bet-input-2" min="0" max="1000" value="10" />
+                            <span class="currency">KES</span>
+                        </div>
+                        <div class="quick-amounts">
+                            <button class="quick-amount" data-amount="10">KES 10</button>
+                            <button class="quick-amount" data-amount="25">KES 25</button>
+                            <button class="quick-amount" data-amount="50">KES 50</button>
+                            <button class="quick-amount" data-amount="100">KES 100</button>
+                        </div>
+                    </div>
+                    
+                    <div class="bet-button-container">
+                        <button id="bet-button-2" class="bet-button">BET</button>
+                        <button id="remove-bet-button" class="remove-bet-btn-inline">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Auto Features (hidden by default) -->
+                    <div class="auto-features" id="auto-features-2" style="display: none;">
+                        <div class="auto-option">
+                            <label class="auto-option-label">
+                                <input type="checkbox" id="auto-bet-toggle-2" class="auto-option-checkbox" />
+                                <span class="auto-option-switch"></span>
+                                <span class="auto-option-text">Auto Bet</span>
+                            </label>
+                        </div>
+                        
+                        <div class="auto-option">
+                            <label class="auto-option-label">
+                                <input type="checkbox" id="auto-cashout-toggle-2" class="auto-option-checkbox" />
+                                <span class="auto-option-switch"></span>
+                                <span class="auto-option-text">Auto Cashout at:</span>
+                            </label>
+                            <div class="input-wrapper cashout-input">
+                                <input type="number" id="auto-cashout-value-2" min="1.01" max="1000" value="2.00" step="0.01" />
+                                <span class="currency">x</span>
+                            </div>
+                        </div>
+                        
+                        <div class="auto-bet-stats" id="auto-stats-2" style="display: none;">
+                            <div class="stat-item">
+                                <span class="stat-label">Bets:</span>
+                                <span class="stat-value" id="auto-bet-count-2">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Wins:</span>
+                                <span class="stat-value" id="auto-win-count-2">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Profit:</span>
+                                <span class="stat-value" id="auto-profit-2">KES 0.00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Remove the standalone add-bet-button since it's now inline -->
+                <!-- <button id="add-bet-button" class="add-bet-btn">
+                    <i class="fas fa-plus"></i>
+                </button> -->
+                    </div> <!-- End of betting-controls -->
+
+                    <div id="message-area">
+                        <p id="message"></p>
+                    </div>
+                </div> <!-- End of game-main -->
+            </div> <!-- End of game-content -->
+        </div> <!-- End of game-container -->
+
+        <!-- Mobile Bets Section (visible only on mobile) -->
+        <div id="mobile-bets-section">
+            <div class="bets-tabs">
+                <button class="tab-btn active" data-tab="mobile-all-bets">
+                    <i class="fas fa-users"></i> All Bets
+                </button>
+                <button class="tab-btn" data-tab="mobile-previous-bets">
+                    <i class="fas fa-history"></i> Previous
+                </button>
+                <button class="tab-btn" data-tab="mobile-top-results">
+                    <i class="fas fa-trophy"></i> Top
+                </button>
+            </div>
+            
+            <div id="mobile-all-bets-content" class="tab-content active">
+                <div class="bet-count-info">
+                    <span class="bet-count-label">Total Bets:</span>
+                    <span class="bet-count" id="mobile-bet-count">0</span>
+                    <button class="show-all-toggle" id="mobile-show-all-bets">Show All</button>
+                </div>
+                <div id="mobile-all-bets" class="bet-list mobile-bet-list">
+                    <!-- Mobile betting activity will be populated here -->
+                </div>
+            </div>
+            
+            <div id="mobile-previous-bets-content" class="tab-content">
+                <div id="mobile-previous-bets" class="bet-list mobile-bet-list">
+                    <!-- Mobile previous bets will be populated here -->
+                </div>
+            </div>
+            
+            <div id="mobile-top-results-content" class="tab-content">
+                <div id="mobile-top-results" class="bet-list mobile-bet-list">
+                    <!-- Mobile top results will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Round Info Modal -->
+    <div id="round-info-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-round-title">Round Info</h2>
+                <span class="close-modal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="round-details">
+                    <div class="detail-row">
+                        <span class="detail-label">Round:</span>
+                        <span class="detail-value" id="modal-round-number">5415384</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Multiplier:</span>
+                        <span class="detail-value multiplier" id="modal-multiplier">1.29x</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Time:</span>
+                        <span class="detail-value" id="modal-time">10:23:09</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Hash:</span>
+                        <div class="hash-values">
+                            <div class="hash-item" id="modal-hash1">B0hzWKyLLyvnQZbd4O9XKYMPTCe7vxRLKgOaSoXc</div>
+                            <div class="hash-item" id="modal-hash2">h1cZneNtfzJyZH9LLDvh</div>
+                            <div class="hash-item" id="modal-hash3">KqeiEgdEKo9OP5TIvned</div>
+                            <div class="hash-item" id="modal-hash4">LbGaKg3vXVIB5iC7Tz1e</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div> <!-- End Main Content Wrapper -->
+
+    <!-- Site Footer -->
+    <footer class="site-footer">
+        <div class="container py-4">
+            <div class="footer-content">
+                
+                <div class="footer-logo" style="display: inline-block; padding: 10px; border-radius: 5px;">
+                    <img src="images/classybetaviator-logo.svg" class="footer-logo-img" style="max-width: 250px; height: auto;" alt="ClassyBet Aviator Logo"/>
+                </div>
+
+                <ul class="footer-nav">
+                    <li class="footer-nav-item">
+                        <a href="#" class="footer-nav-link" onclick="return false;">
+                            Responsible Gambling
+                        </a>
+                    </li>
+                    <li class="footer-nav-item">
+                        <a href="#" class="footer-nav-link" onclick="return false;">
+                            Contact Us
+                        </a>
+                    </li>
+                    <li class="footer-nav-item">
+                        <a href="#" class="footer-nav-link" onclick="return false;">
+                            Terms & Conditions
+                        </a>
+                    </li>
+                    <li class="footer-nav-item">
+                        <a href="#" class="footer-nav-link" onclick="return false;">
+                            Privacy Policy
+                        </a>
+                    </li>
+                    <li class="footer-nav-item">
+                        <a href="#" class="footer-nav-link" onclick="return false;">
+                            Careers
+                        </a>
+                    </li>
+                    <li class="footer-nav-item">
+                        <a href="#" class="footer-nav-link" onclick="return false;">
+                            FAQs
+                        </a>
+                    </li>
+                    <li class="footer-nav-item">
+                        <a href="#" class="footer-nav-link" onclick="return false;">
+                            Disputes
+                        </a>
+                    </li>
+                    <li class="footer-nav-item">
+                        <a href="#" class="footer-nav-link" onclick="return false;">
+                            Refund Policy
+                        </a>
+                    </li>
+                </ul>
+                
+                <div class="payment-methods">
+                    <div class="payment-icon mastercard">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" alt="Mastercard" style="max-width: 60px;">
+                    </div>
+                    <div class="payment-icon visa">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/4/41/Visa_Logo.png" alt="Visa" style="max-width: 60px;">
+                    </div>
+                    <div class="payment-icon paypal">
+                        <img src="https://www.citypng.com/public/uploads/preview/transparent-hd-paypal-logo-701751694777788ilpzr3lary.png" alt="PayPal" style="max-width: 70px;">
+                    </div>
+                    <div class="payment-icon airtel-money">
+                        <img src="https://businesspost.ng/wp-content/uploads/2021/03/Airtel-Money.png" alt="Airtel Money" style="max-width: 60px;">
+                    </div>
+                    <div class="payment-icon mpesa">
+                        <img src="https://www.techinafrica.com/wp-content/uploads/2021/01/1200px-M-PESA_LOGO-01.svg_.png" alt="Safaricom M-Pesa" style="max-width: 70px;">
+                    </div>
+                </div>
+
+                <div class="social-links">
+                    <a href="#" class="social-link">
+                        <i class="fab fa-facebook-f"></i>
+                    </a>
+                    <a href="#" class="social-link">
+                        <i class="fab fa-twitter"></i>
+                    </a>
+                    <a href="#" class="social-link">
+                        <i class="fab fa-instagram"></i>
+                    </a>
+                    <a href="#" class="social-link">
+                        <i class="fab fa-telegram"></i>
+                    </a>
+                </div>
+
+                <div class="footer-legal">
+                    <div class="age-restriction">
+                        <span>18+</span>
+                    </div>
+                    <p class="copyright">Copyright © 2025 ClassyBet Aviator. All rights reserved.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Authentication Modals -->
+    <!-- Login Modal -->
+    <div id="login-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-sign-in-alt"></i> Login to ClassyBet</h3>
+                <span class="close" onclick="closeModal('login-modal')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="login-error" class="error-message" style="display: none;"></div>
+                <form id="login-form">
+                    <div class="form-group">
+                        <label for="login-email">Email or Username</label>
+                        <input type="text" id="login-email" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">Password</label>
+                        <input type="password" id="login-password" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-sign-in-alt"></i> Login
+                    </button>
+                </form>
+                <div class="modal-footer">
+                    <p>Don't have an account? <a href="#" onclick="switchModal('login-modal', 'register-modal')">Register here</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Register Modal -->
+    <div id="register-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-user-plus"></i> Create Account</h3>
+                <span class="close" onclick="closeModal('register-modal')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="register-error" class="error-message" style="display: none;"></div>
+                <form id="register-form">
+                    <div class="form-group">
+                        <label for="register-username">Username</label>
+                        <input type="text" id="register-username" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="register-email">Email</label>
+                        <input type="email" id="register-email" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="register-phone">Phone (254XXXXXXXXX)</label>
+                        <input type="tel" id="register-phone" class="form-control" placeholder="254700000000" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="register-password">Password</label>
+                        <input type="password" id="register-password" class="form-control" minlength="6" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-user-plus"></i> Create Account
+                    </button>
+                </form>
+                <div class="modal-footer">
+                    <p>Already have an account? <a href="#" onclick="switchModal('register-modal', 'login-modal')">Login here</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Deposit Modal -->
+    <div id="deposit-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-plus-circle"></i> Deposit Funds</h3>
+                <span class="close" onclick="closeModal('deposit-modal')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="deposit-instructions">
+                    <h4><i class="fas fa-info-circle"></i> M-Pesa Payment</h4>
+                    <div class="paybill-info">
+                        <div class="paybill-item">
+                            <span>Paybill Number:</span>
+                            <strong>793174</strong>
+                        </div>
+                        <div class="paybill-item">
+                            <span>Account Number:</span>
+                            <strong>745087451</strong>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="deposit-error" class="error-message" style="display: none;"></div>
+                <div id="deposit-success" class="success-message" style="display: none;"></div>
+                
+                <form id="deposit-form">
+                    <div class="form-group">
+                        <label for="deposit-amount">Amount (KES)</label>
+                        <input type="number" id="deposit-amount" class="form-control" min="10" max="50000" step="1" required>
+                        <small>Minimum: KES 10, Maximum: KES 50,000</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="deposit-phone">M-Pesa Phone Number</label>
+                        <input type="tel" id="deposit-phone" class="form-control" placeholder="254700000000" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-mobile-alt"></i> Send STK Push
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="./api.js"></script>
+    <script src="./script.js"></script>
+</body>
+
+</html>
