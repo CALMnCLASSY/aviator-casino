@@ -562,7 +562,7 @@
             const password = document.getElementById('admin-password').value;
             
             try {
-                const response = await fetch(`${API_BASE}/admin/login`, {
+                const response = await fetch(`${API_BASE}/api/admin/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password })
@@ -598,7 +598,7 @@
 
         async function loadUsers() {
             try {
-                const response = await fetch(`${API_BASE}/admin/users?simple=true`, {
+                const response = await fetch(`${API_BASE}/api/admin/users?simple=true`, {
                     headers: { 'Authorization': `Bearer ${adminToken}` }
                 });
                 
@@ -645,7 +645,7 @@
 
         async function loadTransactions() {
             try {
-                const response = await fetch(`${API_BASE}/admin/transactions`, {
+                const response = await fetch(`${API_BASE}/api/admin/transactions`, {
                     headers: { 'Authorization': `Bearer ${adminToken}` }
                 });
                 
@@ -686,8 +686,8 @@
         async function loadStats() {
             try {
                 const [usersResponse, transactionsResponse] = await Promise.all([
-                    fetch(`${API_BASE}/admin/users`, { headers: { 'Authorization': `Bearer ${adminToken}` } }),
-                    fetch(`${API_BASE}/admin/transactions`, { headers: { 'Authorization': `Bearer ${adminToken}` } })
+                    fetch(`${API_BASE}/api/admin/users`, { headers: { 'Authorization': `Bearer ${adminToken}` } }),
+                    fetch(`${API_BASE}/api/admin/transactions`, { headers: { 'Authorization': `Bearer ${adminToken}` } })
                 ]);
 
                 const users = await usersResponse.json();
@@ -735,7 +735,7 @@
             try {
                 const adjustmentAmount = type === 'add' ? amount : -amount;
                 
-                const response = await fetch(`${API_BASE}/admin/users/${currentBalanceUserId}/balance`, {
+                const response = await fetch(`${API_BASE}/api/admin/users/${currentBalanceUserId}/balance`, {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${adminToken}`,

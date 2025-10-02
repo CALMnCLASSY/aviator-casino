@@ -12,32 +12,71 @@ const router = express.Router();
 // Admin login route
 router.post('/login', async (req, res) => {
   try {
+    console.log('Admin login attempt started');
+    console.log('Request body:', req.body);
+    
     await connectToMongoDB();
+    console.log('Database connected successfully');
     
     const { email, password } = req.body;
 
     if (!email || !password) {
+      console.log('Missing email or password');
       return res.status(400).json({ error: 'Email and password are required' });
     }
 
+    console.log('Searching for user with email:', email.toLowerCase());
+    
     // Find admin user
-    const user = await User.findOne({ email: email.toLowerCase() });
+    let user = await User.findOne({ email: email.toLowerCase() });
+    console.log('User found:', user ? 'Yes' : 'No');
+    
+    // If no user found, try to create default admin if this is the expected admin email
+    if (!user && email.toLowerCase() === 'admin@classybet.com') {
+      console.log('Creating default admin user...');
+      try {
+        user = new User({
+          username: 'admin',
+          email: 'admin@classybet.com',
+          password: password, // Use the provided password
+          phone: '254700000000',
+          isAdmin: true,
+          balance: 0
+        });
+        await user.save();
+        console.log('Default admin user created');
+      } catch (createError) {
+        console.error('Error creating admin user:', createError);
+        return res.status(401).json({ error: 'Invalid credentials' });
+      }
+    }
     
     if (!user) {
+      console.log('User not found');
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
+    console.log('User isAdmin:', user.isAdmin);
+    
     // Check if user is admin
     if (!user.isAdmin) {
+      console.log('User is not admin');
       return res.status(403).json({ error: 'Access denied. Admin privileges required.' });
     }
 
-    // Verify password
-    const validPassword = await bcrypt.compare(password, user.password);
+    console.log('Verifying password...');
+    
+    // Verify password using the user model method
+    const validPassword = await user.comparePassword(password);
+    console.log('Password valid:', validPassword);
+    
     if (!validPassword) {
+      console.log('Invalid password');
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
+    console.log('Generating JWT token...');
+    
     // Generate JWT token
     const token = jwt.sign(
       { 
@@ -48,6 +87,8 @@ router.post('/login', async (req, res) => {
       process.env.JWT_SECRET || 'fallback_secret_key',
       { expiresIn: '24h' }
     );
+
+    console.log('Admin login successful');
 
     res.json({
       message: 'Admin login successful',
@@ -61,8 +102,15 @@ router.post('/login', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Admin login error:', error);
-    res.status(500).json({ error: 'Server error during admin login' });
+    console.error('Admin login error details:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    });
+    res.status(500).json({ 
+      error: 'Server error during admin login',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 

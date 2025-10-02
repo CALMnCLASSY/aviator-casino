@@ -16,15 +16,11 @@
       "dest": "/api/index.js"
     },
     {
-      "src": "/admin(.*)",
-      "dest": "/api/index.js"
-    },
-    {
-      "src": "/profile(.*)",
-      "dest": "/api/index.js"
-    },
-    {
       "src": "/health",
+      "dest": "/api/index.js"
+    },
+    {
+      "src": "/profile",
       "dest": "/api/index.js"
     },
     {
