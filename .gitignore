@@ -57,3 +57,4 @@ temp/
 
 # Browser cache
 .cache/
+.vercel

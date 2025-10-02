@@ -47,6 +47,8 @@ const allowedOrigins = [
   'http://127.0.0.1:3001',
   'http://localhost:8080',
   'http://127.0.0.1:8080',
+  'https://aviator-casino.vercel.app',
+  'https://classybet-aviator.vercel.app',
   'null' // For file:// protocol access
 ];
 
