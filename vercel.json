@@ -1,30 +1,26 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "classybet-backend/server.js",
-      "use": "@vercel/node"
-    },
-    {
-      "src": "classybet/**",
-      "use": "@vercel/static"
+  "functions": {
+    "classybet-backend/server.js": {
+      "maxDuration": 30
     }
-  ],
-  "routes": [
+  },
+  "rewrites": [
     {
-      "src": "/api/(.*)",
-      "dest": "/classybet-backend/server.js"
+      "source": "/api/(.*)",
+      "destination": "/classybet-backend/server.js"
     },
     {
-      "src": "/admin/(.*)",
-      "dest": "/classybet-backend/server.js"
+      "source": "/admin/(.*)",
+      "destination": "/classybet-backend/server.js"
     },
     {
-      "src": "/(.*)",
-      "dest": "/classybet/$1"
+      "source": "/profile/(.*)",
+      "destination": "/classybet-backend/server.js"
+    },
+    {
+      "source": "/health",
+      "destination": "/classybet-backend/server.js"
     }
-  ],
-  "env": {
-    "NODE_ENV": "production"
-  }
+  ]
 }
