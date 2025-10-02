@@ -1,7 +1,14 @@
 // Authentication and registration system
 class AuthManager {
     constructor() {
-        this.apiBase = 'http://localhost:3001';
+        // Use environment-aware API base URL
+        const isLocal = window.location.hostname === 'localhost' || 
+                       window.location.hostname === '127.0.0.1' ||
+                       window.location.protocol === 'file:';
+        
+        this.apiBase = isLocal ? 'http://localhost:3001' : window.location.origin;
+        
+        console.log('API Base URL:', this.apiBase, 'Hostname:', window.location.hostname);
         this.init();
     }
 
