@@ -1,14 +1,11 @@
 // Authentication and registration system
 class AuthManager {
     constructor() {
-        // Use environment-aware API base URL
-        const isLocal = window.location.hostname === 'localhost' || 
-                       window.location.hostname === '127.0.0.1' ||
-                       window.location.protocol === 'file:';
+        // Always use same domain - no localhost detection needed
+        // Backend will be hosted on same Vercel domain as serverless functions
+        this.apiBase = window.location.origin;
         
-        this.apiBase = isLocal ? 'http://localhost:3001' : window.location.origin;
-        
-        console.log('API Base URL:', this.apiBase, 'Hostname:', window.location.hostname);
+        console.log('API Base URL:', this.apiBase);
         this.init();
     }
 

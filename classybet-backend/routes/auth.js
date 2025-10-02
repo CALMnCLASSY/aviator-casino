@@ -146,8 +146,11 @@ router.post('/login',
   ],
   async (req, res) => {
     try {
+      console.log('Login attempt started:', req.body.login);
+      
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
+        console.log('Validation errors:', errors.array());
         return res.status(400).json({ 
           error: 'Validation failed', 
           details: errors.array() 
@@ -155,6 +158,14 @@ router.post('/login',
       }
 
       const { login, password } = req.body;
+      console.log('Processing login for:', login);
+      
+      // Check MongoDB connection
+      const mongoose = require('mongoose');
+      if (mongoose.connection.readyState !== 1) {
+        console.error('MongoDB not connected. State:', mongoose.connection.readyState);
+        return res.status(500).json({ error: 'Database connection error' });
+      }
 
       // Find user by username, email, userId, or phone
       const searchQuery = [
@@ -217,8 +228,16 @@ router.post('/login',
       });
 
     } catch (error) {
-      console.error('Login error:', error);
-      res.status(500).json({ error: 'Internal server error' });
+      console.error('Login error details:', {
+        message: error.message,
+        stack: error.stack,
+        jwtSecret: !!process.env.JWT_SECRET,
+        mongodbUri: !!process.env.MONGODB_URI
+      });
+      res.status(500).json({ 
+        error: 'Internal server error',
+        debug: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
     }
   }
 );

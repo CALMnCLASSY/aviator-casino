@@ -48,7 +48,6 @@ const allowedOrigins = [
   'http://localhost:8080',
   'http://127.0.0.1:8080',
   'https://aviator-casino.vercel.app',
-  'https://classybet-aviator.vercel.app',
   'null' // For file:// protocol access
 ];
 
@@ -91,18 +90,28 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 // Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-.then(() => {
-  console.log('✅ Connected to MongoDB');
-  initializeAdmin();
-})
-.catch(err => {
-  console.error('❌ MongoDB connection error:', err);
-  process.exit(1);
-});
+if (!process.env.MONGODB_URI) {
+  console.error('❌ MONGODB_URI is not set');
+} else {
+  console.log('Connecting to MongoDB...');
+  mongoose.connect(process.env.MONGODB_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    serverSelectionTimeoutMS: 10000, // 10 seconds timeout for serverless
+    maxPoolSize: 10 // Limit connection pool for serverless
+  })
+  .then(() => {
+    console.log('✅ Connected to MongoDB');
+    initializeAdmin();
+  })
+  .catch(err => {
+    console.error('❌ MongoDB connection error:', err.message);
+    // Don't exit in serverless environment
+    if (process.env.NODE_ENV !== 'production') {
+      process.exit(1);
+    }
+  });
+}
 
 // Initialize admin user
 async function initializeAdmin() {
