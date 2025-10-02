@@ -457,6 +457,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Global tab switching function for authentication tabs
 window.switchAuthTab = function(tabType) {
+    console.log('Switching to tab:', tabType);
+    
     // Remove active class from all tabs and contents
     document.querySelectorAll('.auth-tabs .tab-btn').forEach(btn => btn.classList.remove('active'));
     document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
@@ -465,11 +467,16 @@ window.switchAuthTab = function(tabType) {
     const clickedButton = document.querySelector(`[onclick="switchAuthTab('${tabType}')"]`);
     if (clickedButton) {
         clickedButton.classList.add('active');
+        console.log('Button activated:', clickedButton);
     }
     
-    const tabContent = document.getElementById(`${tabType}-tab`);
+    // Fix the ID format - HTML uses 'loginTab' and 'registerTab', not 'login-tab'
+    const tabContent = document.getElementById(`${tabType}Tab`);
     if (tabContent) {
         tabContent.classList.add('active');
+        console.log('Tab content activated:', tabContent.id);
+    } else {
+        console.error('Tab content not found for ID:', `${tabType}Tab`);
     }
 };
 
