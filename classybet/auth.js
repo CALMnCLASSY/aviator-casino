@@ -455,5 +455,23 @@ document.addEventListener('DOMContentLoaded', () => {
     new AuthManager();
 });
 
+// Global tab switching function for authentication tabs
+window.switchAuthTab = function(tabType) {
+    // Remove active class from all tabs and contents
+    document.querySelectorAll('.auth-tabs .tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+    
+    // Add active class to clicked tab and corresponding content
+    const clickedButton = document.querySelector(`[onclick="switchAuthTab('${tabType}')"]`);
+    if (clickedButton) {
+        clickedButton.classList.add('active');
+    }
+    
+    const tabContent = document.getElementById(`${tabType}-tab`);
+    if (tabContent) {
+        tabContent.classList.add('active');
+    }
+};
+
 // Export for global access
 window.AuthManager = AuthManager;

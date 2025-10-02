@@ -36,6 +36,10 @@ router.post('/register',
   ],
   async (req, res) => {
     try {
+      // Connect to MongoDB for serverless
+      const { connectToMongoDB } = require('../utils/database');
+      await connectToMongoDB();
+      
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
         return res.status(400).json({ 
@@ -148,6 +152,10 @@ router.post('/login',
     try {
       console.log('Login attempt started:', req.body.login);
       
+      // Connect to MongoDB for serverless
+      const { connectToMongoDB } = require('../utils/database');
+      await connectToMongoDB();
+      
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
         console.log('Validation errors:', errors.array());
@@ -159,13 +167,6 @@ router.post('/login',
 
       const { login, password } = req.body;
       console.log('Processing login for:', login);
-      
-      // Check MongoDB connection
-      const mongoose = require('mongoose');
-      if (mongoose.connection.readyState !== 1) {
-        console.error('MongoDB not connected. State:', mongoose.connection.readyState);
-        return res.status(500).json({ error: 'Database connection error' });
-      }
 
       // Find user by username, email, userId, or phone
       const searchQuery = [
