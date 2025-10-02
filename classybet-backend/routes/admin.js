@@ -83,12 +83,17 @@ router.get('/users', authenticateToken, requireAdmin, async (req, res) => {
 
     const totalUsers = await User.countDocuments();
 
-    res.json({
-      users,
-      currentPage: page,
-      totalPages: Math.ceil(totalUsers / limit),
-      totalUsers
-    });
+    // Return array directly for the management.html compatibility
+    if (req.query.simple === 'true') {
+      res.json(users);
+    } else {
+      res.json({
+        users,
+        currentPage: page,
+        totalPages: Math.ceil(totalUsers / limit),
+        totalUsers
+      });
+    }
   } catch (error) {
     console.error('Get users error:', error);
     res.status(500).json({ error: 'Failed to fetch users' });

@@ -549,7 +549,7 @@
     </div>
 
     <script>
-        const API_BASE = 'http://localhost:3001/api';
+        const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:3001/api' : '/api';
         let adminToken = null;
         let allUsers = [];
         let currentBalanceUserId = null;
@@ -562,15 +562,15 @@
             const password = document.getElementById('admin-password').value;
             
             try {
-                const response = await fetch(`${API_BASE}/auth/login`, {
+                const response = await fetch(`${API_BASE}/admin/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ login: email, password })
+                    body: JSON.stringify({ email, password })
                 });
                 
                 const data = await response.json();
                 
-                if (response.ok && data.user.isAdmin) {
+                if (response.ok) {
                     adminToken = data.token;
                     showAdminDashboard();
                     loadAdminData();
@@ -598,7 +598,7 @@
 
         async function loadUsers() {
             try {
-                const response = await fetch(`${API_BASE}/admin/users`, {
+                const response = await fetch(`${API_BASE}/admin/users?simple=true`, {
                     headers: { 'Authorization': `Bearer ${adminToken}` }
                 });
                 
@@ -735,14 +735,15 @@
             try {
                 const adjustmentAmount = type === 'add' ? amount : -amount;
                 
-                const response = await fetch(`${API_BASE}/admin/user/${currentBalanceUserId}/balance`, {
-                    method: 'PUT',
+                const response = await fetch(`${API_BASE}/admin/users/${currentBalanceUserId}/balance`, {
+                    method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${adminToken}`,
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        adjustment: adjustmentAmount,
+                        amount: Math.abs(adjustmentAmount),
+                        type: type,
                         description: description || `Admin ${type} balance adjustment`
                     })
                 });
