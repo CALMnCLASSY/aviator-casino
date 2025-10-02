@@ -1,14 +1,76 @@
 const express = require('express');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const Transaction = require('../models/Transaction');
 const Bet = require('../models/Bet');
 const { authenticateToken, requireAdmin } = require('../middleware/auth');
+const { connectToMongoDB } = require('../utils/database');
 
 const router = express.Router();
+
+// Admin login route
+router.post('/login', async (req, res) => {
+  try {
+    await connectToMongoDB();
+    
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required' });
+    }
+
+    // Find admin user
+    const user = await User.findOne({ email: email.toLowerCase() });
+    
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    // Check if user is admin
+    if (!user.isAdmin) {
+      return res.status(403).json({ error: 'Access denied. Admin privileges required.' });
+    }
+
+    // Verify password
+    const validPassword = await bcrypt.compare(password, user.password);
+    if (!validPassword) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { 
+        userId: user._id, 
+        email: user.email,
+        isAdmin: user.isAdmin 
+      },
+      process.env.JWT_SECRET || 'fallback_secret_key',
+      { expiresIn: '24h' }
+    );
+
+    res.json({
+      message: 'Admin login successful',
+      token,
+      user: {
+        id: user._id,
+        email: user.email,
+        username: user.username,
+        isAdmin: user.isAdmin
+      }
+    });
+
+  } catch (error) {
+    console.error('Admin login error:', error);
+    res.status(500).json({ error: 'Server error during admin login' });
+  }
+});
 
 // Get all users (Admin only)
 router.get('/users', authenticateToken, requireAdmin, async (req, res) => {
   try {
+    await connectToMongoDB();
+    
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 20;
     const skip = (page - 1) * limit;
@@ -164,11 +226,16 @@ router.get('/transactions/pending', authenticateToken, requireAdmin, async (req,
 // Get dashboard stats (Admin only)
 router.get('/dashboard-stats', authenticateToken, requireAdmin, async (req, res) => {
   try {
+    await connectToMongoDB();
+    
     const totalUsers = await User.countDocuments();
     const activeUsers = await User.countDocuments({ isActive: true });
     const totalBalance = await User.aggregate([
       { $group: { _id: null, total: { $sum: '$balance' } } }
     ]);
+
+    const totalBets = await Bet.countDocuments();
+    const totalTransactions = await Transaction.countDocuments();
 
     const pendingDeposits = await Transaction.countDocuments({ 
       type: 'deposit', 
@@ -182,7 +249,7 @@ router.get('/dashboard-stats', authenticateToken, requireAdmin, async (req, res)
       createdAt: { $gte: todayStart } 
     });
 
-    const todayTransactions = await Transaction.aggregate([
+    const todayTransactionStats = await Transaction.aggregate([
       { 
         $match: { 
           createdAt: { $gte: todayStart },
@@ -201,10 +268,12 @@ router.get('/dashboard-stats', authenticateToken, requireAdmin, async (req, res)
     res.json({
       totalUsers,
       activeUsers,
+      totalBets,
+      totalTransactions,
       totalBalance: totalBalance[0]?.total || 0,
       pendingDeposits,
       todayRegistrations,
-      todayTransactions
+      todayTransactions: todayTransactionStats
     });
 
   } catch (error) {

@@ -246,6 +246,10 @@ router.post('/login',
 // Get current user profile
 router.get('/profile', async (req, res) => {
   try {
+    // Connect to MongoDB for serverless
+    const { connectToMongoDB } = require('../utils/database');
+    await connectToMongoDB();
+    
     const token = req.header('Authorization')?.replace('Bearer ', '');
     if (!token) {
       return res.status(401).json({ error: 'Access denied. No token provided.' });
