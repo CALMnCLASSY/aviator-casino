@@ -4,6 +4,39 @@ const path = require('path');
 
 const app = express();
 
+// Initialize admin user on startup
+async function initializeAdmin() {
+  try {
+    const { connectToMongoDB } = require('../classybet-backend/utils/database');
+    await connectToMongoDB();
+    
+    const User = require('../classybet-backend/models/User');
+    const adminExists = await User.findOne({ isAdmin: true });
+    
+    if (!adminExists) {
+      const adminUser = new User({
+        username: 'admin',
+        email: process.env.ADMIN_EMAIL || 'admin@classybet.com',
+        password: process.env.ADMIN_PASSWORD || 'admin123',
+        phone: '254700000000',
+        isAdmin: true,
+        balance: 0
+      });
+
+      await adminUser.save();
+      console.log('✅ Admin user created');
+      console.log(`📧 Admin email: ${adminUser.email}`);
+    } else {
+      console.log('✅ Admin user already exists');
+    }
+  } catch (error) {
+    console.error('❌ Error initializing admin user:', error);
+  }
+}
+
+// Initialize admin user when the API starts
+initializeAdmin();
+
 // Middleware
 app.use(cors({
   origin: function (origin, callback) {
