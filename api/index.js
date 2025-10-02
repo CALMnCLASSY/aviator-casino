@@ -74,41 +74,74 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Import and use routes (exact localhost structure)
+// Import and mount routes with proper error handling
+console.log('🔧 Starting route loading...');
+
+// Load routes individually with try-catch for each
+let authRoutes, adminRoutes, gameRoutes, paymentRoutes, setupRoutes;
+
 try {
-  console.log('🔧 Loading routes...');
-  
-  const authRoutes = require('../classybet-backend/routes/auth');
-  console.log('✅ Auth routes loaded');
-  
-  const adminRoutes = require('../classybet-backend/routes/admin');
-  console.log('✅ Admin routes loaded');
-  
-  const gameRoutes = require('../classybet-backend/routes/game');
-  console.log('✅ Game routes loaded');
-  
-  const paymentRoutes = require('../classybet-backend/routes/payments');
-  console.log('✅ Payment routes loaded');
-  
-  const setupRoutes = require('./setup');
-  console.log('✅ Setup routes loaded');
-
-  // Mount routes exactly like localhost
-  app.use('/api/auth', authRoutes);
-  app.use('/api/payments', paymentRoutes);
-  app.use('/api/admin', adminRoutes);  // ← CRITICAL: localhost uses /api/admin not /admin
-  app.use('/api/game', gameRoutes);
-  app.use('/api/setup', setupRoutes);
-  
-  console.log('✅ All routes mounted successfully');
-
+  authRoutes = require('../classybet-backend/routes/auth');
+  console.log('✅ Auth routes loaded successfully');
 } catch (error) {
-  console.error('❌ Error loading routes:', {
-    message: error.message,
-    stack: error.stack,
-    cwd: process.cwd()
-  });
+  console.error('❌ Failed to load auth routes:', error.message);
 }
+
+try {
+  adminRoutes = require('../classybet-backend/routes/admin');
+  console.log('✅ Admin routes loaded successfully');
+} catch (error) {
+  console.error('❌ Failed to load admin routes:', error.message);
+}
+
+try {
+  gameRoutes = require('../classybet-backend/routes/game');
+  console.log('✅ Game routes loaded successfully');
+} catch (error) {
+  console.error('❌ Failed to load game routes:', error.message);
+}
+
+try {
+  paymentRoutes = require('../classybet-backend/routes/payments');
+  console.log('✅ Payment routes loaded successfully');
+} catch (error) {
+  console.error('❌ Failed to load payment routes:', error.message);
+}
+
+try {
+  setupRoutes = require('./setup');
+  console.log('✅ Setup routes loaded successfully');
+} catch (error) {
+  console.error('❌ Failed to load setup routes:', error.message);
+}
+
+// Mount routes that loaded successfully
+if (authRoutes) {
+  app.use('/api/auth', authRoutes);
+  console.log('📍 Auth routes mounted at /api/auth');
+}
+
+if (adminRoutes) {
+  app.use('/api/admin', adminRoutes);
+  console.log('📍 Admin routes mounted at /api/admin');
+}
+
+if (gameRoutes) {
+  app.use('/api/game', gameRoutes);
+  console.log('📍 Game routes mounted at /api/game');
+}
+
+if (paymentRoutes) {
+  app.use('/api/payments', paymentRoutes);
+  console.log('📍 Payment routes mounted at /api/payments');
+}
+
+if (setupRoutes) {
+  app.use('/api/setup', setupRoutes);
+  console.log('📍 Setup routes mounted at /api/setup');
+}
+
+console.log('✅ Route loading completed');
 
 // Health check
 app.get('/health', (req, res) => {
@@ -151,7 +184,8 @@ app.get('/api/debug', (req, res) => {
       hasMongoUri: !!process.env.MONGODB_URI,
       hasJwtSecret: !!process.env.JWT_SECRET,
       hasAdminEmail: !!process.env.ADMIN_EMAIL,
-      hasAdminPassword: !!process.env.ADMIN_PASSWORD
+      hasAdminPassword: !!process.env.ADMIN_PASSWORD,
+      mongoUriPrefix: process.env.MONGODB_URI ? process.env.MONGODB_URI.substring(0, 20) + '...' : 'NOT_SET'
     },
     routes: {
       mounted: ['auth', 'admin', 'game', 'payments', 'setup'],
@@ -160,6 +194,8 @@ app.get('/api/debug', (req, res) => {
     timestamp: new Date().toISOString()
   });
 });
+
+
 
 // Handle frontend routes (after API routes are mounted)
 app.get('/profile', (req, res) => {
