@@ -16,13 +16,10 @@ async function connectToMongoDB() {
     console.log('Creating new MongoDB connection...');
     
     const connection = await mongoose.connect(process.env.MONGODB_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
       serverSelectionTimeoutMS: 10000, // 10 seconds
       socketTimeoutMS: 45000, // 45 seconds
-      maxPoolSize: 10, // Limit connection pool
-      bufferCommands: false, // Disable mongoose buffering
-      bufferMaxEntries: 0 // Disable mongoose buffering
+      maxPoolSize: 10, // Limit connection pool for serverless
+      bufferCommands: false // Disable mongoose buffering for serverless
     });
 
     cachedConnection = connection;

@@ -74,74 +74,141 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Import and mount routes with proper error handling
-console.log('🔧 Starting route loading...');
+// Direct route implementation for serverless (bypassing complex imports)
+console.log('🔧 Setting up direct routes...');
 
-// Load routes individually with try-catch for each
-let authRoutes, adminRoutes, gameRoutes, paymentRoutes, setupRoutes;
+// Basic auth login route - directly implemented
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    console.log('🔐 Direct auth login attempt:', req.body);
+    
+    const { login, password } = req.body;
+    
+    if (!login || !password) {
+      return res.status(400).json({ 
+        error: 'Login and password are required',
+        received: { login: !!login, password: !!password }
+      });
+    }
 
-try {
-  authRoutes = require('../classybet-backend/routes/auth');
-  console.log('✅ Auth routes loaded successfully');
-} catch (error) {
-  console.error('❌ Failed to load auth routes:', error.message);
-}
+    // Connect to database
+    const { connectToMongoDB } = require('../classybet-backend/utils/database');
+    await connectToMongoDB();
+    console.log('✅ Database connected for login');
+    
+    const User = require('../classybet-backend/models/User');
+    
+    // Find user
+    const searchQuery = [
+      { username: login },
+      { email: login.toLowerCase() }
+    ];
+    
+    const user = await User.findOne({ $or: searchQuery });
+    
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
 
-try {
-  adminRoutes = require('../classybet-backend/routes/admin');
-  console.log('✅ Admin routes loaded successfully');
-} catch (error) {
-  console.error('❌ Failed to load admin routes:', error.message);
-}
+    if (!user.isActive) {
+      return res.status(403).json({ error: 'Account is suspended' });
+    }
 
-try {
-  gameRoutes = require('../classybet-backend/routes/game');
-  console.log('✅ Game routes loaded successfully');
-} catch (error) {
-  console.error('❌ Failed to load game routes:', error.message);
-}
+    // Verify password
+    const isValidPassword = await user.comparePassword(password);
+    if (!isValidPassword) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
 
-try {
-  paymentRoutes = require('../classybet-backend/routes/payments');
-  console.log('✅ Payment routes loaded successfully');
-} catch (error) {
-  console.error('❌ Failed to load payment routes:', error.message);
-}
+    // Generate JWT
+    const jwt = require('jsonwebtoken');
+    const token = jwt.sign(
+      { 
+        userId: user._id,
+        userIdString: user.userId,
+        isDemo: user.isDemo || false
+      },
+      process.env.JWT_SECRET || 'fallback_secret',
+      { expiresIn: '7d' }
+    );
 
-try {
-  setupRoutes = require('./setup');
-  console.log('✅ Setup routes loaded successfully');
-} catch (error) {
-  console.error('❌ Failed to load setup routes:', error.message);
-}
+    res.json({
+      message: 'Login successful',
+      token,
+      user: user.getPublicProfile()
+    });
 
-// Mount routes that loaded successfully
-if (authRoutes) {
-  app.use('/api/auth', authRoutes);
-  console.log('📍 Auth routes mounted at /api/auth');
-}
+  } catch (error) {
+    console.error('❌ Direct login error:', error);
+    res.status(500).json({ 
+      error: 'Login failed',
+      message: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
 
-if (adminRoutes) {
-  app.use('/api/admin', adminRoutes);
-  console.log('📍 Admin routes mounted at /api/admin');
-}
+// Basic admin login route - directly implemented  
+app.post('/api/admin/login', async (req, res) => {
+  try {
+    console.log('� Direct admin login attempt:', req.body);
+    
+    const { email, password } = req.body;
 
-if (gameRoutes) {
-  app.use('/api/game', gameRoutes);
-  console.log('📍 Game routes mounted at /api/game');
-}
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required' });
+    }
 
-if (paymentRoutes) {
-  app.use('/api/payments', paymentRoutes);
-  console.log('📍 Payment routes mounted at /api/payments');
-}
+    // Connect to database
+    const { connectToMongoDB } = require('../classybet-backend/utils/database');
+    await connectToMongoDB();
+    
+    const User = require('../classybet-backend/models/User');
+    const user = await User.findOne({ email: email.toLowerCase() });
+    
+    if (!user || !user.isAdmin) {
+      return res.status(401).json({ error: 'Invalid admin credentials' });
+    }
 
-if (setupRoutes) {
-  app.use('/api/setup', setupRoutes);
-  console.log('📍 Setup routes mounted at /api/setup');
-}
+    // Verify password
+    const isValidPassword = await user.comparePassword(password);
+    if (!isValidPassword) {
+      return res.status(401).json({ error: 'Invalid admin credentials' });
+    }
 
-console.log('✅ Route loading completed');
+    // Generate JWT
+    const jwt = require('jsonwebtoken');
+    const token = jwt.sign(
+      { 
+        userId: user._id, 
+        email: user.email,
+        isAdmin: user.isAdmin 
+      },
+      process.env.JWT_SECRET || 'fallback_secret',
+      { expiresIn: '24h' }
+    );
+
+    res.json({
+      message: 'Admin login successful',
+      token,
+      user: {
+        id: user._id,
+        email: user.email,
+        username: user.username,
+        isAdmin: user.isAdmin
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Direct admin login error:', error);
+    res.status(500).json({ 
+      error: 'Admin login failed',
+      message: error.message 
+    });
+  }
+});
+
+console.log('✅ Direct routes configured');
 
 // Health check
 app.get('/health', (req, res) => {
