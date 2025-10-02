@@ -1,26 +1,31 @@
 {
   "version": 2,
-  "functions": {
-    "classybet-backend/server.js": {
-      "maxDuration": 30
+  "builds": [
+    {
+      "src": "classybet-backend/server.js",
+      "use": "@vercel/node"
     }
-  },
-  "rewrites": [
+  ],
+  "routes": [
     {
-      "source": "/api/(.*)",
-      "destination": "/classybet-backend/server.js"
+      "src": "/api/(.*)",
+      "dest": "/classybet-backend/server.js"
     },
     {
-      "source": "/admin/(.*)",
-      "destination": "/classybet-backend/server.js"
+      "src": "/admin/(.*)",
+      "dest": "/classybet-backend/server.js"
     },
     {
-      "source": "/profile/(.*)",
-      "destination": "/classybet-backend/server.js"
+      "src": "/profile/(.*)",
+      "dest": "/classybet-backend/server.js"
     },
     {
-      "source": "/health",
-      "destination": "/classybet-backend/server.js"
+      "src": "/health",
+      "dest": "/classybet-backend/server.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/classybet/$1"
     }
   ]
 }
