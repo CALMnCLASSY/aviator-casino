@@ -393,7 +393,7 @@
     </div>
 
     <script>
-        const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:3001/api' : '/api';
+        const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:3001' : '';
         let authToken = localStorage.getItem('admin_token');
 
         // Check if already logged in
@@ -410,7 +410,7 @@
             const password = document.getElementById('login-password').value;
             
             try {
-                const response = await fetch(`${API_BASE}/admin/login`, {
+                const response = await fetch(`${API_BASE}/api/admin/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password })
@@ -447,7 +447,7 @@
         async function loadDashboardData() {
             try {
                 // Load dashboard stats
-                const statsResponse = await fetch(`${API_BASE}/admin/dashboard-stats`, {
+                const statsResponse = await fetch(`${API_BASE}/api/admin/dashboard-stats`, {
                     headers: { 'Authorization': `Bearer ${authToken}` }
                 });
                 
@@ -472,7 +472,7 @@
 
         async function loadPendingTransactions() {
             try {
-                const response = await fetch(`${API_BASE}/admin/transactions/pending`, {
+                const response = await fetch(`${API_BASE}/api/admin/transactions/pending`, {
                     headers: { 'Authorization': `Bearer ${authToken}` }
                 });
                 
@@ -507,7 +507,7 @@
 
         async function loadAllUsers() {
             try {
-                const response = await fetch(`${API_BASE}/admin/users`, {
+                const response = await fetch(`${API_BASE}/api/admin/users`, {
                     headers: { 'Authorization': `Bearer ${authToken}` }
                 });
                 
@@ -564,7 +564,7 @@
 
         async function toggleUserStatus(userId) {
             try {
-                const response = await fetch(`${API_BASE}/admin/users/${userId}/toggle-status`, {
+                const response = await fetch(`${API_BASE}/api/admin/users/${userId}/toggle-status`, {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${authToken}` }
                 });
@@ -589,7 +589,7 @@
             }
             
             try {
-                const response = await fetch(`${API_BASE}/admin/users/${userId}/balance`, {
+                const response = await fetch(`${API_BASE}/api/admin/users/${userId}/balance`, {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${authToken}`,
@@ -619,7 +619,7 @@
             if (!receiptNumber) return;
             
             try {
-                const response = await fetch(`${API_BASE}/payments/confirm-deposit`, {
+                const response = await fetch(`${API_BASE}/api/payments/confirm-deposit`, {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${authToken}`,

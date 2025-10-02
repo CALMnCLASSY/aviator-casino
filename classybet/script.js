@@ -2523,7 +2523,7 @@ function setupModalEventListeners() {
         const isLocal = window.location.hostname === 'localhost' || 
                        window.location.hostname === '127.0.0.1' ||
                        window.location.protocol === 'file:';
-        const adminUrl = isLocal ? 'http://localhost:3001/admin' : '/admin';
+        const adminUrl = isLocal ? 'http://localhost:3001/admin' : '/management.html';
         console.log('Admin URL:', adminUrl);
         window.open(adminUrl, '_blank');
     });

@@ -1,7 +1,8 @@
 // ClassyBet API Service
 class ClassyBetAPI {
     constructor() {
-        this.baseURL = 'http://localhost:3001/api';
+        this.baseURL = window.location.hostname === 'localhost' ? 'http://localhost:3001' : '';
+        this.apiPath = '/api';
         this.token = localStorage.getItem('user_token');
         this.user = null;
         this.gameRound = null;
@@ -29,7 +30,7 @@ class ClassyBetAPI {
     // Authentication methods
     async login(login, password) {
         try {
-            const response = await fetch(`${this.baseURL}/auth/login`, {
+            const response = await fetch(`${this.baseURL}${this.apiPath}/auth/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ login, password })
@@ -53,7 +54,7 @@ class ClassyBetAPI {
 
     async register(userData) {
         try {
-            const response = await fetch(`${this.baseURL}/auth/register`, {
+            const response = await fetch(`${this.baseURL}${this.apiPath}/auth/register`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(userData)
@@ -79,7 +80,7 @@ class ClassyBetAPI {
         if (!this.token) return { success: false, error: 'Not authenticated' };
 
         try {
-            const response = await fetch(`${this.baseURL}/auth/profile`, {
+            const response = await fetch(`${this.baseURL}${this.apiPath}/auth/profile`, {
                 headers: { 'Authorization': `Bearer ${this.token}` }
             });
 
@@ -119,7 +120,7 @@ class ClassyBetAPI {
         }
 
         try {
-            const response = await fetch(`${this.baseURL}/game/bet`, {
+            const response = await fetch(`${this.baseURL}${this.apiPath}/game/bet`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${this.token}`,
@@ -154,7 +155,7 @@ class ClassyBetAPI {
         }
 
         try {
-            const response = await fetch(`${this.baseURL}/game/cashout`, {
+            const response = await fetch(`${this.baseURL}${this.apiPath}/game/cashout`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${this.token}`,
@@ -188,7 +189,7 @@ class ClassyBetAPI {
         }
 
         try {
-            const response = await fetch(`${this.baseURL}/game/my-bet/${this.gameRound}`, {
+            const response = await fetch(`${this.baseURL}${this.apiPath}/game/my-bet/${this.gameRound}`, {
                 headers: { 'Authorization': `Bearer ${this.token}` }
             });
 
@@ -208,7 +209,7 @@ class ClassyBetAPI {
         if (!this.gameRound) return { success: false, error: 'No active round' };
 
         try {
-            const response = await fetch(`${this.baseURL}/game/active-bets/${this.gameRound}`);
+            const response = await fetch(`${this.baseURL}${this.apiPath}/game/active-bets/${this.gameRound}`);
             
             if (response.ok) {
                 const bets = await response.json();
@@ -227,7 +228,7 @@ class ClassyBetAPI {
         }
 
         try {
-            const response = await fetch(`${this.baseURL}/game/end-round`, {
+            const response = await fetch(`${this.baseURL}${this.apiPath}/game/end-round`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${this.token}`,
@@ -259,7 +260,7 @@ class ClassyBetAPI {
         }
 
         try {
-            const response = await fetch(`${this.baseURL}/payments/stk-push`, {
+            const response = await fetch(`${this.baseURL}${this.apiPath}/payments/stk-push`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${this.token}`,

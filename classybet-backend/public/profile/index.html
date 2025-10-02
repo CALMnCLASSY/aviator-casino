@@ -599,7 +599,7 @@
     </div>
 
     <script>
-        const API_BASE = 'http://localhost:3001/api';
+        const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:3001' : '';
         let authToken = localStorage.getItem('user_token');
         let currentUser = null;
 
@@ -616,7 +616,7 @@
             const password = document.getElementById('login-password').value;
             
             try {
-                const response = await fetch(`${API_BASE}/auth/login`, {
+                const response = await fetch(`${API_BASE}/api/auth/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ login, password })
@@ -648,7 +648,7 @@
             const password = document.getElementById('register-password').value;
             
             try {
-                const response = await fetch(`${API_BASE}/auth/register`, {
+                const response = await fetch(`${API_BASE}/api/auth/register`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username, email, phone, password })
@@ -678,7 +678,7 @@
             const phoneNumber = document.getElementById('deposit-phone').value;
             
             try {
-                const response = await fetch(`${API_BASE}/payments/stk-push`, {
+                const response = await fetch(`${API_BASE}/api/payments/stk-push`, {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${authToken}`,
@@ -705,7 +705,7 @@
 
         async function loadUserProfile() {
             try {
-                const response = await fetch(`${API_BASE}/auth/profile`, {
+                const response = await fetch(`${API_BASE}/api/auth/profile`, {
                     headers: { 'Authorization': `Bearer ${authToken}` }
                 });
                 

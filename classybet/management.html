@@ -549,7 +549,9 @@
     </div>
 
     <script>
+        // Environment-aware API base URL
         const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:3001' : '';
+        console.log('Admin API Base URL:', API_BASE || 'Current domain');
         let adminToken = null;
         let allUsers = [];
         let currentBalanceUserId = null;
