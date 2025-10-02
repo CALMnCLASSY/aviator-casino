@@ -4,6 +4,10 @@
     {
       "src": "classybet-backend/server.js",
       "use": "@vercel/node"
+    },
+    {
+      "src": "classybet/**",
+      "use": "@vercel/static"
     }
   ],
   "routes": [
