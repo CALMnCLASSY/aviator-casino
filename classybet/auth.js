@@ -3,7 +3,12 @@ class AuthManager {
     constructor() {
         // Always use same domain - no localhost detection needed
         // Backend will be hosted on same Vercel domain as serverless functions
-        this.apiBase = window.location.origin;
+        // Set API base URL depending on environment
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            this.apiBase = 'http://localhost:3001';
+        } else {
+            this.apiBase = window.location.origin;
+        }
         
         console.log('API Base URL:', this.apiBase);
         this.init();

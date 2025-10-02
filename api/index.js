@@ -56,12 +56,14 @@ try {
   const paymentRoutes = require('../classybet-backend/routes/payments');
   const setupRoutes = require('./setup');
 
-  // Use routes
+  // Use API routes first (more specific routes)
   app.use('/api/auth', authRoutes);
-  app.use('/admin', adminRoutes);
   app.use('/api/game', gameRoutes);
   app.use('/api/payments', paymentRoutes);
   app.use('/api/setup', setupRoutes);
+  
+  // Admin API routes (these need to come BEFORE the redirect)
+  app.use('/admin', adminRoutes);
 
 } catch (error) {
   console.error('Error loading routes:', error);
@@ -98,14 +100,14 @@ app.get('/api', (req, res) => {
   });
 });
 
-// Fallback for admin routes (redirect to management.html)
-app.get('/admin*', (req, res) => {
+// Specific redirect for admin panel access (only for exact /admin path)
+app.get('/admin', (req, res) => {
   res.redirect('/management.html');
 });
 
 // Profile route fallback
 app.get('/profile*', (req, res) => {
-  res.redirect('/admin');
+  res.redirect('/management.html');
 });
 
 // Catch all for API routes

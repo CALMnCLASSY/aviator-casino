@@ -214,9 +214,33 @@ router.post('/users/:userId/toggle-status',
   }
 );
 
+// Get all transactions (Admin only)
+router.get('/transactions', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    await connectToMongoDB();
+    
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 50;
+    const skip = (page - 1) * limit;
+
+    const transactions = await Transaction.find()
+      .populate('user', 'username email')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    res.json(transactions);
+  } catch (error) {
+    console.error('Get transactions error:', error);
+    res.status(500).json({ error: 'Failed to fetch transactions' });
+  }
+});
+
 // Get pending transactions (Admin only)
 router.get('/transactions/pending', authenticateToken, requireAdmin, async (req, res) => {
   try {
+    await connectToMongoDB();
+    
     const pendingTransactions = await Transaction.find({ status: 'pending' })
       .populate('user', 'username email phone')
       .sort({ createdAt: -1 });
