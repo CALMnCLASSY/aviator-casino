@@ -1,0 +1,20 @@
+# Ignore frontend folder - deployed separately on Netlify
+classybet/
+
+# Ignore backend folder - not needed for API
+classybet-backend/
+
+# Ignore predictor folder
+predictor/
+
+# Ignore documentation
+*.md
+!README.md
+
+# Ignore development files
+.vscode/
+.idea/
+*.log
+node_modules/
+
+# Only deploy /api folder for backend
