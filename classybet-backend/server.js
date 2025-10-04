@@ -47,6 +47,7 @@ const allowedOrigins = [
   'http://127.0.0.1:3001',
   'http://localhost:8080',
   'http://127.0.0.1:8080',
+  'https://classybet.netlify.app', // Frontend on Netlify
   'https://aviator-casino.vercel.app',
   'null' // For file:// protocol access
 ];
