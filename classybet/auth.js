@@ -98,7 +98,7 @@ class AuthManager {
 
     // Check for existing authentication
     checkExistingAuth() {
-        const token = localStorage.getItem('authToken');
+        const token = localStorage.getItem('user_token');
         if (token) {
             // Verify token is still valid
             fetch(`${this.apiBase}/api/auth/profile`, {
@@ -112,7 +112,7 @@ class AuthManager {
                     window.location.href = 'base.html';
                 } else {
                     // Token expired, remove it
-                    localStorage.removeItem('authToken');
+                    localStorage.removeItem('user_token');
                 }
             })
             .catch(error => {
@@ -177,8 +177,10 @@ class AuthManager {
 
             if (response.ok) {
                 // Store token and user data
-                localStorage.setItem('authToken', data.token);
+                localStorage.setItem('user_token', data.token);
                 localStorage.setItem('userData', JSON.stringify(data.user));
+                // Clear demo flag for real users
+                localStorage.removeItem('isDemo');
                 
                 this.showMessage(successElement, 'Login successful! Redirecting...');
                 
@@ -252,8 +254,10 @@ class AuthManager {
 
             if (response.ok) {
                 // Store token and user data
-                localStorage.setItem('authToken', data.token);
+                localStorage.setItem('user_token', data.token);
                 localStorage.setItem('userData', JSON.stringify(data.user));
+                // Clear demo flag for real users
+                localStorage.removeItem('isDemo');
                 
                 // Show User ID
                 document.getElementById('generatedUserId').textContent = data.user.userId;
@@ -308,7 +312,7 @@ class AuthManager {
                     demoUser.isDemo = true;
                     demoUser.balance = 3000;
                     
-                    localStorage.setItem('authToken', data.token);
+                    localStorage.setItem('user_token', data.token);
                     localStorage.setItem('userData', JSON.stringify(demoUser));
                     localStorage.setItem('isDemo', 'true');
                     
@@ -337,7 +341,7 @@ class AuthManager {
             // Create a simple demo token
             const demoToken = 'demo_' + btoa(JSON.stringify({userId: demoUser._id, isDemo: true}));
             
-            localStorage.setItem('authToken', demoToken);
+            localStorage.setItem('user_token', demoToken);
             localStorage.setItem('userData', JSON.stringify(demoUser));
             localStorage.setItem('isDemo', 'true');
             

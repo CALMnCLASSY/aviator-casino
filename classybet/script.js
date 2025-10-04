@@ -149,9 +149,9 @@ class AviatorGame {
             const mobileBets = document.getElementById('mobile-bets-section');
             
             if (isMobile) {
-                // Mobile: Hide sidebar, show mobile bets
-                if (leftSidebar) leftSidebar.style.display = 'none';
-                if (mobileBets) mobileBets.style.display = 'block';
+                // Mobile: Show sidebar at bottom, hide mobile bets section
+                if (leftSidebar) leftSidebar.style.display = 'block';
+                if (mobileBets) mobileBets.style.display = 'none';
             } else {
                 // Desktop: Show sidebar, hide mobile bets
                 if (leftSidebar) leftSidebar.style.display = 'flex';
@@ -454,6 +454,9 @@ class AviatorGame {
         
         this.messageElement.textContent = 'Wait for the next round';
         this.updateBalance();
+        
+        // Ensure buttons are in proper initial state
+        this.resetButtonStates();
     }
 
     setupEventListeners() {
@@ -524,11 +527,8 @@ class AviatorGame {
             if (chatToggleBtn) chatToggleBtn.classList.remove('active');
             
             if (isMobile()) {
-                // Show mobile bets section
-                const mobileBetsSection = document.getElementById('mobile-bets-section');
-                if (mobileBetsSection) {
-                    mobileBetsSection.style.display = 'block';
-                }
+                // On mobile, left sidebar is shown at bottom via CSS
+                // No need to manipulate mobile bets section
             }
         };
 
@@ -715,6 +715,12 @@ class AviatorGame {
         if (this.addBetButton) {
             this.addBetButton.style.display = 'none';
         }
+        
+        // Add data attribute for CSS spacing
+        document.body.setAttribute('data-second-bet-active', 'true');
+        
+        // Trigger height recalculation on mobile
+        this.adjustBettingControlsHeight();
     }
     
     hideSecondBet() {
@@ -722,10 +728,56 @@ class AviatorGame {
         if (this.addBetButton) {
             this.addBetButton.style.display = 'inline-flex';
         }
-        // Reset second bet if hidden
-        this.bets.bet2 = { placed: false, amount: 0, cashedOut: false };
+        
+        // Remove data attribute for CSS spacing
+        document.body.removeAttribute('data-second-bet-active');
+        
+        // Reset second bet completely if hidden
+        this.bets.bet2 = { placed: false, amount: 0, cashedOut: false, pending: false, multiplier: 0 };
         this.betButton2.textContent = 'BET';
         this.betButton2.className = 'bet-button';
+        this.betButton2.disabled = false;
+        
+        // Trigger height recalculation on mobile
+        this.adjustBettingControlsHeight();
+    }
+    
+    adjustBettingControlsHeight() {
+        // Force browser to recalculate layout on mobile
+        const bettingControls = document.getElementById('betting-controls');
+        if (bettingControls && window.innerWidth <= 768) {
+            // Trigger a reflow by accessing offsetHeight
+            const height = bettingControls.offsetHeight;
+            
+            // Update data attribute based on second bet panel visibility
+            const secondBetPanel = document.getElementById('second-bet-panel');
+            if (secondBetPanel && secondBetPanel.style.display !== 'none') {
+                document.body.setAttribute('data-second-bet-active', 'true');
+            } else {
+                document.body.removeAttribute('data-second-bet-active');
+            }
+            
+            // Force a layout recalculation
+            setTimeout(() => {
+                bettingControls.style.height = 'auto';
+            }, 10);
+        }
+    }
+    
+    resetButtonStates() {
+        // Ensure all buttons start in proper BET state
+        [this.betButton1, this.betButton2].forEach((button, index) => {
+            if (button) {
+                const betType = index === 0 ? 'bet1' : 'bet2';
+                const bet = this.bets[betType];
+                
+                if (!bet.placed && !bet.pending && !bet.cashedOut) {
+                    button.textContent = 'BET';
+                    button.className = 'bet-button';
+                    button.disabled = false;
+                }
+            }
+        });
     }
     
     toggleAutoFeatures(betNumber) {
@@ -760,14 +812,24 @@ class AviatorGame {
         const input = betType === 'bet1' ? this.betInput1 : this.betInput2;
         const button = betType === 'bet1' ? this.betButton1 : this.betButton2;
 
+        // Prevent any action if button is disabled (e.g., after cashout)
+        if (button.disabled || button.getAttribute('data-disabled-until-reset') === 'true') {
+            return;
+        }
+        
+        // Add cooldown check to prevent rapid successive clicks after cashout
+        if (bet.lastCashoutTime && (Date.now() - bet.lastCashoutTime) < 1000) {
+            return;
+        }
+
         if (bet.placed && !bet.cashedOut && this.gameState === 'flying') {
             // Cash out during flight
             this.cashOut(betType);
         } else if (bet.pending) {
             // Cancel pending bet
             this.cancelBet(betType);
-        } else {
-            // Place new bet
+        } else if (!bet.placed && !bet.cashedOut && !bet.pending) {
+            // Only allow new bet if no bet is active or pending
             this.placeBet(betType);
         }
     }
@@ -838,19 +900,27 @@ class AviatorGame {
             const bet = this.bets[betType];
             const button = betType === 'bet1' ? this.betButton1 : this.betButton2;
             
-            if (bet.placed && !bet.cashedOut && this.gameState === 'flying') {
+            if (bet.cashedOut) {
+                // Keep cashed out state visible
+                button.textContent = `CASHED OUT ${bet.multiplier?.toFixed(2)}x`;
+                button.className = 'bet-button cashed-out';
+                button.disabled = true;
+            } else if (bet.placed && this.gameState === 'flying') {
                 // Show cashout option during flight with orange color
                 const potentialWinnings = (bet.amount * this.counter).toFixed(2);
                 button.textContent = `CASH OUT ${this.formatCurrency(potentialWinnings)}`;
-                button.className = 'bet-button placed'; // Use 'placed' class for orange color
+                button.className = 'bet-button placed';
+                button.disabled = false;
             } else if (bet.pending) {
                 // Show cancel option for pending bets
                 button.textContent = 'CANCEL';
                 button.className = 'bet-button cancel';
-            } else if (!bet.placed && !bet.pending) {
-                // Show bet option when no bet is active
+                button.disabled = false;
+            } else if (!bet.placed && !bet.pending && this.gameState === 'waiting') {
+                // Show bet option when no bet is active and round is waiting
                 button.textContent = 'BET';
                 button.className = 'bet-button';
+                button.disabled = false;
             }
         });
     }
@@ -865,15 +935,27 @@ class AviatorGame {
         }
 
         const winnings = bet.amount * this.counter;
+        const originalAmount = bet.amount;
+        
+        // Mark as cashed out but keep bet data until round ends
         bet.cashedOut = true;
-        bet.placed = false;
         bet.multiplier = this.counter;
+        bet.winnings = winnings;
+        
+        // Add cooldown to prevent accidental clicks
+        bet.lastCashoutTime = Date.now();
 
         // Update balance using the proper method
         this.updatePlayerBalance(this.playerBalance + winnings, 'cashout');
 
-        button.textContent = 'BET';
-        button.className = 'bet-button';
+        // Update button to show cashed out state, NOT ready to bet again
+        button.textContent = `CASHED OUT ${this.counter.toFixed(2)}x`;
+        button.className = 'bet-button cashed-out';
+        button.disabled = true; // Prevent clicking until next round
+        
+        // Store the disabled state to prevent auto-triggering
+        button.setAttribute('data-disabled-until-reset', 'true');
+        
         this.messageElement.textContent = `Cashed out: ${this.formatCurrency(winnings)} (${this.counter.toFixed(2)}x)`;
         
         // Add to chat
@@ -1482,24 +1564,33 @@ class AviatorGame {
         // Set initial counter glow for reset (starts at 1.00x - blue glow)
         this.updateCounterGlow(counterElement, 1.0);
         
-        // Convert pending bets to active bets FIRST, then reset other bets
+        // Reset ALL betting states for fresh round
         Object.keys(this.bets).forEach(betType => {
             const bet = this.bets[betType];
             const button = betType === 'bet1' ? this.betButton1 : this.betButton2;
             
+            // Clear any cooldown timers and disabled states
+            bet.lastCashoutTime = null;
+            button.removeAttribute('data-disabled-until-reset');
+            button.disabled = false;
+            
             if (bet.pending) {
-                // Convert pending bet to active bet
+                // Convert pending bet to active bet for new round
                 bet.pending = false;
                 bet.placed = true;
                 bet.cashedOut = false;
+                bet.winnings = 0;
                 
                 button.textContent = `${this.formatCurrency(bet.amount)} PLACED`;
                 button.className = 'bet-button placed';
-            } else if (!bet.placed) {
-                // Reset empty bet slots
+            } else {
+                // Completely reset all other bets (including cashed out ones)
                 bet.placed = false;
                 bet.cashedOut = false;
+                bet.pending = false;
                 bet.amount = 0;
+                bet.multiplier = 0;
+                bet.winnings = 0;
                 
                 button.textContent = 'BET';
                 button.className = 'bet-button';
@@ -1510,7 +1601,7 @@ class AviatorGame {
         this.allBetsData = [];
         this.updateAllBetsDisplay();
         
-        // Execute auto-bets for new round
+        // Execute auto-bets for new round ONLY if auto-betting is enabled
         this.executeAutoBets();
         
         this.startGame();
@@ -2024,6 +2115,89 @@ function hidePreloader() {
     console.log('Preloader hidden, main container shown');
 }
 
+// Enhanced session management - Authentication check on page load
+async function checkAuthenticationOnLoad() {
+    // Check for new JWT token system
+    const authToken = localStorage.getItem('user_token');
+    const userData = localStorage.getItem('userData');
+    const isDemo = localStorage.getItem('isDemo') === 'true';
+    
+    if (authToken && userData) {
+        try {
+            const user = JSON.parse(userData);
+            
+            // Verify token is still valid (only for real users, not demo)
+            if (!isDemo) {
+                try {
+                    const isLocal = window.location.hostname === 'localhost' || 
+                                   window.location.hostname === '127.0.0.1' ||
+                                   window.location.protocol === 'file:';
+                    const apiBase = isLocal ? 'http://localhost:3001' : window.location.origin;
+                    console.log('Profile API Base URL:', apiBase);
+                    const response = await fetch(`${apiBase}/api/auth/profile`, {
+                        headers: {
+                            'Authorization': `Bearer ${authToken}`
+                        }
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('Token invalid');
+                    }
+                    
+                    // Update user data from server (this will have the real balance)
+                    const profileData = await response.json();
+                    localStorage.setItem('userData', JSON.stringify(profileData));
+                    updateUserDisplay(profileData);
+                    showUserView(profileData);
+                    console.log('Real user balance loaded:', profileData.balance);
+                } catch (serverError) {
+                    console.log('Server not available for profile check:', serverError.message);
+                    // Use stored user data if server is not available
+                    updateUserDisplay(user);
+                    showUserView(user);
+                }
+            } else {
+                // Demo user - preserve existing balance or set to 3000 if first time
+                if (!user.balance || user.balance <= 0) {
+                    user.balance = 3000;
+                }
+                user.isDemo = true;
+                localStorage.setItem('userData', JSON.stringify(user));
+                localStorage.setItem('isDemo', 'true');
+                updateUserDisplay(user);
+                showUserView(user);
+                showDemoIndicator();
+                console.log('Demo user balance preserved/initialized:', user.balance);
+            }
+            
+            console.log('User session restored:', user.username || user.userId);
+            
+        } catch (error) {
+            console.log('Session validation failed:', error);
+            clearAuthSession();
+            redirectToLogin();
+        }
+    } else {
+        // No authentication found, redirect to login
+        redirectToLogin();
+    }
+}
+
+function clearAuthSession() {
+    localStorage.removeItem('user_token');
+    localStorage.removeItem('userData');
+    localStorage.removeItem('isDemo');
+    // Also clear old token format
+    localStorage.removeItem('user_token');
+}
+
+function redirectToLogin() {
+    // Only redirect if not already on index page
+    if (!window.location.pathname.includes('index.html') && window.location.pathname !== '/') {
+        window.location.href = 'index.html';
+    }
+}
+
 // Initialize the game when the page loads
 document.addEventListener('DOMContentLoaded', () => {
     // Show preloader immediately
@@ -2101,89 +2275,6 @@ function setupAuthEventListeners() {
     classyBetAPI.on('onBetUpdate', (data) => {
         updateBetDisplay(data);
     });
-}
-
-// Enhanced session management - Authentication check on page load
-async function checkAuthenticationOnLoad() {
-    // Check for new JWT token system
-    const authToken = localStorage.getItem('authToken');
-    const userData = localStorage.getItem('userData');
-    const isDemo = localStorage.getItem('isDemo') === 'true';
-    
-    if (authToken && userData) {
-        try {
-            const user = JSON.parse(userData);
-            
-            // Verify token is still valid (only for real users, not demo)
-            if (!isDemo) {
-                try {
-                    const isLocal = window.location.hostname === 'localhost' || 
-                                   window.location.hostname === '127.0.0.1' ||
-                                   window.location.protocol === 'file:';
-                    const apiBase = isLocal ? 'http://localhost:3001' : window.location.origin;
-                    console.log('Profile API Base URL:', apiBase);
-                    const response = await fetch(`${apiBase}/api/auth/profile`, {
-                        headers: {
-                            'Authorization': `Bearer ${authToken}`
-                        }
-                    });
-                    
-                    if (!response.ok) {
-                        throw new Error('Token invalid');
-                    }
-                    
-                    // Update user data from server (this will have the real balance)
-                    const profileData = await response.json();
-                    localStorage.setItem('userData', JSON.stringify(profileData));
-                    updateUserDisplay(profileData);
-                    showUserView(profileData);
-                    console.log('Real user balance loaded:', profileData.balance);
-                } catch (serverError) {
-                    console.log('Server not available for profile check:', serverError.message);
-                    // Use stored user data if server is not available
-                    updateUserDisplay(user);
-                    showUserView(user);
-                }
-            } else {
-                // Demo user - preserve existing balance or set to 3000 if first time
-                if (!user.balance || user.balance <= 0) {
-                    user.balance = 3000;
-                }
-                user.isDemo = true;
-                localStorage.setItem('userData', JSON.stringify(user));
-                localStorage.setItem('isDemo', 'true');
-                updateUserDisplay(user);
-                showUserView(user);
-                showDemoIndicator();
-                console.log('Demo user balance preserved/initialized:', user.balance);
-            }
-            
-            console.log('User session restored:', user.username || user.userId);
-            
-        } catch (error) {
-            console.log('Session validation failed:', error);
-            clearAuthSession();
-            redirectToLogin();
-        }
-    } else {
-        // No authentication found, redirect to login
-        redirectToLogin();
-    }
-}
-
-function clearAuthSession() {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('userData');
-    localStorage.removeItem('isDemo');
-    // Also clear old token format
-    localStorage.removeItem('user_token');
-}
-
-function redirectToLogin() {
-    // Only redirect if not already on index page
-    if (!window.location.pathname.includes('index.html') && window.location.pathname !== '/') {
-        window.location.href = 'index.html';
-    }
 }
 
 function showDemoIndicator() {
@@ -2439,7 +2530,7 @@ function getCurrentUser() {
 }
 
 function isUserLoggedIn() {
-    return !!localStorage.getItem('authToken') && !!localStorage.getItem('userData');
+    return !!localStorage.getItem('user_token') && !!localStorage.getItem('userData');
 }
 
 function isDemo() {

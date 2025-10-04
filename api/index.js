@@ -303,6 +303,3 @@ app.use('/api/*', (req, res) => {
     availableRoutes: ['/api/auth/*', '/api/admin/*', '/api/game/*', '/api/payments/*', '/api/setup/*']
   });
 });
-
-// Export for Vercel
-module.exports = app;

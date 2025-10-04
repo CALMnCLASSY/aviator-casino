@@ -556,6 +556,28 @@
         let allUsers = [];
         let currentBalanceUserId = null;
 
+        // Check if user is already logged in as admin through regular auth
+        function checkExistingAdminAuth() {
+            const userToken = localStorage.getItem('user_token');
+            const userData = localStorage.getItem('userData');
+            
+            if (userToken && userData) {
+                try {
+                    const user = JSON.parse(userData);
+                    if (user && user.isAdmin) {
+                        console.log('✅ Admin user already authenticated through regular login');
+                        adminToken = userToken; // Use the regular user token
+                        showAdminDashboard();
+                        loadAdminData();
+                        return true;
+                    }
+                } catch (error) {
+                    console.error('Error parsing user data:', error);
+                }
+            }
+            return false;
+        }
+
         // Admin login form handler
         document.getElementById('admin-login-form').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -831,6 +853,16 @@
             element.style.display = 'block';
             setTimeout(() => element.style.display = 'none', 5000);
         }
+
+        // Initialize page - check for existing admin auth
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('📋 Admin management page loaded');
+            
+            // Check if already logged in as admin through regular auth
+            if (!checkExistingAdminAuth()) {
+                console.log('👤 No existing admin auth found, showing login form');
+            }
+        });
     </script>
 </body>
 </html>
