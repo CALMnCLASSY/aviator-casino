@@ -3,23 +3,26 @@
 ## 🌐 Live URLs
 
 - **Frontend (Netlify)**: https://classybet.netlify.app
-- **Backend API (Vercel)**: https://aviator-casino.vercel.app
+- **Frontend (Vercel)**: https://classybet-aviator.vercel.app
+- **Backend API (Render)**: https://aviator-casino.onrender.com
 
 ## 📁 Deployment Structure
 
-### Frontend (This Folder - Deploy to Netlify)
+### Frontend (This Folder - Deploy to Netlify or Vercel)
 - Static files: HTML, CSS, JavaScript
 - Location: `/classybet` folder
-- Platform: Netlify
-- URL: classybet.netlify.app
+- Platform: Netlify (primary) or Vercel (alternative)
+- URLs: 
+  - classybet.netlify.app
+  - classybet-aviator.vercel.app
 
-### Backend (Separate Deployment on Vercel)
+### Backend (Deployed on Render)
 - Express.js API server
 - MongoDB Atlas database
 - JWT authentication
-- Location: Root project with `/api` folder
-- Platform: Vercel
-- URL: aviator-casino.vercel.app
+- Location: `/classybet-backend` folder
+- Platform: Render.com
+- URL: aviator-casino.onrender.com
 
 ## 🚀 Netlify Deployment Steps
 
@@ -77,9 +80,11 @@ After deployment, verify:
 - [ ] All images and assets load properly
 - [ ] No CORS errors in browser console
 
-## 🔧 Backend Configuration (Already on Vercel)
+## 🔧 Backend Configuration (Already on Render)
 
-Your backend environment variables should be set in Vercel:
+Your backend environment variables should be set in Render Dashboard:
+
+**Backend URL:** https://aviator-casino.onrender.com
 
 ```env
 MONGODB_URI=mongodb+srv://...
@@ -87,13 +92,17 @@ JWT_SECRET=your-secret-key
 ADMIN_EMAIL=admin@example.com
 ADMIN_PASSWORD=secure-password
 NODE_ENV=production
+CLIENT_URL=https://classybet.netlify.app
 ```
+
+**Note:** Render free tier spins down after 15 minutes of inactivity. First request may take 30-60 seconds to wake up.
 
 ## 🐛 Troubleshooting
 
 ### Login Not Working
-- Check backend API is running: https://aviator-casino.vercel.app/health
-- Verify environment variables in Vercel dashboard
+- Check backend API is running: https://aviator-casino.onrender.com/health
+- **Important:** First request may take 30-60 seconds (Render free tier wake-up)
+- Verify environment variables in Render dashboard
 - Check browser console for CORS errors
 
 ### Assets Not Loading
@@ -129,7 +138,7 @@ To update the backend:
 
 ## 📞 API Endpoints
 
-All API calls go to: `https://aviator-casino.vercel.app`
+All API calls go to: `https://aviator-casino.onrender.com`
 
 - `POST /api/auth/login` - User login
 - `POST /api/auth/register` - User registration

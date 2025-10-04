@@ -39,6 +39,11 @@ admin123secure
 https://classybet.netlify.app
 ```
 
+## Variable 8: ALLOWED_ORIGINS (Optional - for extra CORS control)
+```
+https://classybet.netlify.app,https://classybet-aviator.vercel.app
+```
+
 ---
 
 ## 📋 HOW TO ADD IN RENDER:

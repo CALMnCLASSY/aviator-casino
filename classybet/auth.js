@@ -1,14 +1,15 @@
 // Authentication and registration system
 class AuthManager {
     constructor() {
-        // Backend is deployed separately on Vercel
-        // Frontend is on Netlify: classybet.netlify.app
-        // Backend API is on Vercel: aviator-casino.vercel.app
+        // Backend is deployed on Render.com
+        // Frontend on Netlify: classybet.netlify.app
+        // Frontend on Vercel: classybet-aviator.vercel.app
+        // Backend API on Render: aviator-casino.onrender.com
         if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
             this.apiBase = 'http://localhost:3001';
         } else {
-            // Production: Use Vercel backend URL
-            this.apiBase = 'https://aviator-casino.vercel.app';
+            // Production: Use Render backend URL
+            this.apiBase = 'https://aviator-casino.onrender.com';
         }
         
         console.log('API Base URL:', this.apiBase);
