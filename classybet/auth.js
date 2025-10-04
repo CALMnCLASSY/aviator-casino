@@ -1,16 +1,18 @@
 // Authentication and registration system
 class AuthManager {
     constructor() {
-        // Always use same domain - no localhost detection needed
-        // Backend will be hosted on same Vercel domain as serverless functions
-        // Set API base URL depending on environment
+        // Backend is deployed separately on Vercel
+        // Frontend is on Netlify: classybet.netlify.app
+        // Backend API is on Vercel: aviator-casino.vercel.app
         if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
             this.apiBase = 'http://localhost:3001';
         } else {
-            this.apiBase = window.location.origin;
+            // Production: Use Vercel backend URL
+            this.apiBase = 'https://aviator-casino.vercel.app';
         }
         
         console.log('API Base URL:', this.apiBase);
+        console.log('Frontend URL:', window.location.origin);
         this.init();
     }
 
