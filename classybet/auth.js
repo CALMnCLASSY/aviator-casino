@@ -1,16 +1,9 @@
 // Authentication and registration system
 class AuthManager {
     constructor() {
-        // Backend is deployed on Render.com
-        // Frontend on Netlify: classybet.netlify.app
-        // Frontend on Vercel: classybet-aviator.vercel.app
-        // Backend API on Render: aviator-casino.onrender.com
-        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-            this.apiBase = 'http://localhost:3001';
-        } else {
-            // Production: Use Render backend URL
-            this.apiBase = 'https://aviator-casino.onrender.com';
-        }
+        // Backend URL configuration
+        this.apiBase = 'http://localhost:3001'; // Development server
+        // For production, update this to your deployed backend URL
         
         console.log('API Base URL:', this.apiBase);
         console.log('Frontend URL:', window.location.origin);
@@ -100,10 +93,40 @@ class AuthManager {
     }
 
     // Check for existing authentication
+    async syncUserBalance() {
+        const token = localStorage.getItem('user_token');
+        if (!token) return;
+
+        try {
+            const response = await fetch(`${this.apiBase}/api/users/balance`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                const userData = localStorage.getItem('userData');
+                if (userData) {
+                    const user = JSON.parse(userData);
+                    user.balance = data.balance;
+                    localStorage.setItem('userData', JSON.stringify(user));
+                    // Update any displayed balance
+                    const balanceDisplay = document.getElementById('nav-balance');
+                    if (balanceDisplay) {
+                        balanceDisplay.textContent = `KES ${data.balance.toFixed(2)}`;
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Error syncing balance:', error);
+        }
+    }
+
     checkExistingAuth() {
         const token = localStorage.getItem('user_token');
         if (token) {
-            // Verify token is still valid
+            // Verify token is still valid and sync balance
             fetch(`${this.apiBase}/api/auth/profile`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -232,13 +255,26 @@ class AuthManager {
             return;
         }
 
+        // Clean up phone number first
+        const phone = document.getElementById('phone').value.trim().replace(/\D/g, '');
+        
+        // Format email properly
+        let email = document.getElementById('email').value.trim();
+        email = email ? email.toLowerCase() : null;
+        
         const formData = {
             username: document.getElementById('username').value.trim(),
-            email: document.getElementById('email').value.trim() || null,
+            email: email,
             password: password,
-            phone: document.getElementById('phone').value.trim(),
+            phone: phone,
             countryCode: document.getElementById('countryCode').value
         };
+        
+        console.log('Sending registration data:', {
+            ...formData,
+            password: '[REDACTED]',
+            phone: formData.phone ? formData.phone.replace(/\d(?=\d{4})/g, '*') : null
+        });
 
         try {
             this.setLoading(registerBtn, true);
@@ -254,6 +290,7 @@ class AuthManager {
             });
 
             const data = await response.json();
+            console.log('Registration response:', data);
 
             if (response.ok) {
                 // Store token and user data
@@ -274,13 +311,27 @@ class AuthManager {
                 }, 3000);
                 
             } else {
+                let errorMessage = 'Registration failed. Please try again.';
+                
+                // Handle validation errors
                 if (data.details && Array.isArray(data.details)) {
-                    // Show validation errors
-                    const errorMessages = data.details.map(detail => detail.msg).join(', ');
-                    this.showMessage(errorElement, errorMessages);
-                } else {
-                    this.showMessage(errorElement, data.error || 'Registration failed');
+                    errorMessage = data.details.map(detail => detail.msg).join('\n');
+                    console.error('Validation errors:', data.details);
+                } else if (data.errors && typeof data.errors === 'object') {
+                    // Handle Express-validator errors
+                    errorMessage = Object.values(data.errors).join('\n');
+                    console.error('Validation errors:', data.errors);
+                } else if (data.error && typeof data.error === 'string') {
+                    // Handle single error message
+                    errorMessage = data.error;
+                    console.error('Registration error:', data.error);
+                } else if (data.message) {
+                    // Handle message format
+                    errorMessage = data.message;
+                    console.error('Registration error:', data.message);
                 }
+                
+                this.showMessage(errorElement, errorMessage);
             }
 
         } catch (error) {
@@ -298,60 +349,28 @@ class AuthManager {
         try {
             this.setLoading(demoBtn, true);
 
-            // Try backend first, fall back to local demo if it fails
-            try {
-                const response = await fetch(`${this.apiBase}/api/auth/demo`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    // Store demo session data from backend
-                    const demoUser = data.user;
-                    demoUser.isDemo = true;
-                    demoUser.balance = 3000;
-                    
-                    localStorage.setItem('user_token', data.token);
-                    localStorage.setItem('userData', JSON.stringify(demoUser));
-                    localStorage.setItem('isDemo', 'true');
-                    
-                    console.log('Demo session created via backend:', demoUser.balance);
-                    
-                    // Redirect to game
-                    window.location.href = 'base.html';
-                    return;
+            const response = await fetch(`${this.apiBase}/api/auth/demo`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
                 }
-            } catch (backendError) {
-                console.log('Backend not available, creating local demo session');
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                // Store demo session data from backend
+                localStorage.setItem('user_token', data.token);
+                localStorage.setItem('userData', JSON.stringify(data.user));
+                localStorage.setItem('isDemo', 'true');
+                
+                console.log('Demo session created via backend');
+                
+                // Redirect to game
+                window.location.href = 'base.html';
+            } else {
+                throw new Error(data.error || 'Failed to create demo session');
             }
-            
-            // Fallback: Create local demo session
-            const demoUser = {
-                _id: 'demo_' + Date.now(),
-                userId: 'DEMO' + Math.random().toString(36).substr(2, 4).toUpperCase(),
-                username: 'Demo Player',
-                email: null,
-                phone: null,
-                isDemo: true,
-                balance: 3000,
-                createdAt: new Date().toISOString()
-            };
-            
-            // Create a simple demo token
-            const demoToken = 'demo_' + btoa(JSON.stringify({userId: demoUser._id, isDemo: true}));
-            
-            localStorage.setItem('user_token', demoToken);
-            localStorage.setItem('userData', JSON.stringify(demoUser));
-            localStorage.setItem('isDemo', 'true');
-            
-            console.log('Local demo session created:', demoUser.balance);
-            
-            // Redirect to game
-            window.location.href = 'base.html';
 
         } catch (error) {
             console.error('Demo error:', error);
@@ -380,13 +399,14 @@ class AuthManager {
     }
 
     showMessage(element, message) {
-        element.textContent = message;
+        // Replace newlines with HTML line breaks
+        element.innerHTML = message.replace(/\n/g, '<br>');
         element.style.display = 'block';
         
-        // Auto-hide after 5 seconds
+        // Auto-hide after 8 seconds for validation errors
         setTimeout(() => {
             this.hideMessage(element);
-        }, 5000);
+        }, 8000);
     }
 
     hideMessage(element) {

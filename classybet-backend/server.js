@@ -3,7 +3,6 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const helmet = require('helmet');
-const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 
 // Import routes
@@ -11,171 +10,62 @@ const authRoutes = require('./routes/auth');
 const paymentRoutes = require('./routes/payments');
 const adminRoutes = require('./routes/admin');
 const gameRoutes = require('./routes/game');
+const affiliateRoutes = require('./routes/affiliate');
 
 // Import models
 const User = require('./models/User');
 
 const app = express();
-const PORT = process.env.PORT || 3001;
 
-// Security middleware - Updated CSP to allow inline scripts for admin
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com"],
-      fontSrc: ["'self'", "https://cdnjs.cloudflare.com"],
-      imgSrc: ["'self'", "data:", "https:"],
-      connectSrc: ["'self'", "http://localhost:3001"]
-    }
-  }
-}));
-
-// Rate limiting
-const generalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100 // limit each IP to 100 requests per windowMs
-});
-
-app.use(generalLimiter);
-
-// CORS configuration - Updated to allow multiple origins
-const allowedOrigins = [
-  process.env.CLIENT_URL || 'http://localhost:3000',
-  'http://localhost:3001',
-  'http://127.0.0.1:3001',
-  'http://localhost:8080',
-  'http://127.0.0.1:8080',
-  'https://classybet.netlify.app', // Frontend on Netlify
-  'https://classybet-aviator.vercel.app', // Frontend on Vercel
-  'https://aviator-casino.vercel.app', // Old Vercel URL
-  'null' // For file:// protocol access
-];
-
+// Middleware
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: true }));
 app.use(cors({
-  origin: function (origin, callback) {
-    // Allow requests with no origin (mobile apps, curl, etc.)
-    if (!origin) return callback(null, true);
-    
-    // Allow file:// protocol for local development
-    if (origin === 'null' || origin === 'file://') return callback(null, true);
-    
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
-    
-    // Allow any localhost origin
-    if (origin && origin.includes('localhost')) {
-      return callback(null, true);
-    }
-    
-    // In development, allow all origins
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('CORS allowing origin in development:', origin);
-      return callback(null, true);
-    }
-    
-    const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-    return callback(new Error(msg), false);
-  },
-  credentials: true
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+app.use(helmet({
+  crossOriginEmbedderPolicy: false,
+  contentSecurityPolicy: false
 }));
 
-// Body parsing middleware
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-
-// Logging
-if (process.env.NODE_ENV !== 'production') {
-  app.use(morgan('dev'));
-}
-
-// Connect to MongoDB
-if (!process.env.MONGODB_URI) {
-  console.error('❌ MONGODB_URI is not set');
-} else {
-  console.log('Connecting to MongoDB...');
-  mongoose.connect(process.env.MONGODB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-    serverSelectionTimeoutMS: 10000, // 10 seconds timeout for serverless
-    maxPoolSize: 10 // Limit connection pool for serverless
-  })
-  .then(() => {
-    console.log('✅ Connected to MongoDB');
-    initializeAdmin();
-  })
-  .catch(err => {
-    console.error('❌ MongoDB connection error:', err.message);
-    // Don't exit in serverless environment
-    if (process.env.NODE_ENV !== 'production') {
-      process.exit(1);
-    }
-  });
-}
-
-// Initialize admin user
-async function initializeAdmin() {
-  try {
-    const adminExists = await User.findOne({ isAdmin: true });
-    
-    if (!adminExists) {
-      const adminUser = new User({
-        username: 'admin',
-        email: process.env.ADMIN_EMAIL || 'admin@classybet.com',
-        password: process.env.ADMIN_PASSWORD || 'admin123',
-        phone: '254700000000',
-        isAdmin: true,
-        balance: 0
-      });
-
-      await adminUser.save();
-      console.log('✅ Admin user created');
-      console.log(`📧 Admin email: ${adminUser.email}`);
-      console.log(`🔑 Admin password: ${process.env.ADMIN_PASSWORD || 'admin123'}`);
-    }
-  } catch (error) {
-    console.error('❌ Error creating admin user:', error);
-  }
-}
-
-// Root endpoint
-app.get('/', (req, res) => {
-  res.json({
-    message: 'ClassyBet Aviator Backend API',
-    status: 'OK',
-    version: '1.0.0',
-    endpoints: {
-      health: '/health',
-      admin: '/admin',
-      profile: '/profile',
-      api: '/api'
-    },
-    timestamp: new Date().toISOString()
-  });
+// Rate limiting for all endpoints
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 200,
+  standardHeaders: true,
+  legacyHeaders: false
 });
+app.use(limiter);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
+  res.json({
+    status: 'ok',
     timestamp: new Date().toISOString(),
-    uptime: process.uptime()
+    environment: process.env.NODE_ENV || 'development'
   });
 });
+
+// Connect to MongoDB
+const { connectToMongoDB } = require('./utils/database');
+connectToMongoDB().catch((error) => {
+  console.error('Failed to connect to MongoDB during startup:', error.message);
+});
+
+const PORT = process.env.PORT || 4000;
 
 // API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/game', gameRoutes);
+app.use('/api/affiliates', affiliateRoutes);
 
 // Serve static files for admin and profile pages
 app.use('/admin', express.static('public/admin'));
 app.use('/profile', express.static('public/profile'));
-
-// 404 handler
 app.use('*', (req, res) => {
   res.status(404).json({ error: 'Endpoint not found' });
 });

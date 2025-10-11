@@ -292,7 +292,7 @@ input[type=number] {
     justify-content: space-between;
     align-items: center;
     background: #1a1a1a;
-    padding: 15px 20px;
+    padding: 8px 20px; /* Reduced padding from 15px to 8px */
     border-bottom: 2px solid #333; /* Grey separator line */
     min-height: 60px;
     z-index: 100;
@@ -470,8 +470,29 @@ input[type=number] {
 
 .bet-list {
     overflow-y: auto;
+    overflow-x: hidden;
     flex: 1;
-    min-height: 0; /* Important for flex child with overflow */
+    max-height: calc(100vh - 400px); /* Ensure scrolling works */
+    padding-right: 5px;
+}
+
+/* Custom scrollbar for bet-list */
+.bet-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.bet-list::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 3px;
+}
+
+.bet-list::-webkit-scrollbar-thumb {
+    background: rgba(48, 252, 190, 0.3);
+    border-radius: 3px;
+}
+
+.bet-list::-webkit-scrollbar-thumb:hover {
+    background: rgba(48, 252, 190, 0.5);
 }
 
 .bet-list.expanded {
@@ -492,7 +513,29 @@ input[type=number] {
 /* All Bets Area */
 #all-bets { /* allow to fill sidebar area fully */
     overflow-y: auto;
+    overflow-x: hidden;
     flex: 1;
+    max-height: calc(100vh - 400px); /* Ensure there's a height constraint for scrolling */
+    padding-right: 5px; /* Space for scrollbar */
+}
+
+/* Custom scrollbar for all-bets */
+#all-bets::-webkit-scrollbar {
+    width: 6px;
+}
+
+#all-bets::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 3px;
+}
+
+#all-bets::-webkit-scrollbar-thumb {
+    background: rgba(48, 252, 190, 0.3);
+    border-radius: 3px;
+}
+
+#all-bets::-webkit-scrollbar-thumb:hover {
+    background: rgba(48, 252, 190, 0.5);
 }
 
 .show-more-bets-btn:hover {
@@ -622,7 +665,7 @@ input[type=number] {
 }
 
 .game-logo .aviator-logo-image {
-    height: 35px;
+    height: 28px; /* Reduced from 35px */
     filter: brightness(1.2);
 }
 
@@ -1396,6 +1439,20 @@ input[type=number] {
     text-align: center;
 }
 
+#counter.crashed .final-multiplier {
+    display: inline-block;
+    animation: redGlowPulse 1s ease-in-out infinite;
+}
+
+@keyframes redGlowPulse {
+    0%, 100% {
+        text-shadow: 0 0 10px rgba(255, 68, 68, 0.7);
+    }
+    50% {
+        text-shadow: 0 0 20px rgba(255, 68, 68, 0.9);
+    }
+}
+
 #counter.waiting {
     color: #ffa500;
     background: transparent;
@@ -1928,10 +1985,10 @@ input[type=number] {
 .bet-button {
     width: 100%;
     padding: 16px 20px;
-    background: linear-gradient(135deg, #30fcbe 0%, #28d1a0 100%);
-    border: 1px solid #30fcbe;
+    background: linear-gradient(135deg, #36cb12 0%, #36cb13 100%);
+    border: 1px solid #36cb12;
     border-radius: 8px;
-    color: #0a0f1a;
+    color: #f7f8faff;
     font-size: 14px;
     font-weight: 700;
     text-transform: uppercase;
@@ -3247,7 +3304,7 @@ input[type=number] {
 }
 
 .logout-btn {
-    background: linear-gradient(135deg, #fb024c, #ff4081);
+    background: linear-gradient(135deg, #6d565d, #8f5a6c);
     border: none;
 }
 
@@ -3794,5 +3851,339 @@ input[type=number] {
     .bet-player img.avatar {
         width: 20px;
         height: 20px;
+    }
+}
+
+/* Modal Styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.modal-dialog {
+    max-width: 600px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-dialog.modal-lg {
+    max-width: 800px;
+}
+
+.modal-dialog.modal-xl {
+    max-width: 1200px;
+}
+
+.modal-content {
+    background: #1a1a1a;
+    border-radius: 15px;
+    border: 1px solid #333;
+    overflow: hidden;
+}
+
+.modal-header {
+    background: #2a2a2a;
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #333;
+}
+
+.modal-header span {
+    color: #30fcbe;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.modal-header .close {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+}
+
+.modal-body {
+    padding: 20px;
+    color: #fff;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.modal-footer {
+    padding: 15px 20px;
+    background: #2a2a2a;
+    border-top: 1px solid #333;
+    color: #ccc;
+    text-align: center;
+}
+
+/* Game Rules Modal Specific */
+.rules-list-title {
+    color: #30fcbe;
+    font-weight: 600;
+    margin-bottom: 10px;
+    font-size: 16px;
+}
+
+.list-group {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.list-group-item {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid #333;
+    padding: 12px 15px;
+    margin-bottom: 5px;
+    border-radius: 8px;
+    color: #ccc;
+    line-height: 1.5;
+}
+
+/* How to Play Modal */
+.youtube {
+    margin: 20px 0;
+}
+
+.embed-responsive {
+    position: relative;
+    width: 100%;
+    height: 0;
+    padding-bottom: 56.25%;
+}
+
+.embed-responsive-item {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.steps-container {
+    display: flex;
+    gap: 20px;
+    margin: 20px 0;
+    flex-wrap: wrap;
+}
+
+.step {
+    flex: 1;
+    min-width: 200px;
+    text-align: center;
+}
+
+.step h3 {
+    background: #30fcbe;
+    color: #000;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 15px;
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.step-text {
+    color: #ccc;
+    line-height: 1.5;
+}
+
+/* Game Limits Modal */
+.limits-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.limit-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    background: rgba(48, 252, 190, 0.1);
+    border-radius: 10px;
+    border-left: 4px solid #30fcbe;
+}
+
+.limit-label {
+    color: #ccc;
+    font-weight: 500;
+}
+
+.limit-value {
+    color: #30fcbe;
+    font-weight: 600;
+    font-size: 18px;
+}
+
+/* Provably Fair Modal */
+.client-seed, .server-seed {
+    margin: 20px 0;
+}
+
+.client-seed-title-main {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #30fcbe;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.client-seed-title-sub {
+    color: #ccc;
+    font-size: 14px;
+    margin-bottom: 15px;
+}
+
+.client-seed-type {
+    margin: 15px 0;
+    padding: 15px;
+    border: 1px solid #333;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.client-seed-type.active {
+    border-color: #30fcbe;
+    background: rgba(48, 252, 190, 0.1);
+}
+
+.key-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #2a2a2a;
+    padding: 10px;
+    border-radius: 5px;
+    margin-top: 10px;
+}
+
+.key {
+    flex: 1;
+    font-family: monospace;
+    word-break: break-all;
+}
+
+.current {
+    color: #30fcbe;
+}
+
+.btn-change {
+    background: #30fcbe;
+    color: #000;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 5px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* Free Bets Modal */
+.free-bet-item {
+    margin: 20px 0;
+}
+
+.cash-block {
+    background: rgba(48, 252, 190, 0.1);
+    border: 1px solid #30fcbe;
+    padding: 15px;
+    border-radius: 8px;
+}
+
+.cash-block.selected {
+    background: rgba(48, 252, 190, 0.2);
+}
+
+.main-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.radio {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #30fcbe;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.dot {
+    width: 10px;
+    height: 10px;
+    background: #30fcbe;
+    border-radius: 50%;
+}
+
+.free-bets-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 20px 0;
+    color: #30fcbe;
+    font-weight: 600;
+}
+
+.archive-btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    color: #ccc;
+}
+
+.content__none {
+    text-align: center;
+    padding: 40px 20px;
+    color: #ccc;
+}
+
+.none-text {
+    margin-top: 20px;
+    font-size: 16px;
+}
+
+/* Mobile responsiveness for modals */
+@media (max-width: 768px) {
+    .modal-dialog {
+        margin: 10px;
+        max-height: 95vh;
+    }
+    
+    .modal-dialog.modal-lg,
+    .modal-dialog.modal-xl {
+        max-width: 100%;
+    }
+    
+    .steps-container {
+        flex-direction: column;
+    }
+    
+    .limit-item {
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
     }
 }

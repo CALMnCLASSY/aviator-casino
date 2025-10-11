@@ -21,7 +21,7 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: false,
     unique: true,
-    sparse: true, // Allows multiple null values
+    sparse: true,
     trim: true,
     lowercase: true
   },
@@ -53,7 +53,7 @@ const userSchema = new mongoose.Schema({
   },
   balance: {
     type: Number,
-    default: function() {
+    default: function () {
       return this.isDemo ? 3000 : 0;
     },
     min: 0
@@ -62,15 +62,57 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  isAffiliate: {
+    type: Boolean,
+    default: false
+  },
+  promoCode: {
+    type: String,
+    unique: true,
+    sparse: true,
+    uppercase: true,
+    trim: true
+  },
+  referredBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null,
+    index: true
+  },
+  affiliateStats: {
+    referredUsers: {
+      type: Number,
+      default: 0
+    },
+    totalDeposits: {
+      type: Number,
+      default: 0
+    },
+    totalLosses: {
+      type: Number,
+      default: 0
+    },
+    affiliateBalance: {
+      type: Number,
+      default: 0
+    },
+    pendingPayout: {
+      type: Number,
+      default: 0
+    },
+    lastPayoutAt: {
+      type: Date,
+      default: null
+    }
+  },
   isVerified: {
     type: Boolean,
-    default: true // For simplicity, auto-verify users
+    default: true
   },
   avatar: {
     type: String,
     default: 'default-avatar.png'
   },
-  // Betting statistics
   totalBets: {
     type: Number,
     default: 0
@@ -91,7 +133,6 @@ const userSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
-  // Account status
   isActive: {
     type: Boolean,
     default: true
@@ -107,99 +148,122 @@ const userSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Generate userId and hash password before saving
-userSchema.pre('save', async function(next) {
-  try {
-    // Generate userId if new user or existing user without userId
-    if (!this.userId) {
-      this.userId = await this.constructor.generateUserId();
+userSchema.index({ userId: 1 }, { unique: true, sparse: true });
+userSchema.index({ fullPhone: 1 }, { unique: true, sparse: true });
+userSchema.index({ promoCode: 1 }, { unique: true, sparse: true });
+
+async function generateUniqueUserId(model) {
+  const prefix = 'CB';
+  const randomPart = () => Math.random().toString(36).substring(2, 6).toUpperCase();
+
+  for (let attempt = 0; attempt < 10; attempt += 1) {
+    const candidate = `${prefix}${randomPart()}${randomPart()}`;
+    const existing = await model.findOne({ userId: candidate }).lean();
+    if (!existing) {
+      return candidate;
     }
-    
-    // Set fullPhone
-    if (this.countryCode && this.phone) {
-      this.fullPhone = `${this.countryCode}${this.phone}`;
-    } else if (this.phone && !this.fullPhone) {
-      // Handle existing users - assume +254 if no country code
-      this.fullPhone = this.phone.startsWith('+') ? this.phone : `+254${this.phone}`;
-      if (!this.countryCode) {
-        this.countryCode = '+254';
-      }
-    }
-    
-    // Hash password if modified
-    if (this.isModified('password')) {
-      const salt = await bcrypt.genSalt(12);
-      this.password = await bcrypt.hash(this.password, salt);
-    }
-    
-    next();
-  } catch (error) {
-    next(error);
   }
+
+  // Fallback to timestamp-based ID to avoid infinite loop
+  return `${prefix}${Date.now().toString(36).toUpperCase()}`;
+}
+
+userSchema.pre('validate', async function (next) {
+  if (!this.fullPhone && this.countryCode && this.phone) {
+    this.fullPhone = `${this.countryCode}${this.phone}`;
+  }
+
+  if (!this.userId) {
+    this.userId = await generateUniqueUserId(this.constructor);
+  }
+
+  next();
 });
 
-// Static method to generate unique userId
-userSchema.statics.generateUserId = async function() {
-  let userId;
-  let exists = true;
-  
-  while (exists) {
-    // Generate 8-character alphanumeric ID
-    userId = Math.random().toString(36).substr(2, 4).toUpperCase() + 
-             Math.random().toString(36).substr(2, 4).toUpperCase();
-    
-    // Check if it exists
-    const existingUser = await this.findOne({ userId });
-    exists = !!existingUser;
+userSchema.pre('save', async function (next) {
+  if (this.isModified('password')) {
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
   }
-  
-  return userId;
+
+  if (this.isModified('phone') || this.isModified('countryCode')) {
+    this.fullPhone = `${this.countryCode}${this.phone}`;
+  }
+
+  // Ensure demo balance stays consistent
+  if (this.isDemo && (this.isModified('isDemo') || this.isNew) && !this.isModified('balance')) {
+    this.balance = 3000;
+  }
+
+  next();
+});
+
+userSchema.methods.comparePassword = function comparePassword(candidatePassword) {
+  return bcrypt.compare(candidatePassword, this.password);
 };
 
-// Compare password method
-userSchema.methods.comparePassword = async function(candidatePassword) {
-  return await bcrypt.compare(candidatePassword, this.password);
-};
-
-// Update last login
-userSchema.methods.updateLastLogin = async function() {
+userSchema.methods.updateLastLogin = async function updateLastLogin() {
   this.lastLogin = new Date();
-  this.loginCount += 1;
-  return await this.save();
+  this.loginCount = (this.loginCount || 0) + 1;
+  await this.save({ validateBeforeSave: false });
 };
 
-// Get user profile data (excluding sensitive info)
-userSchema.methods.getPublicProfile = function() {
-  const userObject = this.toObject();
-  delete userObject.password;
-  delete userObject.__v;
-  return userObject;
-};
-
-// Static method to create demo session
-userSchema.statics.createDemoSession = function() {
+userSchema.methods.getPublicProfile = function getPublicProfile() {
   return {
-    _id: 'demo_' + Date.now(),
-    userId: 'DEMO' + Math.random().toString(36).substr(2, 4).toUpperCase(),
+    id: this._id,
+    userId: this.userId,
+    username: this.username,
+    email: this.email,
+    phone: this.phone,
+    fullPhone: this.fullPhone,
+    balance: this.balance,
+    isDemo: this.isDemo,
+    isAdmin: this.isAdmin,
+    isAffiliate: this.isAffiliate,
+    promoCode: this.promoCode,
+    referralStats: this.affiliateStats,
+    lastLogin: this.lastLogin,
+    loginCount: this.loginCount,
+    createdAt: this.createdAt,
+    updatedAt: this.updatedAt
+  };
+};
+
+userSchema.methods.toJSON = function toJSON() {
+  const obj = this.getPublicProfile();
+  obj._id = obj.id;
+  return obj;
+};
+
+userSchema.statics.createDemoSession = function createDemoSession() {
+  const randomSuffix = Math.random().toString(36).substring(2, 6).toUpperCase();
+  return {
+    _id: `demo_${randomSuffix}`,
+    userId: `DEMO${randomSuffix}`,
     username: 'Demo Player',
     email: null,
     phone: null,
-    countryCode: '+254',
     fullPhone: null,
     isDemo: true,
     balance: 3000,
-    isActive: true,
-    isVerified: true,
-    totalBets: 0,
-    totalWins: 0,
-    totalLosses: 0,
-    biggestWin: 0,
-    biggestMultiplier: 0,
-    loginCount: 1,
+    isAdmin: false,
+    isAffiliate: false,
+    promoCode: null,
+    referralStats: {
+      referredUsers: 0,
+      totalDeposits: 0,
+      totalLosses: 0,
+      affiliateBalance: 0,
+      pendingPayout: 0,
+      lastPayoutAt: null
+    },
     lastLogin: new Date(),
+    loginCount: 0,
     createdAt: new Date(),
     updatedAt: new Date()
   };
 };
 
-module.exports = mongoose.model('User', userSchema);
+const User = mongoose.models.User || mongoose.model('User', userSchema);
+
+module.exports = User;

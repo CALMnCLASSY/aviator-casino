@@ -1,778 +1,863 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ClassyBet Aviator - Premium Gaming Experience</title>
-    <meta name="description" content="Join ClassyBet Aviator - The ultimate aviation-themed gaming experience with real-time multiplayer action">
-    <link rel="icon" type="image/svg+xml" href="images/classybetaviator-logo.svg">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script src="country-codes.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        :root {
-            --primary-green: #30fcbe;
-            --primary-dark: #1e9e6b;
-            --background-dark: #111111;
-            --card-background: rgba(17, 17, 17, 0.95);
-            --border-color: #333;
-            --text-light: #ccc;
-            --text-muted: #888;
-            --error-color: #ff6b6b;
-            --success-color: #51cf66;
-            --warning-color: #ffa726;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(135deg, #000000 0%, #1a1a1a 50%, #000000 100%);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            position: relative;
-            overflow-x: hidden;
-        }
-        
-        /* Aviator Logo in body background */
-        body::before {
-            content: '';
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-family: "Arial Black", sans-serif;
-            font-size: 120px;
-            font-weight: 900;
-            color: rgba(48, 252, 190, 0.05);
-            text-transform: uppercase;
-            letter-spacing: 8px;
-            z-index: 0;
-            pointer-events: none;
-            white-space: nowrap;
-        }
-        
-        /* Enhanced background effects */
-        body::after {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: 
-                radial-gradient(circle at 20% 50%, rgba(48, 252, 190, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, rgba(255, 107, 107, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 40% 80%, rgba(255, 176, 55, 0.1) 0%, transparent 50%);
-            z-index: 0;
-            pointer-events: none;
-        }
-        
-        /* Company logo in header */
-        .header-logo {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            z-index: 1000;
-            font-size: 18px;
-            font-weight: 700;
-            color: var(--primary-green);
-        }
-        
-        .header-logo img {
-            height: 40px;
-            width: auto;
-        }
-        
-        .auth-container {
-            position: relative;
-            z-index: 1;
-            background: var(--card-background);
-            border: 1px solid var(--border-color);
-            border-radius: 20px;
-            padding: 40px;
-            width: 100%;
-            max-width: 450px;
-            backdrop-filter: blur(20px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-            animation: fadeInUp 0.8s ease-out;
-        }
-        
-        .logo-section {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        
-        .company-logo {
-            width: 120px;
-            height: 60px;
-            margin: 0 auto 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .brand-title {
-            font-size: 16px;
-            font-weight: 500;
-            margin-bottom: 8px;
-            color: var(--text-light);
-        }
-        
-        .brand-subtitle {
-            color: var(--text-muted);
-            font-size: 14px;
-            margin-bottom: 30px;
-        }
-        
-        /* Tab system */
-        .auth-tabs {
-            display: flex;
-            margin-bottom: 30px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 10px;
-            padding: 4px;
-        }
-        
-        .tab-btn {
-            flex: 1;
-            padding: 12px;
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            font-size: 14px;
-            font-weight: 500;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        
-        .tab-btn.active {
-            background: var(--primary-green);
-            color: #111;
-            font-weight: 600;
-        }
-        
-        .tab-content {
-            display: none;
-        }
-        
-        .tab-content.active {
-            display: block;
-        }
-        
-        .form-group {
-            margin-bottom: 20px;
-        }
-        
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            color: var(--text-light);
-            font-weight: 500;
-            font-size: 14px;
-        }
-        
-        .form-group .required {
-            color: var(--error-color);
-        }
-        
-        .input-wrapper {
-            position: relative;
-        }
-        
-        .input-wrapper i {
-            position: absolute;
-            left: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #666;
-            font-size: 16px;
-        }
-        
-        .form-input {
-            width: 100%;
-            padding: 15px 15px 15px 45px;
-            background: #222;
-            border: 1px solid var(--border-color);
-            border-radius: 10px;
-            color: #fff;
-            font-size: 16px;
-            transition: all 0.3s ease;
-            outline: none;
-        }
-        
-        .form-input:focus {
-            border-color: var(--primary-green);
-            box-shadow: 0 0 0 3px rgba(48, 252, 190, 0.1);
-        }
-        
-        .form-input::placeholder {
-            color: #666;
-        }
-        
-        .form-input.error {
-            border-color: var(--error-color);
-        }
-        
-        /* Phone input with country code */
-        .phone-input-wrapper {
-            display: flex;
-            gap: 1px;
-        }
-        
-        .country-select {
-            background: #222;
-            border: 1px solid var(--border-color);
-            border-radius: 10px 0 0 10px;
-            color: #fff;
-            padding: 15px 10px;
-            font-size: 16px;
-            min-width: 120px;
-            cursor: pointer;
-            outline: none;
-        }
-        
-        .country-select:focus {
-            border-color: var(--primary-green);
-        }
-        
-        .phone-input {
-            flex: 1;
-            border-radius: 0 10px 10px 0;
-            border-left: none;
-            padding-left: 15px;
-        }
-        
-        .checkbox-group {
-            display: flex;
-            align-items: flex-start;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-        
-        .checkbox-group input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            accent-color: var(--primary-green);
-            margin-top: 2px;
-        }
-        
-        .checkbox-group label {
-            font-size: 13px;
-            line-height: 1.4;
-            color: var(--text-light);
-            margin-bottom: 0;
-        }
-        
-        .checkbox-group a {
-            color: var(--primary-green);
-            text-decoration: none;
-        }
-        
-        .checkbox-group a:hover {
-            text-decoration: underline;
-        }
-        
-        .password-toggle {
-            position: absolute;
-            right: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: none;
-            border: none;
-            color: #666;
-            cursor: pointer;
-            font-size: 16px;
-            transition: color 0.2s;
-        }
-        
-        .password-toggle:hover {
-            color: var(--primary-green);
-        }
-        
-        .auth-btn {
-            width: 100%;
-            padding: 15px;
-            background: linear-gradient(135deg, var(--primary-green), var(--primary-dark));
-            border: none;
-            border-radius: 10px;
-            color: #111;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-        
-        .auth-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(48, 252, 190, 0.3);
-        }
-        
-        .auth-btn:active {
-            transform: translateY(0);
-        }
-        
-        .auth-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-        
-        .demo-section {
-            text-align: center;
-            margin-bottom: 20px;
-            padding: 20px 0;
-            border-top: 1px solid var(--border-color);
-        }
-        
-        .demo-btn {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid var(--border-color);
-            color: var(--text-light);
-            padding: 12px 24px;
-            border-radius: 10px;
-            font-size: 14px;
-            cursor: pointer;
-            transition: all 0.2s;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            font-weight: 500;
-        }
-        
-        .demo-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
-            color: #fff;
-            transform: translateY(-1px);
-        }
-        
-        .demo-info {
-            font-size: 12px;
-            color: var(--text-muted);
-            margin-top: 8px;
-        }
-        
-        .error-message, .success-message {
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            font-size: 14px;
-            display: none;
-            animation: slideIn 0.3s ease-out;
-        }
-        
-        .error-message {
-            background: rgba(255, 107, 107, 0.1);
-            border: 1px solid rgba(255, 107, 107, 0.3);
-            color: var(--error-color);
-        }
-        
-        .success-message {
-            background: rgba(81, 207, 102, 0.1);
-            border: 1px solid rgba(81, 207, 102, 0.3);
-            color: var(--success-color);
-        }
-        
-        /* Modal styles */
-        .modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 2000;
-            padding: 20px;
-        }
-        
-        .modal-content {
-            background: var(--card-background);
-            border-radius: 15px;
-            padding: 30px;
-            max-width: 500px;
-            width: 100%;
-            max-height: 80vh;
-            overflow-y: auto;
-            animation: modalSlideIn 0.3s ease-out;
-        }
-        
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-        
-        .modal-title {
-            font-size: 20px;
-            font-weight: 600;
-            color: var(--primary-green);
-        }
-        
-        .modal-close {
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            font-size: 24px;
-            cursor: pointer;
-            transition: color 0.2s;
-        }
-        
-        .modal-close:hover {
-            color: #fff;
-        }
-        
-        .modal-body {
-            line-height: 1.6;
-            color: var(--text-light);
-        }
-        
-        .modal-body h3 {
-            color: var(--primary-green);
-            margin: 20px 0 10px 0;
-        }
-        
-        .modal-body p {
-            margin-bottom: 15px;
-        }
-        
-        /* Responsive design */
-        @media (max-width: 480px) {
-            .auth-container {
-                margin: 20px;
-                padding: 30px 25px;
-            }
-            
-            .company-logo {
-                width: 100px;
-                height: 50px;
-            }
-            
-            .phone-input-wrapper {
-                flex-direction: column;
-                gap: 10px;
-            }
-            
-            .country-select {
-                border-radius: 10px;
-                min-width: auto;
-            }
-            
-            .phone-input {
-                border-radius: 10px;
-                border-left: 1px solid var(--border-color);
-            }
-            
-            .header-logo {
-                position: relative;
-                top: auto;
-                left: auto;
-                margin-bottom: 20px;
-            }
-        }
-        
-        /* Animations */
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateX(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-        
-        @keyframes modalSlideIn {
-            from {
-                opacity: 0;
-                transform: scale(0.9) translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1) translateY(0);
-            }
-        }
-        
-        /* User ID display */
-        .user-id-info {
-            background: rgba(48, 252, 190, 0.1);
-            border: 1px solid rgba(48, 252, 190, 0.3);
-            border-radius: 8px;
-            padding: 12px;
-            margin-bottom: 20px;
-            font-size: 13px;
-            text-align: center;
-        }
-        
-        .user-id-info .user-id {
-            font-family: 'Courier New', monospace;
-            font-weight: bold;
-            color: var(--primary-green);
-            font-size: 16px;
-            letter-spacing: 1px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ClassyBet Aviator - Premium Gaming Experience</title>
+  <meta name="description" content="Join ClassyBet Aviator – the premium aviation gaming platform with real-time multiplayer action, secure payouts, and generous bonuses.">
+  <link rel="icon" type="image/svg+xml" href="images/classybetaviator-logo.svg">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-SzlrxWUlpfuzQJ6JH6O6dJcCq2q1hN3h2a1C2R2Lx1Vx1Y1Y1F1Z1F1J1E1J1E1H1Y1" crossorigin="anonymous" referrerpolicy="no-referrer">
+  <script src="country-codes.js" defer></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --primary-green: #30fcbe;
+      --primary-dark: #1e9e6b;
+      --background-dark: #0b0f16;
+      --card-background: rgba(14, 19, 27, 0.92);
+      --border-color: rgba(255, 255, 255, 0.08);
+      --text-light: #e6f3ff;
+      --text-muted: #9bb3cc;
+      --error-color: #ff6b6b;
+      --success-color: #51cf66;
+      --warning-color: #ffa726;
+    }
+
+    body {
+      font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: radial-gradient(circle at 20% 20%, rgba(48, 252, 190, 0.08), transparent 55%),
+                  radial-gradient(circle at 80% 10%, rgba(255, 107, 107, 0.06), transparent 50%),
+                  radial-gradient(circle at 50% 80%, rgba(255, 176, 55, 0.05), transparent 45%),
+                  linear-gradient(140deg, #05080f 0%, #0e1724 45%, #05080f 100%);
+      min-height: 100vh;
+      color: var(--text-light);
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background: linear-gradient(120deg, rgba(48, 252, 190, 0.12), transparent 60%),
+                  linear-gradient(300deg, rgba(255, 107, 107, 0.08), transparent 70%);
+      mix-blend-mode: screen;
+      opacity: 0.35;
+    }
+
+    .header-logo {
+      position: fixed;
+      top: 24px;
+      left: 36px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      z-index: 10;
+      font-weight: 600;
+      font-size: 18px;
+      color: var(--primary-green);
+      letter-spacing: 0.6px;
+    }
+
+    .header-logo img {
+      height: 48px;
+      width: auto;
+    }
+
+    main {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 120px 16px 60px;
+    }
+
+    .auth-wrapper {
+      width: 100%;
+      max-width: 1040px;
+      display: grid;
+      gap: 40px;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      align-items: center;
+    }
+
+    .brand-emblem {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 24px;
+    }
+
+    .brand-emblem img {
+      width: clamp(160px, 25vw, 240px);
+      height: auto;
+      filter: drop-shadow(0 18px 28px rgba(48, 252, 190, 0.18));
+      transition: transform 0.4s ease, filter 0.4s ease;
+    }
+
+    .brand-emblem img:hover {
+      transform: translateY(-4px) scale(1.03);
+      filter: drop-shadow(0 26px 36px rgba(48, 252, 190, 0.26));
+    }
+
+    .hero-panel {
+      padding: 40px;
+      border-radius: 24px;
+      border: 1px solid var(--border-color);
+      background: linear-gradient(155deg, rgba(48, 252, 190, 0.08), transparent 45%),
+                  rgba(13, 18, 27, 0.85);
+      backdrop-filter: blur(22px);
+      box-shadow: 0 28px 45px rgba(0, 0, 0, 0.28);
+    }
+
+    .hero-panel h1 {
+      font-size: clamp(30px, 5vw, 44px);
+      line-height: 1.15;
+      margin-bottom: 24px;
+    }
+
+    .hero-panel p {
+      font-size: 16px;
+      color: var(--text-muted);
+      margin-bottom: 28px;
+      line-height: 1.6;
+      max-width: 420px;
+    }
+
+    .hero-features {
+      display: grid;
+      gap: 18px;
+      margin-top: 16px;
+    }
+
+    .hero-feature {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+    }
+
+    .hero-feature i {
+      color: var(--primary-green);
+      font-size: 18px;
+      margin-top: 4px;
+    }
+
+    .auth-container {
+      border-radius: 26px;
+      border: 1px solid var(--border-color);
+      background: rgba(12, 18, 26, 0.94);
+      padding: 46px 42px;
+      box-shadow: 0 30px 55px rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(22px);
+    }
+
+    .logo-section {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .brand-title {
+      font-size: 16px;
+      color: var(--text-muted);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .brand-subtitle {
+      margin-top: 8px;
+      color: var(--text-light);
+      font-weight: 600;
+      font-size: 20px;
+    }
+
+    .auth-tabs {
+      display: flex;
+      gap: 8px;
+      padding: 6px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.04);
+      margin-bottom: 32px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 14px 18px;
+      border: none;
+      border-radius: 10px;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+
+    .tab-btn.active {
+      background: linear-gradient(135deg, var(--primary-green), var(--primary-dark));
+      color: #03171a;
+      box-shadow: 0 12px 26px rgba(48, 252, 190, 0.25);
+    }
+
+    .tab-content {
+      display: none;
+      animation: fadeIn 0.35s ease;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      color: var(--text-light);
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .required {
+      color: var(--error-color);
+      margin-left: 6px;
+    }
+
+    .input-wrapper {
+      position: relative;
+    }
+
+    .input-wrapper i {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #607089;
+      font-size: 16px;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 15px 16px 15px 48px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(9, 14, 20, 0.85);
+      color: #f0f6ff;
+      font-size: 15px;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      outline: none;
+    }
+
+    .form-input:focus {
+      border-color: var(--primary-green);
+      box-shadow: 0 0 0 3px rgba(48, 252, 190, 0.18);
+    }
+
+    .form-input::placeholder {
+      color: #718096;
+    }
+
+    .form-input.error {
+      border-color: var(--error-color);
+    }
+
+    .phone-input-wrapper {
+      display: flex;
+      gap: 0;
+    }
+
+    .country-select {
+      min-width: 140px;
+      border-radius: 12px 0 0 12px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(9, 14, 20, 0.9);
+      color: #f0f6ff;
+      padding: 15px 14px;
+      font-size: 15px;
+      cursor: pointer;
+      outline: none;
+    }
+
+    .country-select:focus {
+      border-color: var(--primary-green);
+    }
+
+    .phone-input {
+      border-radius: 0 12px 12px 0;
+      border-left: none;
+      padding-left: 16px;
+    }
+
+    .password-toggle {
+      position: absolute;
+      right: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      border: none;
+      background: none;
+      color: #607089;
+      cursor: pointer;
+      font-size: 15px;
+      transition: color 0.2s ease;
+    }
+
+    .password-toggle:hover {
+      color: var(--primary-green);
+    }
+
+    .checkbox-group {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      margin-bottom: 20px;
+      color: var(--text-muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .checkbox-group input {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--primary-green);
+      margin-top: 3px;
+    }
+
+    .checkbox-group a {
+      color: var(--primary-green);
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    .checkbox-group a:hover {
+      text-decoration: underline;
+    }
+
+    .auth-btn {
+      width: 100%;
+      padding: 16px;
+      border-radius: 12px;
+      border: none;
+      background: linear-gradient(135deg, var(--primary-green), var(--primary-dark));
+      color: #03171a;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .auth-btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 16px 32px rgba(48, 252, 190, 0.25);
+    }
+
+    .auth-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .error-message,
+    .success-message {
+      display: none;
+      padding: 12px 14px;
+      border-radius: 10px;
+      font-size: 14px;
+      margin-bottom: 18px;
+      line-height: 1.5;
+    }
+
+    .error-message {
+      background: rgba(255, 107, 107, 0.1);
+      border: 1px solid rgba(255, 107, 107, 0.25);
+      color: var(--error-color);
+    }
+
+    .success-message {
+      background: rgba(81, 207, 102, 0.1);
+      border: 1px solid rgba(81, 207, 102, 0.25);
+      color: var(--success-color);
+    }
+
+    .user-id-info {
+      background: rgba(48, 252, 190, 0.08);
+      border: 1px solid rgba(48, 252, 190, 0.35);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 20px;
+      color: var(--primary-green);
+      font-weight: 600;
+      display: none;
+    }
+
+    .user-id-info small {
+      display: block;
+      margin-top: 6px;
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+
+    .user-id {
+      font-size: 20px;
+      letter-spacing: 4px;
+      display: inline-block;
+      margin-top: 8px;
+    }
+
+    .demo-section {
+      margin-top: 28px;
+      text-align: center;
+      padding-top: 24px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .demo-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 26px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(15, 21, 30, 0.85);
+      color: var(--text-light);
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s ease, transform 0.2s ease;
+    }
+
+    .demo-btn:hover {
+      background: rgba(48, 252, 190, 0.1);
+      transform: translateY(-1px);
+    }
+
+    .demo-info {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 10px;
+    }
+
+    .contracts {
+      display: grid;
+      gap: 12px;
+      margin-top: 32px;
+    }
+
+    .contract-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .contract-card span {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    .contract-card button {
+      background: none;
+      border: none;
+      color: var(--primary-green);
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .footer {
+      margin-top: 40px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    .footer a {
+      color: var(--primary-green);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .footer a:hover {
+      text-decoration: underline;
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      padding: 24px;
+      background: rgba(5, 9, 15, 0.78);
+      backdrop-filter: blur(14px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+    }
+
+    .modal-content {
+      width: 100%;
+      max-width: 640px;
+      max-height: 80vh;
+      overflow-y: auto;
+      border-radius: 18px;
+      background: rgba(11, 17, 26, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 28px;
+      box-shadow: 0 25px 45px rgba(0, 0, 0, 0.35);
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+    }
+
+    .modal-title {
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--primary-green);
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 26px;
+      cursor: pointer;
+      transition: color 0.2s ease;
+    }
+
+    .modal-close:hover {
+      color: #fff;
+    }
+
+    .modal-body {
+      color: var(--text-light);
+      line-height: 1.7;
+    }
+
+    .modal-body h3 {
+      margin-top: 20px;
+      font-size: 18px;
+      color: var(--primary-green);
+    }
+
+    .modal-body p {
+      margin-bottom: 14px;
+      color: var(--text-muted);
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(6px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 960px) {
+      main {
+        padding-top: 110px;
+      }
+
+      .auth-wrapper {
+        gap: 32px;
+      }
+
+      .hero-panel {
+        order: 2;
+        text-align: center;
+      }
+
+      .hero-panel p {
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .auth-container {
+        order: 1;
+        padding: 40px 32px;
+      }
+    }
+
+    @media (max-width: 540px) {
+      .header-logo {
+        left: 20px;
+        top: 20px;
+      }
+
+      .auth-container {
+        padding: 32px 24px;
+      }
+
+      .hero-panel {
+        padding: 32px 24px;
+      }
+
+      .country-select {
+        min-width: 110px;
+      }
+    }
+  </style>
 </head>
 <body>
-    <!-- Aviator logo background text -->
-    <style>
-        body::before {
-            content: 'AVIATOR';
-        }
-    </style>
-    
-    <div class="header-logo">
-        <img src="images/classybetaviator-logo.svg" alt="ClassyBet Aviator">
-    </div>
-    
-    <div class="auth-container">
+  <header class="header-logo">
+    <img src="images/classybetaviator-logo.svg" alt="ClassyBet Logo">
+  </header>
+
+  <main>
+    <section class="auth-wrapper">
+      
+      <img src="images/logo.svg" alt="">
+
+      <div class="auth-container">
         <div class="logo-section">
-            <div class="company-logo">
-                <img src="images/logo.svg" alt="Aviator" style="width: 100%; height: 100%; object-fit: contain;">
-            </div>
-            <h1 class="brand-title">Premium Gaming Experience</h1>
-            <p class="brand-subtitle">Join thousands of players in the ultimate aviation adventure</p>
+          <div class="brand-title">Welcome to ClassyBet</div>
+          <div class="brand-subtitle">Sign in or create your account</div>
         </div>
-        
+
         <div class="auth-tabs">
-            <button class="tab-btn active" onclick="switchAuthTab('login')">
-                <i class="fas fa-sign-in-alt"></i> Login
-            </button>
-            <button class="tab-btn" onclick="switchAuthTab('register')">
-                <i class="fas fa-user-plus"></i> Register
-            </button>
+          <button class="tab-btn active" onclick="switchAuthTab('login')">Sign In</button>
+          <button class="tab-btn" onclick="switchAuthTab('register')">Create Account</button>
         </div>
-        
-        <!-- Login Tab -->
+
         <div id="loginTab" class="tab-content active">
-            <form id="loginForm">
-                <div class="error-message" id="loginError"></div>
-                <div class="success-message" id="loginSuccess"></div>
-                
-                <div class="form-group">
-                    <label for="loginIdentifier"> Phone or User ID</label>
-                    <div class="input-wrapper">
-                        <i class="fas fa-user"></i>
-                        <input type="text" id="loginIdentifier" class="form-input" placeholder="Enter your login credentials" required>
-                    </div>
-                </div>
-                
-                <div class="form-group">
-                    <label for="loginPassword">Password</label>
-                    <div class="input-wrapper">
-                        <i class="fas fa-lock"></i>
-                        <input type="password" id="loginPassword" class="form-input" placeholder="Enter your password" required>
-                        <button type="button" class="password-toggle" onclick="togglePassword('loginPassword')">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                    </div>
-                </div>
-                
-                <div class="checkbox-group">
-                    <input type="checkbox" id="rememberMe">
-                    <label for="rememberMe">Keep me signed in for 7 days</label>
-                </div>
-                
-                <button type="submit" class="auth-btn" id="loginBtn">
-                    <i class="fas fa-sign-in-alt"></i>
-                    Sign In
+          <form id="loginForm">
+            <div class="error-message" id="loginError"></div>
+            <div class="success-message" id="loginSuccess"></div>
+
+            <div class="form-group">
+              <label class="form-label" for="loginIdentifier">Number/Email</label>
+              <div class="input-wrapper">
+                <i class="fas fa-user"></i>
+                <input type="text" id="loginIdentifier" class="form-input" placeholder="Phone, email or User ID" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="loginPassword">Password</label>
+              <div class="input-wrapper">
+                <i class="fas fa-lock"></i>
+                <input type="password" id="loginPassword" class="form-input" placeholder="Enter your password" required>
+                <button type="button" class="password-toggle" onclick="togglePassword('loginPassword')">
+                  <i class="fas fa-eye"></i>
                 </button>
-            </form>
-        </div>
-        
-        <!-- Register Tab -->
-        <div id="registerTab" class="tab-content">
-            <form id="registerForm">
-                <div class="error-message" id="registerError"></div>
-                <div class="success-message" id="registerSuccess"></div>
-                
-                <div class="user-id-info" id="userIdInfo" style="display: none;">
-                    Your User ID: <span class="user-id" id="generatedUserId"></span><br>
-                    <small>Save this ID - you can use it to login</small>
-                </div>
-                
-                <div class="form-group">
-                    <label for="username">Username <span class="required">*</span></label>
-                    <div class="input-wrapper">
-                        <i class="fas fa-user"></i>
-                        <input type="text" id="username" class="form-input" placeholder="Choose a unique username" required maxlength="20">
-                    </div>
-                </div>
-                
-                <div class="form-group">
-                    <label for="phone">Phone Number <span class="required">*</span></label>
-                    <div class="phone-input-wrapper">
-                        <select id="countryCode" class="country-select">
-                            <option value="+254">🇰🇪 +254</option>
-                        </select>
-                        <input type="tel" id="phone" class="form-input phone-input" placeholder="712345678" required>
-                    </div>
-                </div>
-                
-                <div class="form-group">
-                    <label for="email">Email Address (Optional)</label>
-                    <div class="input-wrapper">
-                        <i class="fas fa-envelope"></i>
-                        <input type="email" id="email" class="form-input" placeholder="your@email.com">
-                    </div>
-                </div>
-                
-                <div class="form-group">
-                    <label for="registerPassword">Password <span class="required">*</span></label>
-                    <div class="input-wrapper">
-                        <i class="fas fa-lock"></i>
-                        <input type="password" id="registerPassword" class="form-input" placeholder="Minimum 6 characters" required minlength="6">
-                        <button type="button" class="password-toggle" onclick="togglePassword('registerPassword')">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                    </div>
-                </div>
-                
-                <div class="form-group">
-                    <label for="confirmPassword">Confirm Password <span class="required">*</span></label>
-                    <div class="input-wrapper">
-                        <i class="fas fa-lock"></i>
-                        <input type="password" id="confirmPassword" class="form-input" placeholder="Confirm your password" required>
-                        <button type="button" class="password-toggle" onclick="togglePassword('confirmPassword')">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                    </div>
-                </div>
-                
-                <div class="checkbox-group">
-                    <input type="checkbox" id="agreeTerms" required>
-                    <label for="agreeTerms">
-                        I agree to the <a href="#" onclick="openModal('termsModal')">Terms and Conditions</a>,
-                        <a href="#" onclick="openModal('privacyModal')">Privacy Policy</a>, and
-                        <a href="#" onclick="openModal('responsibleGamingModal')">Responsible Gaming</a> guidelines
-                    </label>
-                </div>
-                
-                <button type="submit" class="auth-btn" id="registerBtn">
-                    <i class="fas fa-user-plus"></i>
-                    Create Account
-                </button>
-            </form>
-        </div>
-        
-        <div class="demo-section">
-            <button class="demo-btn" id="demoBtn">
-                <i class="fas fa-play"></i>
-                Try Demo Version
+              </div>
+            </div>
+
+            <div class="checkbox-group">
+              <input type="checkbox" id="rememberMe">
+              <label for="rememberMe">Keep me signed in for 7 days — not recommended on shared devices.</label>
+            </div>
+
+            <button type="submit" class="auth-btn" id="loginBtn">
+              <i class="fas fa-sign-in-alt"></i>
+              Log In
             </button>
+          </form>
         </div>
-    </div>
-    
-    <!-- Legal Modals -->
-    <div id="termsModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title">Terms and Conditions</h2>
-                <button class="modal-close" onclick="closeModal('termsModal')">&times;</button>
+
+        <div id="registerTab" class="tab-content">
+          <form id="registerForm">
+            <div class="error-message" id="registerError"></div>
+            <div class="success-message" id="registerSuccess"></div>
+
+            <div class="user-id-info" id="userIdInfo">
+              Your User ID: <span class="user-id" id="generatedUserId"></span>
+              <small>Save this ID — you'll use it for support and login.</small>
             </div>
-            <div class="modal-body">
-                <h3>1. Acceptance of Terms</h3>
-                <p>By using ClassyBet Aviator, you agree to these terms and conditions.</p>
-                
-                <h3>2. Eligibility</h3>
-                <p>You must be at least 18 years old and legally able to participate in gaming activities in your jurisdiction.</p>
-                
-                <h3>3. Account Security</h3>
-                <p>You are responsible for maintaining the security of your account and User ID.</p>
-                
-                <h3>4. Fair Play</h3>
-                <p>We ensure fair gaming through certified random number generation and transparent gameplay.</p>
-                
-                <h3>5. Prohibited Activities</h3>
-                <p>Cheating, exploiting bugs, or using automated systems is strictly prohibited.</p>
-                
-                <h3>6. Dispute Resolution</h3>
-                <p>Any disputes will be resolved through our customer support and arbitration process.</p>
+
+            <div class="form-group">
+              <label class="form-label" for="username">Username <span class="required">*</span></label>
+              <div class="input-wrapper">
+                <i class="fas fa-user-circle"></i>
+                <input type="text" id="username" class="form-input" placeholder="Choose a unique username" minlength="3" maxlength="20" required>
+              </div>
             </div>
+
+            <div class="form-group">
+              <label class="form-label" for="email">Email (optional)</label>
+              <div class="input-wrapper">
+                <i class="fas fa-envelope"></i>
+                <input type="email" id="email" class="form-input" placeholder="you@example.com">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Phone Number <span class="required">*</span></label>
+              <div class="phone-input-wrapper">
+                <select id="countryCode" class="country-select"></select>
+                <input type="tel" id="phone" class="form-input phone-input" placeholder="712345678" pattern="[0-9]{9,15}" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="registerPassword">Password <span class="required">*</span></label>
+              <div class="input-wrapper">
+                <i class="fas fa-lock"></i>
+                <input type="password" id="registerPassword" class="form-input" placeholder="Minimum 6 characters" minlength="6" required>
+                <button type="button" class="password-toggle" onclick="togglePassword('registerPassword')">
+                  <i class="fas fa-eye"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="confirmPassword">Confirm Password <span class="required">*</span></label>
+              <div class="input-wrapper">
+                <i class="fas fa-lock"></i>
+                <input type="password" id="confirmPassword" class="form-input" placeholder="Retype password" required>
+                <button type="button" class="password-toggle" onclick="togglePassword('confirmPassword')">
+                  <i class="fas fa-eye"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="promoCode">Promo / Referral Code (optional)</label>
+              <div class="input-wrapper">
+                <i class="fas fa-ticket"></i>
+                <input type="text" id="promoCode" class="form-input" placeholder="Enter partner code if you have one">
+              </div>
+            </div>
+
+            <div class="checkbox-group">
+              <input type="checkbox" id="agreeTerms" required>
+              <label for="agreeTerms">
+                I confirm that I am over 18 and agree to the ClassyBet
+                <a href="javascript:void(0);" onclick="openModal('termsModal')">Terms &amp; Conditions</a>
+                and
+                <a href="javascript:void(0);" onclick="openModal('privacyModal')">Privacy Policy</a>.
+              </label>
+            </div>
+
+            <button type="submit" class="auth-btn" id="registerBtn">
+              <i class="fas fa-user-plus"></i>
+              Create Account
+            </button>
+          </form>
         </div>
-    </div>
-    
-    <div id="privacyModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title">Privacy Policy</h2>
-                <button class="modal-close" onclick="closeModal('privacyModal')">&times;</button>
-            </div>
-            <div class="modal-body">
-                <h3>Data Collection</h3>
-                <p>We collect only necessary information: username, email (optional), phone number, and gameplay data.</p>
-                
-                <h3>Data Usage</h3>
-                <p>Your data is used to provide gaming services, process transactions, and ensure account security.</p>
-                
-                <h3>Data Protection</h3>
-                <p>All data is encrypted and stored securely. We never share personal information with third parties.</p>
-                
-                <h3>Your Rights</h3>
-                <p>You can request access to, correction of, or deletion of your personal data at any time.</p>
-            </div>
+
+        <div class="demo-section">
+          <button type="button" class="demo-btn" id="demoBtn">
+            <i class="fas fa-plane-up"></i>
+            Demo Mode
+          </button>
         </div>
-    </div>
-    
-    <div id="responsibleGamingModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title">Responsible Gaming</h2>
-                <button class="modal-close" onclick="closeModal('responsibleGamingModal')">&times;</button>
+
+        <footer class="footer">
+          By using ClassyBet you agree to responsible gaming. Need help? Chat with us on Telegram @ClassyBetSupport.
+        </footer>
+      </div>
+      <div class="hero-panel">
+        <h1>Experience Aviator Gaming Like Royalty</h1>
+        <p>Take flight with Africa's premium Aviator platform. Instant payouts, real-time multiplayer, dedicated support, and exclusive affiliate rewards tailored for champions.</p>
+
+        <div class="hero-features">
+          <div class="hero-feature">
+            <i class="fas fa-shield-check"></i>
+            <div>
+              <strong>Secure Transactions</strong>
+              <p>End-to-end encrypted deposits and withdrawals with live operator verification.</p>
             </div>
-            <div class="modal-body">
-                <h3>Gaming Responsibly</h3>
-                <p>Gaming should be fun and entertaining. Never bet more than you can afford to lose.</p>
-                
-                <h3>Set Limits</h3>
-                <p>Set time and spending limits for your gaming sessions and stick to them.</p>
-                
-                <h3>Take Breaks</h3>
-                <p>Regular breaks help maintain perspective and prevent excessive gaming.</p>
-                
-                <h3>Get Help</h3>
-                <p>If you feel gaming is becoming a problem, seek help from support organizations or contact our customer service.</p>
-                
-                <h3>Underage Gaming</h3>
-                <p>Gaming is strictly prohibited for users under 18 years of age.</p>
+          </div>
+          <div class="hero-feature">
+            <i class="fas fa-users"></i>
+            <div>
+              <strong>Community Tournaments</strong>
+              <p>Weekly leaderboards, loyalty multipliers, and affiliate commissions up to 25%.</p>
             </div>
+          </div>
+          <div class="hero-feature">
+            <i class="fas fa-headset"></i>
+            <span>Curious about our risk policy &amp; fair play?</span>
+            <button type="button" onclick="openModal('fairplayModal')">Read policy</button>
+          </div>
         </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="modal" id="termsModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">Terms &amp; Conditions</h2>
+        <button class="modal-close" onclick="closeModal('termsModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>ClassyBet Aviator is licensed under the laws of Kenya. Participation is strictly limited to players aged 18 years and above. Real-money wagering is available only after account verification.</p>
+        <h3>Key highlights</h3>
+        <p>&bull; Deposits are processed through secure paybill channels.<br>
+           &bull; Withdrawals require matching ID verification.<br>
+           &bull; Multi-accounting, bot usage, and collusion are strictly prohibited.<br>
+           &bull; Bonus abuse or suspicious wagering patterns will trigger manual review.</p>
+        <p>Complete policy documents are available from our compliance desk upon request.</p>
+      </div>
     </div>
-    
-    <script src="auth.js"></script>
+  </div>
+
+  <div class="modal" id="privacyModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">Privacy Policy</h2>
+        <button class="modal-close" onclick="closeModal('privacyModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>We collect personal data solely for account verification, gameplay security, and payment processing. Information is stored on encrypted servers with regular penetration testing and monitoring.</p>
+        <h3>Your rights</h3>
+        <p>You can request data export or deletion by contacting privacy@classybet.co. We never sell or share your data with third parties without consent.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="affiliateModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">Affiliate Payout Program</h2>
+        <button class="modal-close" onclick="closeModal('affiliateModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>Earn commissions on every net loss generated by players you refer. Transparent dashboards and weekly settlement options via M-Pesa or bank transfer.</p>
+        <p>&bull; Tier 1: 10% up to KES 50,000 monthly net.<br>
+           &bull; Tier 2: 18% up to KES 150,000 net.<br>
+           &bull; Tier 3: 25% beyond KES 150,000 net.</p>
+        <p>Get your unique promo code inside the affiliate dashboard once approved.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="fairplayModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">Fair Play &amp; Risk Disclosure</h2>
+        <button class="modal-close" onclick="closeModal('fairplayModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>Aviator outcomes are supplied by certified RNG providers and audited monthly. We actively monitor unusual cash-out behaviors to keep gameplay fair for everyone.</p>
+        <p>Remember: Aviator is a game of chance. Only wager what you can afford to lose and take regular breaks.</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="auth.js"></script>
 </body>
 </html>
+

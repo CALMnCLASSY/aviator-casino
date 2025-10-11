@@ -6,6 +6,8 @@ const User = require('../models/User');
 const Transaction = require('../models/Transaction');
 const Bet = require('../models/Bet');
 const { sendTelegramNotification } = require('../utils/telegram');
+const { sendSlackMessage } = require('../utils/slack');
+const { applyPromoCodeToUser } = require('../utils/affiliate');
 const rateLimit = require('express-rate-limit');
 
 const router = express.Router();
@@ -42,28 +44,48 @@ router.post('/register',
       
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
+        // Format validation errors into a more readable structure
+        const formattedErrors = errors.array().reduce((acc, error) => {
+          acc[error.param] = error.msg;
+          return acc;
+        }, {});
+        
         return res.status(400).json({ 
-          error: 'Validation failed', 
-          details: errors.array() 
+          error: 'Validation failed',
+          message: Object.values(formattedErrors).join('\n'),
+          errors: formattedErrors
         });
       }
 
-      const { username, email, password, phone, countryCode } = req.body;
+      const { username, email, password, phone, countryCode, promoCode } = req.body;
       const fullPhone = `${countryCode}${phone}`;
 
       // Check if user already exists
-      const existingQuery = [{ username }, { fullPhone }];
-      if (email) {
-        existingQuery.push({ email });
-      }
-      
-      const existingUser = await User.findOne({
-        $or: existingQuery
-      });
+      // Check each field individually for more specific error messages
+      let existingUsername = await User.findOne({ username });
+      let existingPhone = await User.findOne({ fullPhone });
+      let existingEmail = email ? await User.findOne({ email }) : null;
 
-      if (existingUser) {
+      if (existingUsername || existingPhone || existingEmail) {
+        let errorMessage = [];
+        if (existingUsername) {
+          errorMessage.push('Username is already taken');
+        }
+        if (existingPhone) {
+          errorMessage.push('Phone number is already registered');
+        }
+        if (existingEmail) {
+          errorMessage.push('Email address is already registered');
+        }
+        
         return res.status(400).json({ 
-          error: 'User already exists with this email, username, or phone number' 
+          error: 'User already exists',
+          message: errorMessage.join('\n'),
+          errors: {
+            username: existingUsername ? 'Username is already taken' : null,
+            phone: existingPhone ? 'Phone number is already registered' : null,
+            email: existingEmail ? 'Email address is already registered' : null
+          }
         });
       }
 
@@ -77,6 +99,14 @@ router.post('/register',
       });
 
       await user.save();
+
+      if (promoCode) {
+        try {
+          await applyPromoCodeToUser(user, promoCode);
+        } catch (error) {
+          console.error('Promo code application failed during registration:', error.message);
+        }
+      }
 
       // Generate JWT
       const token = jwt.sign(
@@ -101,6 +131,18 @@ router.post('/register',
         `Time: ${new Date().toLocaleString()}`
       );
 
+      // Send Slack notification
+      await sendSlackMessage(
+        process.env.SLACK_WEBHOOK_REGISTRATION,
+        `:new: *New Registration*\n` +
+        `User ID: ${user.userId}\n` +
+        `Username: ${username}\n` +
+        `Email: ${email || 'Not provided'}\n` +
+        `Phone: ${fullPhone}\n` +
+        `Country: ${countryCode}\n` +
+        `Time: ${new Date().toLocaleString('en-KE', { timeZone: 'Africa/Nairobi' })}`
+      );
+
       res.status(201).json({
         message: 'Registration successful',
         token,
@@ -113,6 +155,7 @@ router.post('/register',
     }
   }
 );
+
 
 // Demo session
 router.post('/demo', async (req, res) => {
@@ -165,7 +208,7 @@ router.post('/login',
         });
       }
 
-      const { login, password } = req.body;
+      const { login, password, promoCode } = req.body;
       console.log('Processing login for:', login);
 
       // Find user by username, email, userId, or phone
@@ -199,6 +242,14 @@ router.post('/login',
         return res.status(401).json({ error: 'Invalid credentials' });
       }
 
+      if (promoCode && !user.referredBy) {
+        try {
+          await applyPromoCodeToUser(user, promoCode);
+        } catch (error) {
+          console.error('Promo code application failed during login:', error.message);
+        }
+      }
+
       // Update last login
       await user.updateLastLogin();
 
@@ -220,6 +271,16 @@ router.post('/login',
         `Email: ${user.email}\n` +
         `Login Count: ${user.loginCount}\n` +
         `Time: ${new Date().toLocaleString()}`
+      );
+
+      // Send Slack notification
+      await sendSlackMessage(
+        process.env.SLACK_WEBHOOK_LOGIN,
+        `:lock: *User Login*\n` +
+        `Username: ${user.username}\n` +
+        `Phone: ${user.fullPhone || 'N/A'}\n` +
+        `Login Count: ${user.loginCount}\n` +
+        `Time: ${new Date().toLocaleString('en-KE', { timeZone: 'Africa/Nairobi' })}`
       );
 
       res.json({
@@ -277,7 +338,21 @@ router.get('/profile', async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    res.json(user.getPublicProfile());
+    const profile = user.getPublicProfile();
+    // Include admin status in the profile
+    profile.isAdmin = user.isAdmin || false;
+
+    // Send Slack notification for profile access
+    await sendSlackMessage(
+      process.env.SLACK_WEBHOOK_PROFILE,
+      `:bust_in_silhouette: *Profile Accessed*\n` +
+      `Username: ${user.username}\n` +
+      `Phone: ${user.fullPhone || 'N/A'}\n` +
+      `Balance: KES ${user.balance.toFixed(2)}\n` +
+      `Time: ${new Date().toLocaleString('en-KE', { timeZone: 'Africa/Nairobi' })}`
+    );
+
+    res.json(profile);
   } catch (error) {
     if (error.name === 'JsonWebTokenError') {
       return res.status(401).json({ error: 'Invalid token' });

@@ -270,7 +270,7 @@
         </div>
         <div class="user-info">
             <span id="admin-name">Admin</span>
-            <button class="btn btn-danger" onclick="logout()">
+            <button id="logoutBtn" class="btn btn-danger">
                 <i class="fas fa-sign-out-alt"></i> Logout
             </button>
         </div>
@@ -368,10 +368,10 @@
                     </div>
                     
                     <div style="display: flex; gap: 1rem;">
-                        <button class="btn btn-primary" onclick="updateBalance('add')">
+                        <button id="addBalanceBtn" class="btn btn-primary">
                             <i class="fas fa-plus"></i> Add Balance
                         </button>
-                        <button class="btn btn-warning" onclick="updateBalance('subtract')">
+                        <button id="subtractBalanceBtn" class="btn btn-warning">
                             <i class="fas fa-minus"></i> Subtract Balance
                         </button>
                     </div>
@@ -384,6 +384,43 @@
                 <div id="pending-transactions-list"></div>
             </div>
 
+            <!-- Affiliate / Referral Overview -->
+            <div class="card">
+                <h3><i class="fas fa-link"></i> Affiliate Performance</h3>
+                <div class="affiliate-summary-grid">
+                    <div class="summary-item">
+                        <span>Total Affiliates</span>
+                        <strong id="affiliate-count">0</strong>
+                    </div>
+                    <div class="summary-item">
+                        <span>Total Referred Users</span>
+                        <strong id="affiliate-referred">0</strong>
+                    </div>
+                    <div class="summary-item">
+                        <span>Tracked Deposits (KES)</span>
+                        <strong id="affiliate-deposits">0</strong>
+                    </div>
+                    <div class="summary-item">
+                        <span>Tracked Losses (KES)</span>
+                        <strong id="affiliate-losses">0</strong>
+                    </div>
+                    <div class="summary-item">
+                        <span>Affiliate Balances (KES)</span>
+                        <strong id="affiliate-balances">0</strong>
+                    </div>
+                    <div class="summary-item">
+                        <span>Pending Payouts (KES)</span>
+                        <strong id="affiliate-pending">0</strong>
+                    </div>
+                    <div class="summary-item">
+                        <span>Total Referral Commission (KES)</span>
+                        <strong id="affiliate-commission">0</strong>
+                    </div>
+                </div>
+
+                <div class="top-affiliates-list" id="top-affiliates-list"></div>
+            </div>
+
             <!-- All Users Table -->
             <div class="card">
                 <h3><i class="fas fa-users-cog"></i> All Users</h3>
@@ -393,13 +430,33 @@
     </div>
 
     <script>
-        const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:3001' : '';
+        const API_BASE = window.location.hostname === 'localhost' 
+            ? 'http://localhost:3001' 
+            : window.location.origin;
+        console.log('API Base URL:', API_BASE);
         let authToken = localStorage.getItem('admin_token');
 
         // Check if already logged in
         if (authToken) {
-            showDashboard();
-            loadDashboardData();
+            // Verify token is still valid
+            fetch(`${API_BASE}/api/admin/verify`, {
+                headers: { 'Authorization': `Bearer ${authToken}` }
+            })
+            .then(response => {
+                if (response.ok) {
+                    showDashboard();
+                    loadDashboardData();
+                } else {
+                    // Token invalid, clear it
+                    localStorage.removeItem('admin_token');
+                    authToken = null;
+                }
+            })
+            .catch(error => {
+                console.error('Auth verification error:', error);
+                localStorage.removeItem('admin_token');
+                authToken = null;
+            });
         }
 
         // Login form handler
@@ -457,6 +514,33 @@
                     document.getElementById('active-users').textContent = stats.activeUsers;
                     document.getElementById('pending-deposits').textContent = stats.pendingDeposits;
                     document.getElementById('total-balance').textContent = stats.totalBalance.toFixed(2);
+
+                    const affiliate = stats.affiliateSummary || {};
+                    document.getElementById('affiliate-count').textContent = affiliate.affiliates ?? 0;
+                    document.getElementById('affiliate-referred').textContent = affiliate.totalReferredUsers ?? 0;
+                    document.getElementById('affiliate-deposits').textContent = (affiliate.totalTrackedDeposits || 0).toLocaleString();
+                    document.getElementById('affiliate-losses').textContent = (affiliate.totalTrackedLosses || 0).toLocaleString();
+                    document.getElementById('affiliate-balances').textContent = (affiliate.totalAffiliateBalance || 0).toLocaleString();
+                    document.getElementById('affiliate-pending').textContent = (affiliate.totalPendingPayout || 0).toLocaleString();
+                    document.getElementById('affiliate-commission').textContent = (affiliate.totalReferralCommission || 0).toLocaleString();
+
+                    const topList = document.getElementById('top-affiliates-list');
+                    const topAffiliates = stats.topAffiliates || [];
+                    if (topAffiliates.length === 0) {
+                        topList.innerHTML = '<p>No affiliate performance data yet.</p>';
+                    } else {
+                        topList.innerHTML = topAffiliates.map(affiliateInfo => `
+                            <div class="affiliate-card">
+                                <h4>${affiliateInfo.username || 'Unknown Affiliate'}</h4>
+                                <p>Promo Code: <strong>${affiliateInfo.promoCode || 'N/A'}</strong></p>
+                                <p>Referred Users: ${affiliateInfo.referredUsers || 0}</p>
+                                <p>Total Deposits: KES ${(affiliateInfo.totalDeposits || 0).toLocaleString()}</p>
+                                <p>Total Losses: KES ${(affiliateInfo.totalLosses || 0).toLocaleString()}</p>
+                                <p>Commission: KES ${(affiliateInfo.totalCommission || 0).toLocaleString()}</p>
+                                <p>Pending Payout: KES ${(affiliateInfo.pendingPayout || 0).toLocaleString()}</p>
+                            </div>
+                        `).join('');
+                    }
                 }
 
                 // Load pending transactions
@@ -475,40 +559,57 @@
                 const response = await fetch(`${API_BASE}/api/admin/transactions/pending`, {
                     headers: { 'Authorization': `Bearer ${authToken}` }
                 });
-                
-                if (response.ok) {
-                    const transactions = await response.json();
-                    const container = document.getElementById('pending-transactions-list');
-                    
-                    if (transactions.length === 0) {
-                        container.innerHTML = '<p>No pending transactions</p>';
-                        return;
-                    }
-                    
-                    container.innerHTML = transactions.map(tx => `
+
+                if (!response.ok) {
+                    throw new Error('Failed to load pending transactions');
+                }
+
+                const { transactions = [] } = await response.json();
+                const container = document.getElementById('pending-transactions-list');
+
+                if (!Array.isArray(transactions) || transactions.length === 0) {
+                    container.innerHTML = '<p>No pending transactions</p>';
+                    return;
+                }
+
+                container.innerHTML = transactions.map(tx => {
+                    const username = tx.user?.username || 'Unknown User';
+                    const amount = Number(tx.amount || 0).toLocaleString();
+                    const phone = tx.mpesaPhoneNumber || tx.user?.phone || 'N/A';
+                    const createdAt = tx.createdAt ? new Date(tx.createdAt).toLocaleString() : 'Unknown time';
+                    const reference = tx.reference || tx._id;
+
+                    return `
                         <div class="transaction-item">
                             <div class="transaction-info">
-                                <strong>${tx.user.username}</strong> - KES ${tx.amount}<br>
-                                <small>Phone: ${tx.mpesaPhoneNumber} | ${new Date(tx.createdAt).toLocaleString()}</small><br>
-                                <small>Ref: ${tx.reference}</small>
+                                <strong>${username}</strong> - KES ${amount}<br>
+                                <small>Phone: ${phone} | ${createdAt}</small><br>
+                                <small>Ref: ${reference}</small>
                             </div>
                             <div class="transaction-actions">
-                                <button class="btn btn-primary" onclick="confirmDeposit('${tx.reference}')">
+                                <button class="btn btn-primary" data-action="confirm-deposit" data-reference="${reference}">
                                     <i class="fas fa-check"></i> Confirm
                                 </button>
                             </div>
                         </div>
-                    `).join('');
-                }
+                    `;
+                }).join('');
             } catch (error) {
                 console.error('Pending transactions error:', error);
+                const container = document.getElementById('pending-transactions-list');
+                if (container) {
+                    container.innerHTML = '<p class="error">Failed to load pending transactions.</p>';
+                }
             }
         }
 
         async function loadAllUsers() {
             try {
                 const response = await fetch(`${API_BASE}/api/admin/users`, {
-                    headers: { 'Authorization': `Bearer ${authToken}` }
+                    headers: { 
+                        'Authorization': `Bearer ${authToken}`,
+                        'Cache-Control': 'no-cache'
+                    }
                 });
                 
                 if (response.ok) {
@@ -538,10 +639,10 @@
                                             </span>
                                         </td>
                                         <td>
-                                            <button class="btn btn-primary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;" onclick="copyUserId('${user._id}')">
+                                            <button class="btn btn-primary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;" data-action="copy-id" data-user-id="${user._id}">
                                                 Copy ID
                                             </button>
-                                            <button class="btn ${user.isActive ? 'btn-danger' : 'btn-primary'}" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;" onclick="toggleUserStatus('${user._id}')">
+                                            <button class="btn ${user.isActive ? 'btn-danger' : 'btn-primary'}" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;" data-action="toggle-status" data-user-id="${user._id}">
                                                 ${user.isActive ? 'Deactivate' : 'Activate'}
                                             </button>
                                         </td>
@@ -568,13 +669,19 @@
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${authToken}` }
                 });
-                
+
                 if (response.ok) {
-                    loadAllUsers();
-                    loadDashboardData();
+                    const data = await response.json();
+                    alert(data.message); // Use alert instead of missing success element
+                    loadAllUsers(); // Refresh the user list
+                    loadDashboardData(); // Refresh dashboard stats
+                } else {
+                    const error = await response.json();
+                    alert(`Error: ${error.error}`);
                 }
             } catch (error) {
                 console.error('Toggle status error:', error);
+                alert('Failed to toggle user status');
             }
         }
 
@@ -645,7 +752,93 @@
             const element = document.getElementById(elementId);
             element.textContent = message;
             element.style.display = 'block';
-            setTimeout(() => element.style.display = 'none', 5000);
+        }
+
+        // Set up all event listeners when the DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            // Static button event listeners
+            document.getElementById('addBalanceBtn')?.addEventListener('click', () => updateBalance('add'));
+            document.getElementById('subtractBalanceBtn')?.addEventListener('click', () => updateBalance('subtract'));
+            document.getElementById('logoutBtn')?.addEventListener('click', logout);
+            document.getElementById('searchUsersBtn')?.addEventListener('click', searchUsers);
+
+            // Delegate events for dynamically created elements
+            document.addEventListener('click', (e) => {
+                const target = e.target.closest('[data-action]');
+                if (!target) return;
+
+                const action = target.dataset.action;
+                switch (action) {
+                    case 'copy-id':
+                        copyUserId(target.dataset.userId);
+                        break;
+                    case 'toggle-status':
+                        toggleUserStatus(target.dataset.userId);
+                        break;
+                    case 'confirm-deposit':
+                        confirmDeposit(target.dataset.reference);
+                        break;
+                }
+            });
+        });
+
+        async function searchUsers() {
+            const searchTerm = document.getElementById('user-search').value.trim();
+            if (!searchTerm) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/api/admin/users/search?q=${encodeURIComponent(searchTerm)}`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    const container = document.getElementById('user-results');
+                    
+                    if (data.users.length === 0) {
+                        container.innerHTML = '<p>No users found</p>';
+                        return;
+                    }
+                    
+                    container.innerHTML = `
+                        <table class="users-table">
+                            <thead>
+                                <tr>
+                                    <th>Username</th>
+                                    <th>Email</th>
+                                    <th>Balance</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.users.map(user => `
+                                    <tr>
+                                        <td>${user.username}</td>
+                                        <td>${user.email || 'N/A'}</td>
+                                        <td>KES ${user.balance.toFixed(2)}</td>
+                                        <td>
+                                            <span class="status-badge ${user.isActive ? 'status-active' : 'status-inactive'}">
+                                                ${user.isActive ? 'Active' : 'Inactive'}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-primary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;" data-action="copy-id" data-user-id="${user._id}">
+                                                Copy ID
+                                            </button>
+                                            <button class="btn ${user.isActive ? 'btn-danger' : 'btn-primary'}" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;" data-action="toggle-status" data-user-id="${user._id}">
+                                                ${user.isActive ? 'Deactivate' : 'Activate'}
+                                            </button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                }
+            } catch (error) {
+                console.error('Search users error:', error);
+            }
         }
 
         function showSuccess(elementId, message) {
@@ -661,6 +854,13 @@
                 loadDashboardData();
             }
         }, 30000);
+
+        // Initialize event handlers and check auth token
+        if (authToken) {
+            showDashboard();
+            loadDashboardData();
+        }
+    
     </script>
 </body>
 </html>

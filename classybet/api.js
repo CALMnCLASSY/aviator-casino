@@ -12,6 +12,33 @@ class ClassyBetAPI {
             onBalanceUpdate: [],
             onBetUpdate: []
         };
+
+        this.loadUserFromStorage();
+    }
+
+    loadUserFromStorage() {
+        const storedUser = localStorage.getItem('userData');
+
+        if (!storedUser) {
+            this.user = null;
+            return;
+        }
+
+        try {
+            this.user = JSON.parse(storedUser);
+        } catch (error) {
+            console.error('Failed to parse stored user data:', error);
+            localStorage.removeItem('userData');
+            this.user = null;
+        }
+    }
+
+    saveUserToStorage() {
+        if (this.user) {
+            localStorage.setItem('userData', JSON.stringify(this.user));
+        } else {
+            localStorage.removeItem('userData');
+        }
     }
 
     // Event system
@@ -42,11 +69,12 @@ class ClassyBetAPI {
                 this.token = data.token;
                 this.user = data.user;
                 localStorage.setItem('user_token', this.token);
+                this.saveUserToStorage();
                 this.emit('onAuthChange', { authenticated: true, user: this.user });
                 return { success: true, user: this.user };
-            } else {
-                return { success: false, error: data.error };
             }
+
+            return { success: false, error: data.error };
         } catch (error) {
             return { success: false, error: 'Connection failed' };
         }
@@ -66,11 +94,12 @@ class ClassyBetAPI {
                 this.token = data.token;
                 this.user = data.user;
                 localStorage.setItem('user_token', this.token);
+                this.saveUserToStorage();
                 this.emit('onAuthChange', { authenticated: true, user: this.user });
                 return { success: true, user: this.user };
-            } else {
-                return { success: false, error: data.error };
             }
+
+            return { success: false, error: data.error };
         } catch (error) {
             return { success: false, error: 'Connection failed' };
         }
@@ -86,12 +115,13 @@ class ClassyBetAPI {
 
             if (response.ok) {
                 this.user = await response.json();
+                this.saveUserToStorage();
                 this.emit('onAuthChange', { authenticated: true, user: this.user });
                 return { success: true, user: this.user };
-            } else {
-                this.logout();
-                return { success: false, error: 'Authentication failed' };
             }
+
+            this.logout();
+            return { success: false, error: 'Authentication failed' };
         } catch (error) {
             return { success: false, error: 'Connection failed' };
         }
@@ -102,11 +132,20 @@ class ClassyBetAPI {
         this.user = null;
         this.currentBet = null;
         localStorage.removeItem('user_token');
+        localStorage.removeItem('userData');
         this.emit('onAuthChange', { authenticated: false, user: null });
     }
 
     isAuthenticated() {
-        return !!this.token && !!this.user;
+        if (!this.token) {
+            return false;
+        }
+
+        if (!this.user) {
+            this.loadUserFromStorage();
+        }
+
+        return !!this.user;
     }
 
     // Game methods
@@ -138,12 +177,13 @@ class ClassyBetAPI {
             if (response.ok) {
                 this.currentBet = data.bet;
                 this.user.balance = data.newBalance;
+                this.saveUserToStorage();
                 this.emit('onBetUpdate', { bet: this.currentBet, balance: this.user.balance });
                 this.emit('onBalanceUpdate', this.user.balance);
                 return { success: true, bet: this.currentBet, newBalance: data.newBalance };
-            } else {
-                return { success: false, error: data.error };
             }
+
+            return { success: false, error: data.error };
         } catch (error) {
             return { success: false, error: 'Connection failed' };
         }
@@ -172,12 +212,22 @@ class ClassyBetAPI {
             if (response.ok) {
                 this.currentBet = data.bet;
                 this.user.balance = data.newBalance;
-                this.emit('onBetUpdate', { bet: this.currentBet, balance: this.user.balance, winAmount: data.winAmount });
+                this.saveUserToStorage();
+                this.emit('onBetUpdate', {
+                    bet: this.currentBet,
+                    balance: this.user.balance,
+                    winAmount: data.winAmount
+                });
                 this.emit('onBalanceUpdate', this.user.balance);
-                return { success: true, bet: this.currentBet, newBalance: data.newBalance, winAmount: data.winAmount };
-            } else {
-                return { success: false, error: data.error };
+                return {
+                    success: true,
+                    bet: this.currentBet,
+                    newBalance: data.newBalance,
+                    winAmount: data.winAmount
+                };
             }
+
+            return { success: false, error: data.error };
         } catch (error) {
             return { success: false, error: 'Connection failed' };
         }
@@ -197,9 +247,9 @@ class ClassyBetAPI {
                 const bet = await response.json();
                 this.currentBet = bet;
                 return { success: true, bet };
-            } else {
-                return { success: false, error: 'Failed to fetch bet' };
             }
+
+            return { success: false, error: 'Failed to fetch bet' };
         } catch (error) {
             return { success: false, error: 'Connection failed' };
         }
@@ -210,13 +260,13 @@ class ClassyBetAPI {
 
         try {
             const response = await fetch(`${this.baseURL}${this.apiPath}/game/active-bets/${this.gameRound}`);
-            
+
             if (response.ok) {
                 const bets = await response.json();
                 return { success: true, bets };
-            } else {
-                return { success: false, error: 'Failed to fetch bets' };
             }
+
+            return { success: false, error: 'Failed to fetch bets' };
         } catch (error) {
             return { success: false, error: 'Connection failed' };
         }
@@ -243,11 +293,11 @@ class ClassyBetAPI {
             const data = await response.json();
 
             if (response.ok) {
-                this.currentBet = null; // Clear current bet after round ends
+                this.currentBet = null;
                 return { success: true, data };
-            } else {
-                return { success: false, error: data.error };
             }
+
+            return { success: false, error: data.error };
         } catch (error) {
             return { success: false, error: 'Connection failed' };
         }
@@ -273,9 +323,9 @@ class ClassyBetAPI {
 
             if (response.ok) {
                 return { success: true, transactionId: data.transactionId };
-            } else {
-                return { success: false, error: data.error };
             }
+
+            return { success: false, error: data.error };
         } catch (error) {
             return { success: false, error: 'Connection failed' };
         }

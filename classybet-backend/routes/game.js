@@ -5,6 +5,7 @@ const Bet = require('../models/Bet');
 const Transaction = require('../models/Transaction');
 const { authenticateToken } = require('../middleware/auth');
 const { sendTelegramNotification } = require('../utils/telegram');
+const { recordAffiliateLoss } = require('../utils/affiliate');
 
 const router = express.Router();
 
@@ -265,6 +266,22 @@ router.post('/end-round',
           // Bet lost
           bet.status = 'lost';
           bet.actualMultiplier = crashMultiplier;
+
+          try {
+            if (!userUpdates[bet.userId]) {
+              const user = await User.findById(bet.userId);
+              if (user) {
+                userUpdates[bet.userId] = user;
+              }
+            }
+
+            const user = userUpdates[bet.userId];
+            if (user) {
+              await recordAffiliateLoss(user, bet.amount);
+            }
+          } catch (error) {
+            console.error('Affiliate loss tracking failed:', error.message);
+          }
         }
 
         updates.push(bet.save());
@@ -333,6 +350,69 @@ router.get('/my-bet/:gameRound', authenticateToken, async (req, res) => {
 
   } catch (error) {
     console.error('User bet fetch error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Update user balance
+router.post('/update-balance', authenticateToken, async (req, res) => {
+  try {
+    const { balance, reason } = req.body;
+    const userId = req.user.id;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Update user balance
+    user.balance = balance;
+    await user.save();
+
+    res.json({
+      message: 'Balance updated successfully',
+      newBalance: user.balance
+    });
+
+  } catch (error) {
+    console.error('Balance update error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Record transaction
+router.post('/record-transaction', authenticateToken, async (req, res) => {
+  try {
+    const { type, amount, description, game } = req.body;
+    const userId = req.user.id;
+
+    // Find current user to get current balance
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Create transaction record
+    const transaction = new Transaction({
+      user: userId,  // Changed from userId to user
+      type,
+      amount,
+      description,
+      game,
+      status: 'completed',
+      balanceBefore: user.balance,
+      balanceAfter: user.balance + amount
+    });
+
+    await transaction.save();
+
+    res.json({
+      message: 'Transaction recorded successfully',
+      transaction: transaction.toObject()
+    });
+
+  } catch (error) {
+    console.error('Transaction record error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });

@@ -6,8 +6,22 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Aviator - Professional Gaming</title>
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="style.css" as="style">
+    <link rel="preload" href="script.js?v=2.4" as="script">
+    <link rel="preload" href="auth.js" as="script">
+    
+    <!-- Preload critical images -->
+    <link rel="preload" href="images/classybetaviator-logo.svg" as="image" type="image/svg+xml">
+    <link rel="preload" href="images/logo.svg" as="image" type="image/svg+xml">
+    
+    <!-- Stylesheets -->
     <link rel="stylesheet" href="./style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Disable tracking prevention warnings -->
+    <meta http-equiv="origin-trial" content="*">
 </head>
 
 <body>
@@ -124,9 +138,17 @@
                                 <i class="fas fa-book"></i>
                                 <span>Game Rules</span>
                             </div>
+                            <div class="menu-item" data-action="game-limits">
+                                <i class="fas fa-coins"></i>
+                                <span>Game Limits</span>
+                            </div>
                             <div class="menu-item" data-action="provably-fair">
                                 <i class="fas fa-check-circle"></i>
                                 <span>Provably Fair</span>
+                            </div>
+                            <div class="menu-item" data-action="free-bets">
+                                <i class="fas fa-gift"></i>
+                                <span>Free Bets</span>
                             </div>
                         </div>
                     </div>
@@ -277,14 +299,14 @@
                         
                         <label></label>
                         <div class="input-wrapper">
-                            <input type="number" id="bet-input-1" min="0" max="1000" value="10" />
+                            <input type="number" id="bet-input-1" min="0" max="10000" value="100" />
                             <span class="currency">KES</span>
                         </div>
                         <div class="quick-amounts">
-                            <button class="quick-amount" data-amount="10">KES 10</button>
-                            <button class="quick-amount" data-amount="25">KES 25</button>
-                            <button class="quick-amount" data-amount="50">KES 50</button>
                             <button class="quick-amount" data-amount="100">KES 100</button>
+                            <button class="quick-amount" data-amount="200">KES 200</button>
+                            <button class="quick-amount" data-amount="500">KES 500</button>
+                            <button class="quick-amount" data-amount="5000">KES 5000</button>
                         </div>
                     </div>
                     
@@ -350,14 +372,14 @@
                         
                         <label></label>
                         <div class="input-wrapper">
-                            <input type="number" id="bet-input-2" min="0" max="1000" value="10" />
+                            <input type="number" id="bet-input-2" min="0" max="10000" value="100" />
                             <span class="currency">KES</span>
                         </div>
                         <div class="quick-amounts">
-                            <button class="quick-amount" data-amount="10">KES 10</button>
-                            <button class="quick-amount" data-amount="25">KES 25</button>
-                            <button class="quick-amount" data-amount="50">KES 50</button>
                             <button class="quick-amount" data-amount="100">KES 100</button>
+                            <button class="quick-amount" data-amount="200">KES 200</button>
+                            <button class="quick-amount" data-amount="500">KES 500</button>
+                            <button class="quick-amount" data-amount="5000">KES 5000</button>
                         </div>
                     </div>
                     
@@ -424,7 +446,7 @@
         <div id="mobile-bets-section">
             <div class="bets-tabs">
                 <button class="tab-btn active" data-tab="mobile-all-bets">
-                    <i class="fas fa-users"></i> All Bets
+                    <i class="fas fa-users"></i>All Bets
                 </button>
                 <button class="tab-btn" data-tab="mobile-previous-bets">
                     <i class="fas fa-history"></i> Previous
@@ -546,24 +568,6 @@
                         </a>
                     </li>
                 </ul>
-                
-                <div class="payment-methods">
-                    <div class="payment-icon mastercard">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" alt="Mastercard" style="max-width: 60px;">
-                    </div>
-                    <div class="payment-icon visa">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/4/41/Visa_Logo.png" alt="Visa" style="max-width: 60px;">
-                    </div>
-                    <div class="payment-icon paypal">
-                        <img src="https://www.citypng.com/public/uploads/preview/transparent-hd-paypal-logo-701751694777788ilpzr3lary.png" alt="PayPal" style="max-width: 70px;">
-                    </div>
-                    <div class="payment-icon airtel-money">
-                        <img src="https://businesspost.ng/wp-content/uploads/2021/03/Airtel-Money.png" alt="Airtel Money" style="max-width: 60px;">
-                    </div>
-                    <div class="payment-icon mpesa">
-                        <img src="https://www.techinafrica.com/wp-content/uploads/2021/01/1200px-M-PESA_LOGO-01.svg_.png" alt="Safaricom M-Pesa" style="max-width: 70px;">
-                    </div>
-                </div>
 
                 <div class="social-links">
                     <a href="#" class="social-link">
@@ -590,35 +594,7 @@
         </div>
     </footer>
 
-    <!-- Authentication Modals -->
-    <!-- Login Modal -->
-    <div id="login-modal" class="modal" style="display: none;">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3><i class="fas fa-sign-in-alt"></i> Login to ClassyBet</h3>
-                <span class="close" onclick="closeModal('login-modal')">&times;</span>
-            </div>
-            <div class="modal-body">
-                <div id="login-error" class="error-message" style="display: none;"></div>
-                <form id="login-form">
-                    <div class="form-group">
-                        <label for="login-email">Email or Username</label>
-                        <input type="text" id="login-email" class="form-control" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="login-password">Password</label>
-                        <input type="password" id="login-password" class="form-control" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-sign-in-alt"></i> Login
-                    </button>
-                </form>
-                <div class="modal-footer">
-                    <p>Don't have an account? <a href="#" onclick="switchModal('login-modal', 'register-modal')">Register here</a></p>
-                </div>
-            </div>
-        </div>
-    </div>
+
 
     <!-- Register Modal -->
     <div id="register-modal" class="modal" style="display: none;">
@@ -664,38 +640,335 @@
                 <h3><i class="fas fa-plus-circle"></i> Deposit Funds</h3>
                 <span class="close" onclick="closeModal('deposit-modal')">&times;</span>
             </div>
-            <div class="modal-body">
-                <div class="deposit-instructions">
-                    <h4><i class="fas fa-info-circle"></i> M-Pesa Payment</h4>
-                    <div class="paybill-info">
-                        <div class="paybill-item">
-                            <span>Paybill Number:</span>
-                            <strong>793174</strong>
-                        </div>
-                        <div class="paybill-item">
-                            <span>Account Number:</span>
-                            <strong>745087451</strong>
-                        </div>
-                    </div>
-                </div>
-                
+            <div class="modal-body">            
                 <div id="deposit-error" class="error-message" style="display: none;"></div>
                 <div id="deposit-success" class="success-message" style="display: none;"></div>
-                
+    
                 <form id="deposit-form">
                     <div class="form-group">
                         <label for="deposit-amount">Amount (KES)</label>
-                        <input type="number" id="deposit-amount" class="form-control" min="10" max="50000" step="1" required>
-                        <small>Minimum: KES 10, Maximum: KES 50,000</small>
+                        <input type="number" id="deposit-amount" class="form-control" min="10" max="150000" step="1" required>
+                        <small>Minimum: KES 10, Maximum: KES 150,000</small>
                     </div>
                     <div class="form-group">
                         <label for="deposit-phone">M-Pesa Phone Number</label>
                         <input type="tel" id="deposit-phone" class="form-control" placeholder="254700000000" required>
                     </div>
                     <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-mobile-alt"></i> Send STK Push
+                        <i class="fas fa-mobile-alt"></i> Deposit
                     </button>
+                    <p>Deposit using M-Pesa STK Push or Paybill option below</p>
                 </form>
+                <div class="deposit-instructions">
+                    <h4><i class="fas fa-info-circle"></i>Manual Payment Instructions if prompt takes too long.</h4>
+                    <div class="paybill-info">
+                        <div class="paybill-item">
+                            <span>Paybill Number:</span>
+                            <strong>793174</strong>
+                        </div>
+                        <div class="paybill-item">
+                            <span>Your Assigned Account Number:</span>
+                            <strong>745087451</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Menu Modals -->
+    
+    <!-- How to Play Modal -->
+    <div class="modal-overlay" id="how-to-play-modal" style="display: none;">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <span class="text-uppercase">How to Play</span>
+                    <button type="button" class="close" data-modal="how-to-play-modal">
+                        <span>×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-grey">
+                        Aviator is a new generation of iGaming entertainment. You can win many times more, in seconds! 
+                        Aviator is built on a provably fair system, which is currently the only real guarantee of honesty in the gambling industry.
+                    </p>
+                    <h6 class="mt-4 mb-2 text-uppercase">How to play</h6>
+                    <div class="youtube">
+                        <div class="embed-responsive embed-responsive-16by9">
+                            <iframe frameborder="0" allowfullscreen allow="accelerometer; encrypted-media; gyroscope; picture-in-picture" 
+                                class="embed-responsive-item" src="https://www.youtube.com/embed/PZejs3XDCSY?playsinline=1&rel=0"></iframe>
+                        </div>
+                    </div>
+                    <div class="steps-wrapper">
+                        <h6 class="pl-2 pt-5">Aviator is as easy to play as 1-2-3:</h6>
+                        <div class="steps-container">
+                            <div class="step step-1">
+                                <h3>01</h3>
+                                <div class="step-text pt-2">
+                                    <span class="text-uppercase">Bet</span> before take-off
+                                </div>
+                            </div>
+                            <div class="step step-2">
+                                <h3>02</h3>
+                                <div class="step-text">
+                                    <span class="text-uppercase">Watch</span> as your Lucky Plane takes off and your winnings increase.
+                                </div>
+                            </div>
+                            <div class="step step-3">
+                                <h3>03</h3>
+                                <div class="step-text">
+                                    <span class="text-uppercase">Cash out</span> before the plane disappears and wins X times more!
+                                </div>
+                            </div>
+                        </div>
+                        <p class="mt-3 text-grey">
+                            But remember, if you did not have time to Cash Out before the Lucky Plane flies away, your bet will be lost. 
+                            Aviator is pure excitement! Risk and win. It's all in your hands!
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Rules Modal -->
+    <div class="modal-overlay" id="game-rules-modal" style="display: none;">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <span class="text-uppercase">Game Rules</span>
+                    <button type="button" class="close" data-modal="game-rules-modal">
+                        <span>×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="rules-list pt-3">
+                        <div class="rules-list-title">More details</div>
+                        <ul class="list-group">
+                            <li class="list-group-item">The win multiplier starts at 1x and grows more and more as the Lucky Plane takes off.</li>
+                            <li class="list-group-item">Your winnings are calculated at the multiplier at which you made a Cash Out, multiplied by your bet.</li>
+                            <li class="list-group-item">Before the start of each round, our provably fair random number generator generates the multiplier at which the Lucky Plane will fly away.</li>
+                        </ul>
+                    </div>
+                    
+                    <h6 class="mt-4 mt-5">GAME FUNCTIONS</h6>
+                    <div class="rules-list pt-2">
+                        <div class="rules-list-title">Bet & Cash Out</div>
+                        <ul class="list-group">
+                            <li class="list-group-item">Select an amount and press the "Bet" button to make a bet.</li>
+                            <li class="list-group-item">You can cancel the bet by pressing the "Cancel" button if the round has not yet started.</li>
+                            <li class="list-group-item">Adjust the bet size using the "+" and "-" buttons to change the bet amount. Alternatively, you can select the bet size using the preset values or enter a value manually.</li>
+                            <li class="list-group-item">You can make two bets simultaneously, by adding a second bet panel. To add a second bet panel, press the plus icon, which is located on the top right corner of the first bet panel.</li>
+                            <li class="list-group-item">Press the "Cash Out" button to cash out your winnings. Your win is your bet multiplied by the Cash Out multiplier.</li>
+                            <li class="list-group-item">Your bet is lost, if you didn't cash out before the plane flies away.</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="rules-list pt-2">
+                        <div class="rules-list-title">Auto Play & Auto Cash Out</div>
+                        <ul class="list-group">
+                            <li class="list-group-item">Before starting Auto Play, select the bet size you want to play with.</li>
+                            <li class="list-group-item">Auto Play is activated from the "Auto" tab in the Bet Panel, by checking the "Auto Bet" checkbox. After activation, bets will be placed automatically, but for Cash Out, you should press the "Cash Out" button in each round.</li>
+                            <li class="list-group-item">Auto Cash Out is available from the "Auto" tab on the Bet panel. After activation, your bet will be automatically cashed out when it reaches the multiplier entered.</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="rules-list pt-2">
+                        <div class="rules-list-title">Live Bets & Statistics</div>
+                        <ul class="list-group">
+                            <li class="list-group-item">On the left side of the game interface (or under the Bet Panel on mobile), is located the Live Bets panel. Here you can see all bets that are being made in the current round.</li>
+                            <li class="list-group-item">In the "Top" panel, game statistics are located. You can browse wins by amount, or Cash Out multiplier, and see the biggest round multipliers.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Limits Modal -->
+    <div class="modal-overlay" id="game-limits-modal" style="display: none;">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <span class="text-uppercase">Game Limits</span>
+                    <button type="button" class="close" data-modal="game-limits-modal">
+                        <span>×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="limits-container">
+                        <div class="limit-item">
+                            <span class="limit-label">Minimum Bet:</span>
+                            <span class="limit-value">KES 10.00</span>
+                        </div>
+                        <div class="limit-item">
+                            <span class="limit-label">Maximum Bet:</span>
+                            <span class="limit-value">KES 10,000.00</span>
+                        </div>
+                        <div class="limit-item">
+                            <span class="limit-label">Maximum Win for One Bet:</span>
+                            <span class="limit-value">KES 1,500,000.00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Provably Fair Modal -->
+    <div class="modal-overlay" id="provably-fair-modal" style="display: none;">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div class="modal-title text-uppercase">Provably Fair Settings</div>
+                    <button type="button" class="close" data-modal="provably-fair-modal">
+                        <span>×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="info">
+                        <p>This game uses Provably Fair technology to determine game result. This tool gives you ability to change your seed and check fairness of the game.</p>
+                        <p class="info-link">
+                            <i class="question-icon"></i> What is Provably Fair
+                        </p>
+                    </div>
+                    
+                    <div class="client-seed">
+                        <div class="client-seed-title">
+                            <div class="client-seed-title-main">
+                                <i class="client-icon"></i>
+                                <span>Client (your) seed:</span>
+                            </div>
+                            <div class="client-seed-title-sub">
+                                <span>Round result is determined from combination of server seed and first 3 bets of the round.</span>
+                            </div>
+                        </div>
+                        
+                        <div class="client-seed-type active">
+                            <label>
+                                <span class="radio">
+                                    <i class="dot"></i>
+                                </span>
+                                <span> Random on every new game </span>
+                            </label>
+                            <div class="block-key">
+                                <div class="key-container random">
+                                    <div class="key">
+                                        <p>
+                                            <span class="current">Current: </span>
+                                            <span id="random-seed">nDfaDX3u7OoflLQ5BDSs</span>
+                                        </p>
+                                    </div>
+                                    <i class="copy-icon"></i>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="client-seed-type">
+                            <label>
+                                <span class="radio">
+                                    <i class="dot"></i>
+                                </span>
+                                <span> Enter manually </span>
+                            </label>
+                            <div class="block-key d-flex">
+                                <div class="key-container manual mr-lg-2 flex-grow-1">
+                                    <div class="key">
+                                        <p>
+                                            <span class="current">Current: </span>
+                                            <span id="manual-seed">er6ER3G20YHZRPYAEm57-0</span>
+                                        </p>
+                                    </div>
+                                    <i class="copy-icon"></i>
+                                </div>
+                                <button class="btn btn-success btn-change text-uppercase" disabled>
+                                    <span>Change</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="server-seed">
+                        <div class="server-seed-title">
+                            <i class="server-icon"></i>
+                            <span>Server seed SHA256:</span>
+                        </div>
+                        <div class="server-seed-value-block">
+                            <div class="key-container">
+                                <div class="key" id="server-seed">037ccb1df2e15dd4d714c27785c3f0e5ab4efbfcc7cbe33fb8a1f27de02e70f7</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    You can check fairness of each bet from bets history
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Free Bets Modal -->
+    <div class="modal-overlay" id="free-bets-modal" style="display: none;">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <span class="text-uppercase">Free Bets Management</span>
+                    <button type="button" class="close" data-modal="free-bets-modal">
+                        <span>×</span>
+                    </button>
+                </div>
+                <div class="modal-body px-2">
+                    <div class="content-wrapper">
+                        <div class="content">
+                            <div class="free-bet-item">
+                                <div class="item-wrapper">
+                                    <div class="rounded-block cash-block selected">
+                                        <div class="main-row">
+                                            <span class="radio">
+                                                <i class="dot"></i>
+                                            </span>
+                                            <div class="cash-block__text">Play with cash</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="free-bets-header pl-1">
+                                <div>ACTIVE FREE BETS</div>
+                                <div class="archive-btn pl-1 pr-2">
+                                    <div class="history-i"></div>
+                                    <div>Archive</div>
+                                </div>
+                            </div>
+                            
+                            <div class="content__none">
+                                <div class="free-bet-image"></div>
+                                <div class="none-text">No Active Free Bets. Yet!</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bet History Modal -->
+    <div class="modal-overlay" id="bet-history-modal" style="display: none;">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <span class="text-uppercase">My Bet History</span>
+                    <button type="button" class="close" data-modal="bet-history-modal">
+                        <span>×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="bet-history-content">
+                        <p class="text-center text-muted">No betting history available yet.</p>
+                        <p class="text-center text-grey">Start playing to see your bet history here!</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

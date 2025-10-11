@@ -5,54 +5,53 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ClassyBet Profile</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="./style.css">
     <style>
-        /* Profile-specific styles */
-        .profile-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem;
-            background: rgba(13, 20, 33, 0.95);
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0d1421 0%, #1a2332 100%);
+            color: white;
             min-height: 100vh;
         }
 
-        .profile-header {
-            background: rgba(48, 252, 190, 0.1);
-            border: 1px solid #30fcbe;
-            border-radius: 12px;
-            padding: 2rem;
-            margin-bottom: 2rem;
-            text-align: center;
+        .header {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 1rem 2rem;
+            border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
-        .profile-header h1 {
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
             color: #30fcbe;
-            margin-bottom: 1rem;
-            font-size: 2.5rem;
         }
 
-        .back-to-game {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            z-index: 1000;
-            background: linear-gradient(135deg, #30fcbe, #28d1a0);
-            border: none;
-            padding: 0.75rem 1.5rem;
-            border-radius: 8px;
-            color: #0a0f1a;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-decoration: none;
+        .user-info {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 1rem;
         }
 
-        .back-to-game:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(48, 252, 190, 0.3);
+        .balance-display {
+            background: rgba(48, 252, 190, 0.1);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: bold;
+            color: #30fcbe;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
         }
 
         .profile-grid {
@@ -62,12 +61,15 @@
             margin-bottom: 2rem;
         }
 
-        .profile-card {
+        .card {
             background: rgba(255, 255, 255, 0.1);
             border-radius: 12px;
             padding: 2rem;
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .profile-card {
             text-align: center;
             position: relative;
             overflow: hidden;
@@ -108,21 +110,6 @@
             color: #30fcbe;
         }
 
-        .user-email {
-            color: #ccc;
-            margin-bottom: 1rem;
-        }
-
-        .balance-display {
-            background: rgba(48, 252, 190, 0.1);
-            padding: 1rem;
-            border-radius: 20px;
-            font-weight: bold;
-            color: #30fcbe;
-            font-size: 1.2rem;
-            margin: 1rem 0;
-        }
-
         .user-stats {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -149,43 +136,129 @@
             margin-top: 0.25rem;
         }
 
-        .tabs {
-            display: flex;
-            margin-bottom: 2rem;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 12px;
-            padding: 0.5rem;
+        .menu-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
         }
 
-        .tab-button {
+        .menu-item {
+            background: rgba(255, 255, 255, 0.1);
+            margin-bottom: 1rem;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            padding: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .menu-item:hover {
+            background: rgba(48, 252, 190, 0.1);
+            border-color: #30fcbe;
+        }
+
+        .menu-item i {
+            font-size: 1.5rem;
+            margin-right: 1rem;
+            color: #30fcbe;
+            width: 30px;
+            text-align: center;
+        }
+
+        .menu-item-content {
             flex: 1;
+        }
+
+        .menu-item-title {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #fff;
+            margin-bottom: 0.25rem;
+        }
+
+        .menu-item-description {
+            font-size: 0.9rem;
+            color: #ccc;
+        }
+
+        .menu-item-arrow {
+            color: #30fcbe;
+            margin-left: 1rem;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .back-button {
             background: none;
             border: none;
-            color: #ccc;
-            padding: 1rem;
+            color: #30fcbe;
             cursor: pointer;
-            border-radius: 8px;
+            padding: 0.5rem;
+            margin-right: 1rem;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             transition: all 0.3s ease;
-            font-size: 1rem;
         }
 
-        .tab-button.active {
-            background: #30fcbe;
-            color: #0a0f1a;
-            font-weight: bold;
+        .back-button:hover {
+            background: rgba(48, 252, 190, 0.1);
         }
 
-        .tab-content {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            padding: 2rem;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+        .section-title {
+            font-size: 1.5rem;
+            color: #30fcbe;
+            margin: 0;
+        }
+
+        .content-section {
             display: none;
         }
 
-        .tab-content.active {
+        .content-section.active {
             display: block;
+        }
+
+        .menu-list.hidden {
+            display: none;
+        }
+
+        .menu-item-arrow.rotated {
+            transform: rotate(180deg);
+        }
+
+        .referral-list .referral-item {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .referral-list .referral-item + .referral-item {
+            margin-top: 0.75rem;
+        }
+
+        .referral-list .referral-item .referral-meta {
+            color: #ccc;
+            font-size: 0.85rem;
+            margin-top: 0.25rem;
+        }
+
+        .referral-list .referral-item .referral-stats {
+            text-align: right;
+            color: #30fcbe;
+            font-size: 0.85rem;
         }
 
         .form-group {
@@ -196,13 +269,12 @@
             display: block;
             margin-bottom: 0.5rem;
             color: #ccc;
-            font-weight: 500;
         }
 
         .form-control {
             width: 100%;
             padding: 0.75rem;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border: 1px solid #333;
             border-radius: 8px;
             background: rgba(255, 255, 255, 0.1);
             color: white;
@@ -235,6 +307,11 @@
         .btn-primary:hover {
             transform: translateY(-2px);
             box-shadow: 0 8px 25px rgba(48, 252, 190, 0.3);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #fb024c, #ff4081);
+            color: white;
         }
 
         .deposit-instructions {
@@ -311,24 +388,22 @@
             color: #30fcbe;
         }
 
-        .error-message {
+        .error {
             background: rgba(251, 2, 76, 0.1);
             border: 1px solid #fb024c;
             color: #fb024c;
             padding: 1rem;
             border-radius: 8px;
             margin-bottom: 1rem;
-            display: none;
         }
 
-        .success-message {
+        .success {
             background: rgba(40, 169, 9, 0.1);
             border: 1px solid #28a909;
             color: #28a909;
             padding: 1rem;
             border-radius: 8px;
             margin-bottom: 1rem;
-            display: none;
         }
 
         .loading {
@@ -338,7 +413,7 @@
         }
 
         @media (max-width: 768px) {
-            .profile-container {
+            .container {
                 padding: 1rem;
             }
             
@@ -358,54 +433,91 @@
                 flex-direction: column;
                 gap: 1rem;
             }
-
-            .back-to-game {
-                position: static;
-                margin: 1rem auto;
-                display: inline-flex;
-            }
         }
     </style>
 </head>
 <body>
-    <a href="base.html" class="back-to-game">
-        <i class="fas fa-arrow-left"></i> Back to Game
-    </a>
+    <div class="header">
+        <div class="logo">
+            <a href="game.html" style="cursor: pointer; text-decoration: none;">
+                <img src="images/classybetaviator-logo.svg" alt="ClassyBet" height="30">
+            </a>
+        </div>
+        <div class="user-info">
+            <div class="balance-display" id="header-balance">
+                KES 0.00
+            </div>
+            <button class="btn btn-danger" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+        </div>
+    </div>
 
-    <div class="profile-container">
-        <div class="profile-header">
-            <h1><i class="fas fa-user-circle"></i> My Profile</h1>
-            <p>Manage your ClassyBet account and view your gaming history</p>
+    <div class="container">
+        <!-- Login Form (initially shown if not logged in) -->
+        <div id="login-section" class="card" style="max-width: 400px; margin: 5rem auto; display: none;">
+            <h2 style="text-align: center; color: #30fcbe; margin-bottom: 2rem;">
+                <i class="fas fa-lock"></i> Login to Profile
+            </h2>
+            
+            <div id="login-error" class="error" style="display: none;"></div>  
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="login-email">Email or Username</label>
+                    <input type="text" id="login-email" class="form-control" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="login-password">Password</label>
+                    <input type="password" id="login-password" class="form-control" required>
+                </div>
+                
+                <button type="submit" class="btn btn-primary" style="width: 100%;">
+                    <i class="fas fa-sign-in-alt"></i> Login
+                </button>
+            </form>
+
+            <div style="text-align: center; margin-top: 1rem;">
+                <a href="#" onclick="showRegisterForm()" style="color: #30fcbe;">Don't have an account? Register here</a>
+            </div>
         </div>
 
-        <!-- Login Section (initially shown) -->
-        <div id="login-section">
-            <div class="profile-card" style="max-width: 400px; margin: 2rem auto;">
-                <h2 style="text-align: center; color: #30fcbe; margin-bottom: 2rem;">
-                    <i class="fas fa-lock"></i> Login to View Profile
-                </h2>
-                
-                <div id="login-error" class="error-message"></div>
-                
-                <form id="login-form">
-                    <div class="form-group">
-                        <label for="login-email">Email or Username</label>
-                        <input type="text" id="login-email" class="form-control" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="login-password">Password</label>
-                        <input type="password" id="login-password" class="form-control" required>
-                    </div>
-                    
-                    <button type="submit" class="btn btn-primary" style="width: 100%;">
-                        <i class="fas fa-sign-in-alt"></i> Login
-                    </button>
-                </form>
-
-                <div style="text-align: center; margin-top: 1rem;">
-                    <p>Don't have an account? <a href="base.html" style="color: #30fcbe;">Play the game to register</a></p>
+        <!-- Registration Form -->
+        <div id="register-section" class="card" style="max-width: 400px; margin: 5rem auto; display: none;">
+            <h2 style="text-align: center; color: #30fcbe; margin-bottom: 2rem;">
+                <i class="fas fa-user-plus"></i> Register Account
+            </h2>
+            
+            <div id="register-error" class="error" style="display: none;"></div>
+            
+            <form id="register-form">
+                <div class="form-group">
+                    <label for="register-username">Username</label>
+                    <input type="text" id="register-username" class="form-control" required>
                 </div>
+                
+                <div class="form-group">
+                    <label for="register-email">Email</label>
+                    <input type="email" id="register-email" class="form-control" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="register-phone">Phone (254XXXXXXXXX)</label>
+                    <input type="tel" id="register-phone" class="form-control" placeholder="254700000000" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="register-password">Password</label>
+                    <input type="password" id="register-password" class="form-control" minlength="6" required>
+                </div>
+                
+                <button type="submit" class="btn btn-primary" style="width: 100%;">
+                    <i class="fas fa-user-plus"></i> Register
+                </button>
+            </form>
+
+            <div style="text-align: center; margin-top: 1rem;">
+                <a href="#" onclick="showLoginForm()" style="color: #30fcbe;">Already have an account? Login here</a>
             </div>
         </div>
 
@@ -413,82 +525,175 @@
         <div id="profile-section" style="display: none;">
             <div class="profile-grid">
                 <!-- Profile Info Card -->
-                <div class="profile-card">
+                <div class="card profile-card">
                     <div class="avatar">
                         <i class="fas fa-user"></i>
                     </div>
                     <div class="username" id="profile-username">Username</div>
-                    <div class="user-email" id="profile-email">email@example.com</div>
-                    <div class="balance-display">
+                    <div id="profile-email" style="color: #ccc;">email@example.com</div>
+                    <div class="balance-display" style="margin: 1rem 0;">
                         Balance: KES <span id="profile-balance">0.00</span>
                     </div>
                     
                     <div class="user-stats">
                         <div class="stat-item">
-                            <div class="stat-number" id="total-bets">0</div>
-                            <div class="stat-label">Total Bets</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-number" id="total-wins">0</div>
-                            <div class="stat-label">Total Wins</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-number" id="biggest-win">KES 0</div>
+                            <div class="stat-number" id="biggest-win">KES 0.00</div>
                             <div class="stat-label">Biggest Win</div>
                         </div>
                         <div class="stat-item">
                             <div class="stat-number" id="biggest-multiplier">0x</div>
                             <div class="stat-label">Best Multiplier</div>
                         </div>
+                        <div class="stat-item" id="referral-count-card" style="display: none;">
+                            <div class="stat-number" id="referral-count">0</div>
+                            <div class="stat-label">Referred Players</div>
+                        </div>
+                        <div class="stat-item" id="referral-earnings-card" style="display: none;">
+                            <div class="stat-number" id="referral-earnings">KES 0</div>
+                            <div class="stat-label">Referral Earnings</div>
+                        </div>
                     </div>
 
-                    <button id="logout-btn" class="btn" style="background: linear-gradient(135deg, #fb024c, #ff4081); color: white; width: 100%; margin-top: 1rem;">
-                        <i class="fas fa-sign-out-alt"></i> Logout
-                    </button>
-                </div>
-
-                <!-- Main Content Tabs -->
-                <div>
-                    <div class="tabs">
-                        <button class="tab-button active" onclick="switchTab('deposit')">
-                            <i class="fas fa-plus-circle"></i> Deposit
-                        </button>
-                        <button class="tab-button" onclick="switchTab('withdraw')">
-                            <i class="fas fa-minus-circle"></i> Withdraw
-                        </button>
-                        <button class="tab-button" onclick="switchTab('transactions')">
-                            <i class="fas fa-history"></i> History
-                        </button>
-                        <button class="tab-button" onclick="switchTab('settings')">
-                            <i class="fas fa-cog"></i> Settings
-                        </button>
+                    <div class="menu-item" id="affiliate-toggle" style="margin-top: 1.25rem; cursor: pointer;">
+                        <i class="fas fa-users"></i>
+                        <div class="menu-item-content">
+                            <div class="menu-item-title">Affiliate Program</div>
+                            <div class="menu-item-description">Earn commissions when friends register</div>
+                        </div>
+                        <i class="fas fa-chevron-down menu-item-arrow" id="affiliate-toggle-icon"></i>
                     </div>
 
-                    <!-- Deposit Tab -->
-                    <div id="deposit-tab" class="tab-content active">
-                        <div class="deposit-instructions">
-                            <h4><i class="fas fa-info-circle"></i> M-Pesa Deposit Instructions</h4>
-                            <div class="paybill-info">
-                                <div class="paybill-item">
-                                    <div style="color: #ccc; margin-bottom: 0.5rem;">Paybill Number</div>
-                                    <div class="paybill-number">793174</div>
-                                </div>
-                                <div class="paybill-item">
-                                    <div style="color: #ccc; margin-bottom: 0.5rem;">Account Number</div>
-                                    <div class="paybill-number">745087451</div>
-                                </div>
+                    <div id="affiliate-panel" style="display: none;">
+                        <div id="affiliate-join-card" style="margin-top: 1.25rem; display: none;">
+                            <div style="background: rgba(48, 252, 190, 0.08); border-radius: 12px; padding: 1.5rem;">
+                                <h4 style="color: #30fcbe; margin-bottom: 0.75rem;">Become a ClassyBet Affiliate</h4>
+                                <p style="color: #ccc; margin-bottom: 1rem;">
+                                    Create your personal promo code and earn commissions when friends register using it. Choose a code that is easy to remember.
+                                </p>
+                                <div id="affiliate-join-success" class="success" style="display: none;"></div>
+                                <div id="affiliate-join-error" class="error" style="display: none;"></div>
+                                <form id="affiliate-join-form">
+                                    <div class="form-group">
+                                        <label for="affiliate-promo">Promo Code (4-12 letters or numbers)</label>
+                                        <input type="text" id="affiliate-promo" class="form-control" placeholder="MYCODE" minlength="4" maxlength="12" required>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary" style="width: 100%;">
+                                        <i class="fas fa-rocket"></i> Create Promo Code
+                                    </button>
+                                </form>
                             </div>
-                            <p style="color: #ccc; margin-bottom: 1rem;">Or use STK Push below for instant deposit:</p>
                         </div>
 
-                        <div id="deposit-error" class="error-message"></div>
-                        <div id="deposit-success" class="success-message"></div>
+                        <div id="referral-cta" style="margin-top: 1.5rem; display: none;">
+                            <div style="background: rgba(48, 252, 190, 0.12); border-radius: 12px; padding: 1.25rem; text-align: left;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                                    <div>
+                                        <div style="font-size: 1rem; color: #30fcbe; font-weight: 600; margin-bottom: 0.25rem;">Affiliate Promo Code</div>
+                                        <div style="font-size: 1.35rem; font-weight: 700; letter-spacing: 0.05em;" id="referral-code">N/A</div>
+                                        <div style="color: #ccc; font-size: 0.85rem; margin-top: 0.25rem;" id="referral-highlight">Share this code to start earning commissions.</div>
+                                    </div>
+                                    <div style="display: flex; gap: 0.75rem;">
+                                        <button class="btn btn-primary" id="copy-referral-code" style="padding: 0.6rem 1.1rem;">
+                                            <i class="fas fa-copy"></i> Copy Code
+                                        </button>
+                                        <button class="btn" id="view-referral-details" style="background: rgba(48, 252, 190, 0.18); color: #0a0f1a; padding: 0.6rem 1.1rem;">
+                                            <i class="fas fa-chart-line"></i> View Details
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="referral-list-card" style="margin-top: 1.5rem; display: none;">
+                            <div style="background: rgba(255, 255, 255, 0.04); border-radius: 12px; padding: 1.25rem;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                                    <h4 style="color: #30fcbe; margin: 0;">Referred Players</h4>
+                                    <button class="btn" id="refresh-referrals" style="background: rgba(48, 252, 190, 0.18); color: #0a0f1a; padding: 0.55rem 1rem; font-size: 0.85rem;">
+                                        <i class="fas fa-sync-alt"></i> Refresh
+                                    </button>
+                                </div>
+                                <div id="referral-list" class="referral-list">
+                                    <div style="text-align: center; color: #ccc;">No referrals yet.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Content Card -->
+                <div class="card">
+                    <ul class="menu-list" id="main-menu">
+                        <li class="menu-item" onclick="showSection('deposit')">
+                            <i class="fas fa-plus-circle"></i>
+                            <div class="menu-item-content">
+                                <div class="menu-item-title">Deposit</div>
+                                <div class="menu-item-description">Add funds to your account</div>
+                            </div>
+                            <i class="fas fa-chevron-right menu-item-arrow"></i>
+                        </li>
+                        <li class="menu-item" onclick="showSection('withdraw')">
+                            <i class="fas fa-minus-circle"></i>
+                            <div class="menu-item-content">
+                                <div class="menu-item-title">Withdraw</div>
+                                <div class="menu-item-description">Withdraw funds to M-Pesa</div>
+                            </div>
+                            <i class="fas fa-chevron-right menu-item-arrow"></i>
+                        </li>
+                        <li class="menu-item" onclick="showSection('transactions')">
+                            <i class="fas fa-history"></i>
+                            <div class="menu-item-content">
+                                <div class="menu-item-title">Transactions</div>
+                                <div class="menu-item-description">View your transaction history</div>
+                            </div>
+                            <i class="fas fa-chevron-right menu-item-arrow"></i>
+                        </li>
+                        <li class="menu-item" onclick="showSection('settings')">
+                            <i class="fas fa-cog"></i>
+                            <div class="menu-item-content">
+                                <div class="menu-item-title">Settings</div>
+                                <div class="menu-item-description">Manage your account settings</div>
+                            </div>
+                            <i class="fas fa-chevron-right menu-item-arrow"></i>
+                        </li>
+                        <li class="menu-item" onclick="showSection('responsible')">
+                            <i class="fas fa-shield-alt"></i>
+                            <div class="menu-item-content">
+                                <div class="menu-item-title">Responsible Gambling</div>
+                                <div class="menu-item-description">Manage your gambling activity</div>
+                            </div>
+                            <i class="fas fa-chevron-right menu-item-arrow"></i>
+                        </li>
+                        <li class="menu-item" onclick="showSection('delete')">
+                            <i class="fas fa-user-times"></i>
+                            <div class="menu-item-content">
+                                <div class="menu-item-title">Delete Account</div>
+                                <div class="menu-item-description">Permanently delete your account</div>
+                            </div>
+                            <i class="fas fa-chevron-right menu-item-arrow"></i>
+                        </li>
+                    </ul>
+
+                    <!-- Deposit Section -->
+                                        <!-- Deposit Section -->
+                    <div id="deposit-section" class="content-section">
+                        <div class="section-header">
+                            <button class="back-button" onclick="showMainMenu()">
+                                <i class="fas fa-arrow-left"></i>
+                            </button>
+                            <h2 class="section-title">Deposit</h2>
+                        </div>
+                        
+
+                        <h4 style="margin-bottom: 1rem; color: #30fcbe;">STK Push Deposit</h4>
+                        
+                        <div id="deposit-error" class="error" style="display: none;"></div>
+                        <div id="deposit-success" class="success" style="display: none;"></div>
                         
                         <form id="deposit-form">
                             <div class="form-group">
                                 <label for="deposit-amount">Amount (KES)</label>
                                 <input type="number" id="deposit-amount" class="form-control" min="10" max="50000" step="1" required>
-                                <small style="color: #ccc;">Minimum: KES 10, Maximum: KES 50,000</small>
+                                <small style="color: #ccc;">Minimum: KES 10, Maximum: KES 150,000</small>
                             </div>
                             
                             <div class="form-group">
@@ -497,21 +702,55 @@
                             </div>
                             
                             <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-mobile-alt"></i> Send STK Push
+                                <i class="fas fa-mobile-alt"></i> DEPOSIT
                             </button>
+
+                            <div style="margin-top: 2rem; padding: 1rem; background: rgba(255, 165, 0, 0.1); border-radius: 8px;">
+                                <h5 style="color: #ffa500; margin-bottom: 0.5rem;">⚠️ Deposit Notice</h5>
+                                <p style="color: #ccc; font-size: 0.9rem;">Deposit processing is instant but may take upto 10 minutes for prompt to appear. You'll receive an SMS confirmation immediately once processed.</p>
+                            </div>
                         </form>
+
+                        <div class="deposit-instructions">
+                            <h4><i class="fas fa-info-circle"></i> Deposit Instructions if STK Push doesn't appear</h4>
+                            <div class="paybill-info">
+                                <div class="paybill-item">
+                                    <div style="color: #ccc; margin-bottom: 0.5rem;">Paybill Number</div>
+                                    <div class="paybill-number" id="paybill-number">793174</div>
+                                </div>
+                                <div class="paybill-item">
+                                    <div style="color: #ccc; margin-bottom: 0.5rem;">Account No: Your Account User ID</div>
+                                    <div class="paybill-number" id="account-number">745087451</div>
+                                </div>
+                            </div>
+                            <p style="color: #ccc; margin-bottom: 1rem;">Follow these steps to deposit:</p>
+                            <ol style="color: #ccc; padding-left: 1.5rem;">
+                                <li>Go to M-PESA menu</li>
+                                <li>Select Lipa na M-PESA → Pay Bill</li>
+                                <li>Enter Business Number: <strong>793174</strong></li>
+                                <li>Enter Account Number(Your Given Account ID): <strong>745087451</strong></li>
+                                <li>Enter amount and complete payment</li>
+                                <li>Or use STK Push above for instant deposit</li>
+                            </ol>
+                        </div>
                     </div>
 
-                    <!-- Withdraw Tab -->
-                    <div id="withdraw-tab" class="tab-content">
-                        <div id="withdraw-error" class="error-message"></div>
-                        <div id="withdraw-success" class="success-message"></div>
+                    <!-- Withdraw Section -->
+                    <div id="withdraw-section" class="content-section">
+                        <div class="section-header">
+                            <button class="back-button" onclick="showMainMenu()">
+                                <i class="fas fa-arrow-left"></i>
+                            </button>
+                            <h2 class="section-title">Withdraw</h2>
+                        </div>
+                        <div id="withdraw-error" class="error" style="display: none;"></div>
+                        <div id="withdraw-success" class="success" style="display: none;"></div>
                         
                         <form id="withdraw-form">
                             <div class="form-group">
                                 <label for="withdraw-amount">Amount (KES)</label>
                                 <input type="number" id="withdraw-amount" class="form-control" min="100" step="1" required>
-                                <small style="color: #ccc;">Minimum withdrawal: KES 100</small>
+                                <small style="color: #ccc;">Minimum withdrawal: KES 200</small>
                             </div>
                             
                             <div class="form-group">
@@ -526,20 +765,32 @@
 
                         <div style="margin-top: 2rem; padding: 1rem; background: rgba(255, 165, 0, 0.1); border-radius: 8px;">
                             <h5 style="color: #ffa500; margin-bottom: 0.5rem;">⚠️ Withdrawal Notice</h5>
-                            <p style="color: #ccc; font-size: 0.9rem;">Withdrawals are processed manually and may take 1-24 hours to complete.</p>
+                            <p style="color: #ccc; font-size: 0.9rem;">Withdrawals processing is instant but may take 1-24 hours to complete. You'll receive an SMS confirmation immediately once processed.</p>
                         </div>
                     </div>
 
-                    <!-- Transactions Tab -->
-                    <div id="transactions-tab" class="tab-content">
+                    <!-- Transactions Section -->
+                    <div id="transactions-section" class="content-section">
+                        <div class="section-header">
+                            <button class="back-button" onclick="showMainMenu()">
+                                <i class="fas fa-arrow-left"></i>
+                            </button>
+                            <h2 class="section-title">Transactions</h2>
+                        </div>
                         <h4 style="margin-bottom: 1rem; color: #30fcbe;">Transaction History</h4>
                         <div id="transactions-list" class="transaction-list">
                             <div class="loading">Loading transactions...</div>
                         </div>
                     </div>
 
-                    <!-- Settings Tab -->
-                    <div id="settings-tab" class="tab-content">
+                    <!-- Settings Section -->
+                    <div id="settings-section" class="content-section">
+                        <div class="section-header">
+                            <button class="back-button" onclick="showMainMenu()">
+                                <i class="fas fa-arrow-left"></i>
+                            </button>
+                            <h2 class="section-title">Settings</h2>
+                        </div>
                         <h4 style="margin-bottom: 1rem; color: #30fcbe;">Account Settings</h4>
                         
                         <div class="form-group">
@@ -567,19 +818,142 @@
                             <input type="text" class="form-control" id="settings-login" readonly>
                         </div>
                     </div>
+
+                    <!-- Take a Break Section -->
+                    <div id="responsible-section" class="content-section">
+                        <div class="section-header">
+                            <button class="back-button" onclick="showMainMenu()">
+                                <i class="fas fa-arrow-left"></i>
+                            </button>
+                            <h2 class="section-title">Responsible Gambling</h2>
+                        </div>
+                        <h4 style="margin-bottom: 1rem; color: #30fcbe;">Take a Break</h4>
+                        
+                        <div style="background: rgba(48, 252, 190, 0.1); padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem;">
+                            <p style="color: #fff; margin-bottom: 1rem;">
+                                If you feel that you may be at risk of developing a gambling problem, or if you believe you are already experiencing one, we encourage you to consider taking a break.
+                            </p>
+                            <p style="color: #fff; margin-bottom: 1rem;">
+                                For any other reason you wish to stop playing, please visit our <a href="#" onclick="showSection('delete')" style="color: #30fcbe;">Account Deletion page</a>.
+                            </p>
+                            <p style="color: #fff; margin-bottom: 1rem;">
+                                Classybet offers a take a break option, allowing you to temporarily exclude yourself from your account for a set period. Once activated, account cannot be re-activated until the specified period ends.
+                            </p>
+                            <p style="color: #fff;">
+                                During your take a break period, we will take all necessary measures to prevent the creation of new accounts in your name.
+                            </p>
+                        </div>
+
+                        <form id="take-break-form">
+                            <div class="form-group">
+                                <label>Break Period</label>
+                                <select class="form-control" id="break-period" required>
+                                    <option value="24h">24 Hours</option>
+                                    <option value="7d">7 Days</option>
+                                    <option value="30d">30 Days</option>
+                                    <option value="90d">90 Days</option>
+                                    <option value="180d">180 Days</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Reason for Break</label>
+                                <select class="form-control" id="break-reason" required>
+                                    <option value="spending">Spending too much money</option>
+                                    <option value="time">Spending too much time</option>
+                                    <option value="control">Feel like losing control</option>
+                                    <option value="other">Other reasons</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="checkbox-container">
+                                    <input type="checkbox" required>
+                                    <span>By ticking this box you agree to taking a break terms and conditions.</span>
+                                </label>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-pause-circle"></i> Take a Break
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Delete Account Section -->
+                    <div id="delete-section" class="content-section">
+                        <div class="section-header">
+                            <button class="back-button" onclick="showMainMenu()">
+                                <i class="fas fa-arrow-left"></i>
+                            </button>
+                            <h2 class="section-title">Delete Account</h2>
+                        </div>
+                        <h4 style="margin-bottom: 1rem; color: #fb024c;">Delete Account</h4>
+                        
+                        <div style="background: rgba(251, 2, 76, 0.1); padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem;">
+                            <p style="color: #fff; margin-bottom: 1rem;">
+                                Before proceeding with account deletion, please be aware that:
+                            </p>
+                            <ul style="color: #fff; margin-bottom: 1rem; padding-left: 1.5rem;">
+                                <li>This action cannot be undone</li>
+                                <li>All your account data will be permanently deleted</li>
+                                <li>Any remaining balance should be withdrawn before deletion</li>
+                                <li>You won't be able to recover your betting history or transactions</li>
+                            </ul>
+                            <p style="color: #fff;">
+                                Consider using our <a href="#" onclick="showSection('responsible')" style="color: #30fcbe;">Take a Break</a> feature if you only need temporary exclusion.
+                            </p>
+                        </div>
+
+                        <form id="delete-account-form">
+                            <div class="form-group">
+                                <label>Reason for Deletion</label>
+                                <select class="form-control" id="delete-reason" required>
+                                    <option value="gambling">Gambling concerns</option>
+                                    <option value="not-using">No longer using the service</option>
+                                    <option value="experience">Bad experience</option>
+                                    <option value="other">Other reasons</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Confirm your password</label>
+                                <input type="password" class="form-control" id="delete-password" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="checkbox-container">
+                                    <input type="checkbox" required>
+                                    <span>I understand this action cannot be undone and all my data will be permanently deleted.</span>
+                                </label>
+                            </div>
+
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-user-times"></i> Delete My Account
+                            </button>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:3001' : '';
+        const API_BASE = (() => {
+            const { hostname, protocol } = window.location;
+            const isLocalHost = hostname === 'localhost' || hostname === '127.0.0.1';
+            if (isLocalHost || protocol === 'file:' || hostname === '') {
+                return 'http://localhost:3001';
+            }
+            return window.location.origin;
+        })();
         let authToken = localStorage.getItem('user_token');
         let currentUser = null;
 
         // Check if already logged in
         if (authToken) {
             loadUserProfile();
+        } else {
+            showLoginForm();
         }
 
         // Login form handler
@@ -612,12 +986,64 @@
             }
         });
 
+        // Register form handler
+        document.getElementById('register-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const username = document.getElementById('register-username').value;
+            const email = document.getElementById('register-email').value;
+            const phone = document.getElementById('register-phone').value;
+            const password = document.getElementById('register-password').value;
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, email, phone, password })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    authToken = data.token;
+                    currentUser = data.user;
+                    localStorage.setItem('user_token', authToken);
+                    showProfileSection();
+                    loadUserProfile();
+                } else {
+                    showError('register-error', data.error);
+                }
+            } catch (error) {
+                showError('register-error', 'Registration failed. Please try again.');
+            }
+        });
+
         // Deposit form handler
         document.getElementById('deposit-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             
             const amount = document.getElementById('deposit-amount').value;
-            const phoneNumber = document.getElementById('deposit-phone').value;
+            let phoneNumber = document.getElementById('deposit-phone').value;
+            
+            // Validate amount
+            if (amount < 10 || amount > 150000) {
+                showError('deposit-error', 'Amount must be between KES 10 and KES 150,000');
+                return;
+            }
+
+            // Format and validate phone number
+            phoneNumber = phoneNumber.replace(/\D/g, ''); // Remove non-digits
+            if (phoneNumber.startsWith('0')) {
+                phoneNumber = '254' + phoneNumber.substring(1);
+            } else if (phoneNumber.startsWith('+')) {
+                phoneNumber = phoneNumber.substring(1);
+            }
+
+            // Validate phone number format
+            if (!/^254[0-9]{9}$/.test(phoneNumber)) {
+                showError('deposit-error', 'Invalid phone number format. Use format: 254XXXXXXXXX or 07XXXXXXXX');
+                return;
+            }
             
             try {
                 const response = await fetch(`${API_BASE}/api/payments/stk-push`, {
@@ -645,9 +1071,6 @@
             }
         });
 
-        // Logout button handler
-        document.getElementById('logout-btn').addEventListener('click', logout);
-
         async function loadUserProfile() {
             try {
                 const response = await fetch(`${API_BASE}/api/auth/profile`, {
@@ -670,18 +1093,88 @@
         function updateProfileUI() {
             if (!currentUser) return;
 
+            // Header
+            document.getElementById('header-balance').textContent = `KES ${currentUser.balance.toFixed(2)}`;
+            
             // Profile section
             document.getElementById('profile-username').textContent = currentUser.username;
             document.getElementById('profile-email').textContent = currentUser.email;
             document.getElementById('profile-balance').textContent = currentUser.balance.toFixed(2);
-            document.getElementById('total-bets').textContent = currentUser.totalBets || 0;
-            document.getElementById('total-wins').textContent = currentUser.totalWins || 0;
             document.getElementById('biggest-win').textContent = `KES ${(currentUser.biggestWin || 0).toFixed(2)}`;
             document.getElementById('biggest-multiplier').textContent = `${(currentUser.biggestMultiplier || 0).toFixed(2)}x`;
             
-            // Settings
-            document.getElementById('settings-username').value = currentUser.username;
-            document.getElementById('settings-email').value = currentUser.email;
+            // Handle referral stats and CTA
+            const referralStats = currentUser.referralStats || {};
+            const referralCountCard = document.getElementById('referral-count-card');
+            const referralEarningsCard = document.getElementById('referral-earnings-card');
+            const referralCTA = document.getElementById('referral-cta');
+            const referralCountValue = document.getElementById('referral-count');
+            const referralEarningsValue = document.getElementById('referral-earnings');
+            const referralCodeValue = document.getElementById('referral-code');
+            const referralHighlight = document.getElementById('referral-highlight');
+            const referralJoinCard = document.getElementById('affiliate-join-card');
+            const affiliateJoinForm = document.getElementById('affiliate-join-form');
+            const referralListCard = document.getElementById('referral-list-card');
+            const referralListContainer = document.getElementById('referral-list');
+            const affiliatePanel = document.getElementById('affiliate-panel');
+            const affiliateToggleIcon = document.getElementById('affiliate-toggle-icon');
+
+            const referredUsers = referralStats.referredUsers || 0;
+            const referralBalance = typeof referralStats.affiliateBalance === 'number' ? referralStats.affiliateBalance : 0;
+
+            if (referralCountCard && referralCountValue) {
+                if (referredUsers > 0 || currentUser.isAffiliate) {
+                    referralCountCard.style.display = 'block';
+                    referralCountValue.textContent = referredUsers;
+                } else {
+                    referralCountCard.style.display = 'none';
+                }
+            }
+
+            if (referralEarningsCard && referralEarningsValue) {
+                if (referralBalance > 0 || currentUser.isAffiliate) {
+                    referralEarningsCard.style.display = 'block';
+                    referralEarningsValue.textContent = `KES ${referralBalance.toFixed(2)}`;
+                } else {
+                    referralEarningsCard.style.display = 'none';
+                }
+            }
+
+            if (referralJoinCard && affiliateJoinForm) {
+                if (!currentUser.isAffiliate || !currentUser.promoCode) {
+                    referralJoinCard.style.display = 'block';
+                    affiliateJoinForm.reset();
+                } else {
+                    referralJoinCard.style.display = 'none';
+                }
+            }
+
+            if (referralCTA && referralCodeValue && referralHighlight) {
+                if (currentUser.isAffiliate && currentUser.promoCode) {
+                    referralCTA.style.display = 'block';
+                    const promoCode = currentUser.promoCode;
+                    referralCodeValue.textContent = promoCode;
+                    referralHighlight.textContent = referredUsers > 0
+                        ? `You've referred ${referredUsers} player${referredUsers === 1 ? '' : 's'} so far. Keep sharing to grow your earnings.`
+                        : 'Share this code to start earning commissions.';
+                } else {
+                    referralCTA.style.display = 'none';
+                }
+            }
+
+            if (referralListCard && referralListContainer) {
+                if (currentUser.isAffiliate && currentUser.promoCode) {
+                    referralListCard.style.display = 'block';
+                    loadReferralList();
+                } else {
+                    referralListCard.style.display = 'none';
+                }
+            }
+
+            if (affiliateToggleIcon && affiliatePanel) {
+                affiliateToggleIcon.classList.toggle('rotated', affiliatePanel.style.display === 'block');
+            }
+
             document.getElementById('settings-phone').value = currentUser.phone;
             document.getElementById('settings-created').value = new Date(currentUser.createdAt).toLocaleDateString();
             document.getElementById('settings-login').value = currentUser.lastLogin ? 
@@ -743,34 +1236,74 @@
         }
 
         function showProfileSection() {
+            document.querySelector('.container').style.display = 'block';
             document.getElementById('login-section').style.display = 'none';
+            document.getElementById('register-section').style.display = 'none';
             document.getElementById('profile-section').style.display = 'block';
         }
 
-        function switchTab(tabName) {
-            // Hide all tab contents
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.remove('active');
+        function showLoginForm() {
+            document.querySelector('.container').style.display = 'block';
+            document.getElementById('login-section').style.display = 'block';
+            document.getElementById('register-section').style.display = 'none';
+            document.getElementById('profile-section').style.display = 'none';
+        }
+
+        function showRegisterForm() {
+            document.getElementById('register-section').style.display = 'block';
+            document.getElementById('profile-section').style.display = 'none';
+        }
+
+        async function trackDepositMenuClick() {
+            if (!authToken) {
+                return;
+            }
+
+            try {
+                await fetch(`${API_BASE}/api/payments/deposit-tab-click`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+            } catch (error) {
+                console.error('Deposit menu tracking failed:', error);
+            }
+        }
+
+        function showSection(sectionName) {
+            if (sectionName === 'deposit') {
+                trackDepositMenuClick();
+            }
+
+            // Hide the main menu
+            document.getElementById('main-menu').classList.add('hidden');
+            
+            // Hide all sections
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.remove('active');
             });
             
-            // Remove active class from all buttons
-            document.querySelectorAll('.tab-button').forEach(btn => {
-                btn.classList.remove('active');
-            });
+            // Show selected section
+            document.getElementById(`${sectionName}-section`).classList.add('active');
+        }
+
+        function showMainMenu() {
+            // Show the main menu
+            document.getElementById('main-menu').classList.remove('hidden');
             
-            // Show selected tab
-            document.getElementById(`${tabName}-tab`).classList.add('active');
-            event.target.classList.add('active');
+            // Hide all sections
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.remove('active');
+            });
         }
 
         function logout() {
             localStorage.removeItem('user_token');
             authToken = null;
             currentUser = null;
-            document.getElementById('login-section').style.display = 'block';
-            document.getElementById('profile-section').style.display = 'none';
-            // Clear form
-            document.getElementById('login-form').reset();
+            showLoginForm();
         }
 
         function showError(elementId, message) {
@@ -785,6 +1318,139 @@
             element.textContent = message;
             element.style.display = 'block';
             setTimeout(() => element.style.display = 'none', 8000);
+        }
+
+        // Referral button handlers
+        const copyReferralButton = document.getElementById('copy-referral-code');
+        if (copyReferralButton) {
+            copyReferralButton.addEventListener('click', () => {
+                const codeText = document.getElementById('referral-code')?.textContent;
+                if (!codeText || codeText === 'N/A') {
+                    alert('No referral code assigned yet.');
+                    return;
+                }
+
+                navigator.clipboard.writeText(codeText).then(() => {
+                    alert('Referral code copied to clipboard.');
+                }).catch(() => {
+                    alert(`Referral code: ${codeText}`);
+                });
+            });
+        }
+
+        const referralDetailsButton = document.getElementById('view-referral-details');
+        if (referralDetailsButton) {
+            referralDetailsButton.addEventListener('click', () => {
+                showSection('transactions');
+                alert('Referral analytics coming soon. Contact support for detailed breakdown.');
+            });
+        }
+
+        const affiliateJoinForm = document.getElementById('affiliate-join-form');
+        if (affiliateJoinForm) {
+            affiliateJoinForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const promoInput = document.getElementById('affiliate-promo');
+                const successBox = document.getElementById('affiliate-join-success');
+                const errorBox = document.getElementById('affiliate-join-error');
+                const promoCode = promoInput.value.trim();
+
+                if (!promoCode || promoCode.length < 4) {
+                    showError('affiliate-join-error', 'Promo code must be at least 4 characters.');
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`${API_BASE}/api/affiliates/join`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${authToken}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ promoCode })
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        currentUser = data.affiliate;
+                        showSuccess('affiliate-join-success', 'Affiliate program activated!');
+                        updateProfileUI();
+                    } else {
+                        showError('affiliate-join-error', data.error || 'Failed to join affiliate program.');
+                    }
+                } catch (error) {
+                    showError('affiliate-join-error', 'Network error. Please try again.');
+                }
+            });
+        }
+
+        const affiliateToggle = document.getElementById('affiliate-toggle');
+        const affiliatePanel = document.getElementById('affiliate-panel');
+        const affiliateToggleIcon = document.getElementById('affiliate-toggle-icon');
+        if (affiliateToggle && affiliatePanel && affiliateToggleIcon) {
+            affiliateToggle.addEventListener('click', () => {
+                const isOpen = affiliatePanel.style.display === 'block';
+                affiliatePanel.style.display = isOpen ? 'none' : 'block';
+                affiliateToggleIcon.classList.toggle('rotated', !isOpen);
+            });
+        }
+
+        async function loadReferralList() {
+            const referralListContainer = document.getElementById('referral-list');
+            if (!referralListContainer) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/api/affiliates/referrals`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                if (!response.ok) {
+                    referralListContainer.innerHTML = '<div style="text-align: center; color: #fb024c;">Failed to load referrals.</div>';
+                    return;
+                }
+
+                const referrals = await response.json();
+
+                if (!referrals || referrals.length === 0) {
+                    referralListContainer.innerHTML = '<div style="text-align: center; color: #ccc;">No referrals yet.</div>';
+                    return;
+                }
+
+                referralListContainer.innerHTML = referrals.map(ref => `
+                    <div class="referral-item">
+                        <div>
+                            <div style="font-weight: 600; color: #fff;">${ref.referredUser?.username || 'Unknown Player'}</div>
+                            <div class="referral-meta">
+                                Joined ${ref.referredUser?.createdAt ? new Date(ref.referredUser.createdAt).toLocaleDateString() : new Date(ref.createdAt).toLocaleDateString()} · Code ${ref.promoCodeUsed}
+                            </div>
+                        </div>
+                        <div class="referral-stats">
+                            Deposits: KES ${(ref.depositTotal || 0).toFixed(2)}<br>
+                            Losses: KES ${(ref.lossTotal || 0).toFixed(2)}
+                        </div>
+                    </div>
+                `).join('');
+
+                const referralCountValue = document.getElementById('referral-count');
+                const referralCountCard = document.getElementById('referral-count-card');
+                if (referralCountValue && referralCountCard) {
+                    referralCountValue.textContent = referrals.length;
+                    referralCountCard.style.display = 'block';
+                }
+            } catch (error) {
+                referralListContainer.innerHTML = '<div style="text-align: center; color: #fb024c;">Error loading referrals.</div>';
+            }
+        }
+
+        const refreshReferralsButton = document.getElementById('refresh-referrals');
+        if (refreshReferralsButton) {
+            refreshReferralsButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                loadReferralList();
+            });
         }
 
         // Auto-refresh balance every 30 seconds

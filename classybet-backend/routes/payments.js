@@ -5,6 +5,8 @@ const User = require('../models/User');
 const Transaction = require('../models/Transaction');
 const { authenticateToken } = require('../middleware/auth');
 const { sendTelegramNotification } = require('../utils/telegram');
+const { sendSlackMessage } = require('../utils/slack');
+const { recordAffiliateDeposit } = require('../utils/affiliate');
 
 const router = express.Router();
 
@@ -13,8 +15,8 @@ router.post('/stk-push',
   authenticateToken,
   [
     body('amount').isNumeric().custom(value => {
-      if (value < 10 || value > 50000) {
-        throw new Error('Amount must be between KES 10 and KES 50,000');
+      if (value < 10 || value > 150000) {
+        throw new Error('Amount must be between KES 10 and KES 150,000');
       }
       return true;
     }),
@@ -67,6 +69,18 @@ router.post('/stk-push',
         `⚠️ Please process this deposit manually through the admin panel.`
       );
 
+      // Send Slack notification for deposit request
+      await sendSlackMessage(
+        process.env.SLACK_WEBHOOK_DEPOSIT_REQUEST,
+        `:moneybag: *Deposit Request*\n` +
+        `User: ${user.username}\n` +
+        `Phone: ${phoneNumber}\n` +
+        `Amount: KES ${amount}\n` +
+        `Transaction ID: ${transaction.reference}\n` +
+        `Time: ${new Date().toLocaleString('en-KE', { timeZone: 'Africa/Nairobi' })}\n\n` +
+        `⚠️ Please process this deposit manually through the admin panel.`
+      );
+
       res.json({
         message: 'STK Push sent successfully',
         transactionId: transaction.reference,
@@ -109,6 +123,12 @@ router.post('/confirm-deposit',
       user.balance += transaction.amount;
       await user.save();
 
+      try {
+        await recordAffiliateDeposit(user, transaction.amount);
+      } catch (error) {
+        console.error('Affiliate deposit tracking failed:', error.message);
+      }
+
       // Update transaction
       transaction.status = 'completed';
       transaction.balanceAfter = user.balance;
@@ -140,6 +160,28 @@ router.post('/confirm-deposit',
     }
   }
 );
+
+// Track deposit tab click
+router.post('/deposit-tab-click', authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.userId);
+    
+    // Send Slack notification for deposit tab click
+    await sendSlackMessage(
+      process.env.SLACK_WEBHOOK_DEPOSIT_TAB,
+      `:credit_card: *Deposit Tab Accessed*\n` +
+      `User: ${user.username}\n` +
+      `Phone: ${user.fullPhone || 'N/A'}\n` +
+      `Balance: KES ${user.balance.toFixed(2)}\n` +
+      `Time: ${new Date().toLocaleString('en-KE', { timeZone: 'Africa/Nairobi' })}`
+    );
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Deposit tab click tracking error:', error);
+    res.status(500).json({ error: 'Failed to track deposit tab click' });
+  }
+});
 
 // Get deposit instructions
 router.get('/deposit-info', authenticateToken, async (req, res) => {
