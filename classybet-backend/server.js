@@ -11,9 +11,11 @@ const paymentRoutes = require('./routes/payments');
 const adminRoutes = require('./routes/admin');
 const gameRoutes = require('./routes/game');
 const affiliateRoutes = require('./routes/affiliate');
+const roundRoutes = require('./routes/rounds');
 
 // Import models
 const User = require('./models/User');
+const { startRoundScheduler } = require('./utils/roundScheduler');
 
 const app = express();
 
@@ -50,9 +52,13 @@ app.get('/health', (req, res) => {
 
 // Connect to MongoDB
 const { connectToMongoDB } = require('./utils/database');
-connectToMongoDB().catch((error) => {
-  console.error('Failed to connect to MongoDB during startup:', error.message);
-});
+connectToMongoDB()
+  .then(() => {
+    startRoundScheduler();
+  })
+  .catch((error) => {
+    console.error('Failed to connect to MongoDB during startup:', error.message);
+  });
 
 const PORT = process.env.PORT || 4000;
 
@@ -62,6 +68,7 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/game', gameRoutes);
 app.use('/api/affiliates', affiliateRoutes);
+app.use('/api/rounds', roundRoutes);
 
 // Serve static files for admin and profile pages
 app.use('/admin', express.static('public/admin'));
