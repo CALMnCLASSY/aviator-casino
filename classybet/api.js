@@ -1,7 +1,9 @@
 // ClassyBet API Service
 class ClassyBetAPI {
     constructor() {
-        this.baseURL = window.location.hostname === 'localhost' ? 'http://localhost:3001' : '';
+        const productionURL = 'https://aviator-casino.onrender.com';
+        const isLocalhost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+        this.baseURL = isLocalhost ? 'http://localhost:3001' : productionURL;
         this.apiPath = '/api';
         this.token = localStorage.getItem('user_token');
         this.user = null;

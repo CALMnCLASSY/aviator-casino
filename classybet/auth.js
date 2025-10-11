@@ -2,8 +2,8 @@
 class AuthManager {
     constructor() {
         // Backend URL configuration
-        this.apiBase = 'http://localhost:3001'; // Development server
-        // For production, update this to your deployed backend URL
+        const isLocalhost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+        this.apiBase = isLocalhost ? 'http://localhost:3001' : 'https://aviator-casino.onrender.com';
         
         console.log('API Base URL:', this.apiBase);
         console.log('Frontend URL:', window.location.origin);

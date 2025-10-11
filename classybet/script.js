@@ -1,7 +1,7 @@
 // Global API configuration
 const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:3001'
-    : window.location.origin;
+    : 'https://aviator-casino.onrender.com';
 
 // Game State Management
 class AviatorGame {
@@ -2566,7 +2566,7 @@ async function checkAuthenticationOnLoad() {
                     const isLocal = window.location.hostname === 'localhost' || 
                                    window.location.hostname === '127.0.0.1' ||
                                    window.location.protocol === 'file:';
-                    const apiBase = isLocal ? 'http://localhost:3001' : window.location.origin;
+                    const apiBase = isLocal ? 'http://localhost:3001' : 'https://aviator-casino.onrender.com';
                     console.log('Profile API Base URL:', apiBase);
                     const response = await fetch(`${apiBase}/api/auth/profile`, {
                         headers: {
@@ -3068,24 +3068,24 @@ function isDemo() {
         }
         
         // For localhost, use the full backend URL
-        const profileUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-            ? 'http://localhost:3001/profile'
-            : '/profile';
-            
-        window.location.href = profileUrl;
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            window.location.href = 'http://localhost:3001/profile';
+            return;
+        }
+
+        window.location.href = `${window.location.origin}/profile.html`;
     });
     
     document.getElementById('admin-btn').addEventListener('click', () => {
         const isLocal = window.location.hostname === 'localhost' || 
                        window.location.hostname === '127.0.0.1' ||
                        window.location.protocol === 'file:';
-        const adminUrl = isLocal ? 'http://localhost:3001/admin' : '/admin';
+        const adminUrl = isLocal ? 'http://localhost:3001/admin' : 'https://aviator-casino.onrender.com/admin';
         console.log('Admin URL:', adminUrl);
         window.open(adminUrl, '_blank');
     });
     
     document.getElementById('logout-btn').addEventListener('click', () => {
-        logout();
     });
 
 // Modal utility functions
