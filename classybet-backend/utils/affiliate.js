@@ -95,7 +95,13 @@ const recordAffiliateDeposit = async (user, amount) => {
     return;
   }
 
+  // Calculate 50% commission on deposits
+  const commissionRate = 0.5; // 50% of deposits
+  const commission = amount * commissionRate;
+
   referral.depositTotal += amount;
+  referral.commissionEarned += commission;
+  referral.lastCommissionAt = new Date();
   referral.markModified('metadata');
   await referral.save();
 
@@ -106,6 +112,8 @@ const recordAffiliateDeposit = async (user, amount) => {
 
   ensureAffiliateStats(affiliate);
   affiliate.affiliateStats.totalDeposits += amount;
+  affiliate.affiliateStats.affiliateBalance += commission;
+  affiliate.affiliateStats.pendingPayout += commission;
   affiliate.markModified('affiliateStats');
   await affiliate.save();
 };
@@ -120,12 +128,8 @@ const recordAffiliateLoss = async (user, amount) => {
     return;
   }
 
-  const commissionRate = referral.commissionRate || DEFAULT_COMMISSION_RATE;
-  const commission = amount * commissionRate;
-
+  // Only track losses for statistics, no commission on losses
   referral.lossTotal += amount;
-  referral.commissionEarned += commission;
-  referral.lastCommissionAt = new Date();
   await referral.save();
 
   const affiliate = await User.findById(referral.affiliate);
@@ -135,8 +139,6 @@ const recordAffiliateLoss = async (user, amount) => {
 
   ensureAffiliateStats(affiliate);
   affiliate.affiliateStats.totalLosses += amount;
-  affiliate.affiliateStats.affiliateBalance += commission;
-  affiliate.affiliateStats.pendingPayout += commission;
   affiliate.markModified('affiliateStats');
   await affiliate.save();
 };

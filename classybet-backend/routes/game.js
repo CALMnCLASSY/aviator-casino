@@ -380,6 +380,33 @@ router.post('/update-balance', authenticateToken, async (req, res) => {
   }
 });
 
+// Get user's bet history
+router.get('/bet-history', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const limit = parseInt(req.query.limit) || 50;
+    const skip = parseInt(req.query.skip) || 0;
+
+    const bets = await Bet.find({ userId })
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .skip(skip)
+      .lean();
+
+    const totalBets = await Bet.countDocuments({ userId });
+
+    res.json({
+      bets,
+      total: totalBets,
+      hasMore: totalBets > (skip + limit)
+    });
+
+  } catch (error) {
+    console.error('Bet history fetch error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // Record transaction
 router.post('/record-transaction', authenticateToken, async (req, res) => {
   try {

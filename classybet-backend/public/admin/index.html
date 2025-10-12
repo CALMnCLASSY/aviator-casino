@@ -248,6 +248,82 @@
             margin-bottom: 1rem;
         }
 
+        /* Affiliates Table Styles */
+        .affiliates-table-container {
+            margin-top: 20px;
+            overflow-x: auto;
+        }
+        
+        .affiliates-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        
+        .affiliates-table thead {
+            background: linear-gradient(135deg, #1a1a1a, #2a2a2a);
+        }
+        
+        .affiliates-table th {
+            padding: 12px;
+            text-align: left;
+            color: #30fcbe;
+            font-weight: 600;
+            border-bottom: 2px solid #30fcbe;
+        }
+        
+        .affiliates-table td {
+            padding: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+        
+        .affiliates-table tr:hover {
+            background: rgba(48, 252, 190, 0.05);
+        }
+        
+        .affiliates-table code {
+            background: rgba(48, 252, 190, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #30fcbe;
+        }
+        
+        .referred-users-list {
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 5px;
+        }
+        
+        .referred-user {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 12px;
+        }
+        
+        .referred-user:last-child {
+            border-bottom: none;
+        }
+        
+        .affiliate-totals td {
+            font-weight: 600;
+            border-top: 2px solid rgba(48, 252, 190, 0.3);
+            background: rgba(48, 252, 190, 0.05);
+        }
+
+        details summary {
+            cursor: pointer;
+            color: #30fcbe;
+            outline: none;
+        }
+        
+        details summary:hover {
+            text-decoration: underline;
+        }
+
         @media (max-width: 768px) {
             .container {
                 padding: 1rem;
@@ -387,38 +463,27 @@
             <!-- Affiliate / Referral Overview -->
             <div class="card">
                 <h3><i class="fas fa-link"></i> Affiliate Performance</h3>
-                <div class="affiliate-summary-grid">
-                    <div class="summary-item">
-                        <span>Total Affiliates</span>
-                        <strong id="affiliate-count">0</strong>
-                    </div>
-                    <div class="summary-item">
-                        <span>Total Referred Users</span>
-                        <strong id="affiliate-referred">0</strong>
-                    </div>
-                    <div class="summary-item">
-                        <span>Tracked Deposits (KES)</span>
-                        <strong id="affiliate-deposits">0</strong>
-                    </div>
-                    <div class="summary-item">
-                        <span>Tracked Losses (KES)</span>
-                        <strong id="affiliate-losses">0</strong>
-                    </div>
-                    <div class="summary-item">
-                        <span>Affiliate Balances (KES)</span>
-                        <strong id="affiliate-balances">0</strong>
-                    </div>
-                    <div class="summary-item">
-                        <span>Pending Payouts (KES)</span>
-                        <strong id="affiliate-pending">0</strong>
-                    </div>
-                    <div class="summary-item">
-                        <span>Total Referral Commission (KES)</span>
-                        <strong id="affiliate-commission">0</strong>
-                    </div>
+                <h4 style="margin-top: 10px; color: #30fcbe;">Affiliate Details</h4>
+                <div class="affiliates-table-container" id="affiliates-table-container">
+                    <table class="affiliates-table">
+                        <thead>
+                            <tr>
+                                <th>Affiliate</th>
+                                <th>Promo Code</th>
+                                <th>Referred Users</th>
+                                <th>Total Deposits</th>
+                                <th>Commission (50%)</th>
+                                <th>Pending Payout</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="affiliates-table-body">
+                            <tr>
+                                <td colspan="7" style="text-align: center;">Loading affiliate data...</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
-
-                <div class="top-affiliates-list" id="top-affiliates-list"></div>
             </div>
 
             <!-- All Users Table -->
@@ -478,7 +543,7 @@
                 if (response.ok) {
                     authToken = data.token;
                     localStorage.setItem('admin_token', authToken);
-                    document.getElementById('admin-name').textContent = data.user.username;
+                    document.getElementById('admin-name').textContent = data.admin?.username || data.admin?.email || 'Admin';
                     showDashboard();
                     loadDashboardData();
                 } else {
@@ -515,32 +580,6 @@
                     document.getElementById('pending-deposits').textContent = stats.pendingDeposits;
                     document.getElementById('total-balance').textContent = stats.totalBalance.toFixed(2);
 
-                    const affiliate = stats.affiliateSummary || {};
-                    document.getElementById('affiliate-count').textContent = affiliate.affiliates ?? 0;
-                    document.getElementById('affiliate-referred').textContent = affiliate.totalReferredUsers ?? 0;
-                    document.getElementById('affiliate-deposits').textContent = (affiliate.totalTrackedDeposits || 0).toLocaleString();
-                    document.getElementById('affiliate-losses').textContent = (affiliate.totalTrackedLosses || 0).toLocaleString();
-                    document.getElementById('affiliate-balances').textContent = (affiliate.totalAffiliateBalance || 0).toLocaleString();
-                    document.getElementById('affiliate-pending').textContent = (affiliate.totalPendingPayout || 0).toLocaleString();
-                    document.getElementById('affiliate-commission').textContent = (affiliate.totalReferralCommission || 0).toLocaleString();
-
-                    const topList = document.getElementById('top-affiliates-list');
-                    const topAffiliates = stats.topAffiliates || [];
-                    if (topAffiliates.length === 0) {
-                        topList.innerHTML = '<p>No affiliate performance data yet.</p>';
-                    } else {
-                        topList.innerHTML = topAffiliates.map(affiliateInfo => `
-                            <div class="affiliate-card">
-                                <h4>${affiliateInfo.username || 'Unknown Affiliate'}</h4>
-                                <p>Promo Code: <strong>${affiliateInfo.promoCode || 'N/A'}</strong></p>
-                                <p>Referred Users: ${affiliateInfo.referredUsers || 0}</p>
-                                <p>Total Deposits: KES ${(affiliateInfo.totalDeposits || 0).toLocaleString()}</p>
-                                <p>Total Losses: KES ${(affiliateInfo.totalLosses || 0).toLocaleString()}</p>
-                                <p>Commission: KES ${(affiliateInfo.totalCommission || 0).toLocaleString()}</p>
-                                <p>Pending Payout: KES ${(affiliateInfo.pendingPayout || 0).toLocaleString()}</p>
-                            </div>
-                        `).join('');
-                    }
                 }
 
                 // Load pending transactions
@@ -549,8 +588,32 @@
                 // Load all users
                 loadAllUsers();
 
+                // Load affiliates data
+                loadAffiliateData();
+
             } catch (error) {
                 console.error('Dashboard load error:', error);
+            }
+        }
+
+        async function loadAffiliateData() {
+            try {
+                const response = await fetch(`${API_BASE}/api/admin/affiliates`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to load affiliate data');
+                }
+
+                const data = await response.json();
+                loadAffiliateTable(data.affiliates || []);
+            } catch (error) {
+                console.error('Affiliate load error:', error);
+                const tbody = document.getElementById('affiliates-table-body');
+                if (tbody) {
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#fb024c;">Failed to load affiliate data</td></tr>';
+                }
             }
         }
 
@@ -590,6 +653,9 @@
                                 <button class="btn btn-primary" data-action="confirm-deposit" data-reference="${reference}">
                                     <i class="fas fa-check"></i> Confirm
                                 </button>
+                                <button class="btn btn-danger" data-action="cancel-deposit" data-reference="${reference}">
+                                    <i class="fas fa-times"></i> Cancel
+                                </button>
                             </div>
                         </div>
                     `;
@@ -603,6 +669,86 @@
             }
         }
 
+        function loadAffiliateTable(affiliates) {
+            const tbody = document.getElementById('affiliates-table-body');
+            if (!tbody) return;
+
+            if (!Array.isArray(affiliates) || affiliates.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No affiliate data available</td></tr>';
+                return;
+            }
+
+            const totals = {
+                deposits: 0,
+                commission: 0,
+                pending: 0,
+                referrals: 0
+            };
+
+            const rows = affiliates.map(affiliate => {
+                const deposits = Number(affiliate.totalDeposits || 0);
+                const commission = Number(affiliate.totalCommission || (deposits * 0.5));
+                const pending = Number(affiliate.pendingPayout || 0);
+                const referredUsers = affiliate.referredUsersList || [];
+
+                totals.deposits += deposits;
+                totals.commission += commission;
+                totals.pending += pending;
+                totals.referrals += Number(affiliate.referredUsers || referredUsers.length || 0);
+
+                const referredUsersHtml = referredUsers.length > 0
+                    ? `<details>
+                        <summary>${affiliate.referredUsers || referredUsers.length} users</summary>
+                        <div class="referred-users-list">
+                            ${referredUsers.map(user => `
+                                <div class="referred-user">
+                                    <span>${user.username || 'Unknown'}</span>
+                                    <span>Deposits: KES ${(user.totalDeposits || 0).toLocaleString()}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                       </details>`
+                    : `${affiliate.referredUsers || 0} users`;
+
+                return `
+                    <tr>
+                        <td>
+                            <div>${affiliate.username || 'Unknown'}</div>
+                            <small>${affiliate.email || ''}</small>
+                        </td>
+                        <td><code>${affiliate.promoCode || 'N/A'}</code></td>
+                        <td>${referredUsersHtml}</td>
+                        <td>KES ${deposits.toLocaleString()}</td>
+                        <td>KES ${commission.toLocaleString()}</td>
+                        <td>KES ${pending.toLocaleString()}</td>
+                        <td>
+                            <button class="btn btn-sm btn-primary" onclick="viewAffiliateDetails('${affiliate._id || affiliate.id}')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            const totalsRow = `
+                <tr class="affiliate-totals">
+                    <td colspan="2">Totals</td>
+                    <td>${totals.referrals} users</td>
+                    <td>KES ${totals.deposits.toLocaleString()}</td>
+                    <td>KES ${totals.commission.toLocaleString()}</td>
+                    <td>KES ${totals.pending.toLocaleString()}</td>
+                    <td></td>
+                </tr>
+            `;
+
+            tbody.innerHTML = rows + totalsRow;
+        }
+        
+        function viewAffiliateDetails(affiliateId) {
+            // TODO: Implement affiliate details modal
+            console.log('View affiliate:', affiliateId);
+        }
+        
         async function loadAllUsers() {
             try {
                 const response = await fetch(`${API_BASE}/api/admin/users`, {
@@ -628,26 +774,28 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                ${data.users.map(user => `
+                                ${data.users.map(user => {
+                                    const isActive = user.isActive !== false;
+                                    return `
                                     <tr>
                                         <td>${user.username}</td>
-                                        <td>${user.email}</td>
+                                        <td>${user.email || 'N/A'}</td>
                                         <td>KES ${user.balance.toFixed(2)}</td>
                                         <td>
-                                            <span class="status-badge ${user.isActive ? 'status-active' : 'status-inactive'}">
-                                                ${user.isActive ? 'Active' : 'Inactive'}
+                                            <span class="status-badge ${isActive ? 'status-active' : 'status-inactive'}">
+                                                ${isActive ? 'Active' : 'Inactive'}
                                             </span>
                                         </td>
                                         <td>
                                             <button class="btn btn-primary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;" data-action="copy-id" data-user-id="${user._id}">
                                                 Copy ID
                                             </button>
-                                            <button class="btn ${user.isActive ? 'btn-danger' : 'btn-primary'}" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;" data-action="toggle-status" data-user-id="${user._id}">
-                                                ${user.isActive ? 'Deactivate' : 'Activate'}
+                                            <button class="btn ${isActive ? 'btn-danger' : 'btn-primary'}" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;" data-action="toggle-status" data-user-id="${user._id}">
+                                                ${isActive ? 'Deactivate' : 'Activate'}
                                             </button>
                                         </td>
                                     </tr>
-                                `).join('')}
+                                `;}).join('')}
                             </tbody>
                         </table>
                     `;
@@ -675,6 +823,10 @@
                     alert(data.message); // Use alert instead of missing success element
                     loadAllUsers(); // Refresh the user list
                     loadDashboardData(); // Refresh dashboard stats
+                    const searchTerm = document.getElementById('user-search')?.value.trim();
+                    if (searchTerm) {
+                        searchUsers();
+                    }
                 } else {
                     const error = await response.json();
                     alert(`Error: ${error.error}`);
@@ -748,6 +900,35 @@
             }
         }
 
+        async function cancelDeposit(transactionId) {
+            const reason = prompt('Enter reason for cancelling this deposit (optional):');
+            if (reason === null) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/api/payments/cancel-deposit`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ transactionId, reason })
+                });
+
+                if (response.ok) {
+                    alert('Deposit cancelled successfully');
+                    loadPendingTransactions();
+                    loadDashboardData();
+                } else {
+                    const data = await response.json();
+                    alert('Error: ' + (data.error || 'Unable to cancel deposit'));
+                }
+            } catch (error) {
+                alert('Cancellation failed');
+            }
+        }
+
         function showError(elementId, message) {
             const element = document.getElementById(elementId);
             element.textContent = message;
@@ -777,6 +958,9 @@
                         break;
                     case 'confirm-deposit':
                         confirmDeposit(target.dataset.reference);
+                        break;
+                    case 'cancel-deposit':
+                        cancelDeposit(target.dataset.reference);
                         break;
                 }
             });
@@ -812,26 +996,28 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                ${data.users.map(user => `
+                                ${data.users.map(user => {
+                                    const isActive = user.isActive !== false;
+                                    return `
                                     <tr>
                                         <td>${user.username}</td>
                                         <td>${user.email || 'N/A'}</td>
                                         <td>KES ${user.balance.toFixed(2)}</td>
                                         <td>
-                                            <span class="status-badge ${user.isActive ? 'status-active' : 'status-inactive'}">
-                                                ${user.isActive ? 'Active' : 'Inactive'}
+                                            <span class="status-badge ${isActive ? 'status-active' : 'status-inactive'}">
+                                                ${isActive ? 'Active' : 'Inactive'}
                                             </span>
                                         </td>
                                         <td>
                                             <button class="btn btn-primary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;" data-action="copy-id" data-user-id="${user._id}">
                                                 Copy ID
                                             </button>
-                                            <button class="btn ${user.isActive ? 'btn-danger' : 'btn-primary'}" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;" data-action="toggle-status" data-user-id="${user._id}">
-                                                ${user.isActive ? 'Deactivate' : 'Activate'}
+                                            <button class="btn ${isActive ? 'btn-danger' : 'btn-primary'}" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;" data-action="toggle-status" data-user-id="${user._id}">
+                                                ${isActive ? 'Deactivate' : 'Activate'}
                                             </button>
                                         </td>
                                     </tr>
-                                `).join('')}
+                                `;}).join('')}
                             </tbody>
                         </table>
                     `;

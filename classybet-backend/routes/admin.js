@@ -245,6 +245,66 @@ router.get('/transactions/pending', authenticateToken, requireAdmin, async (req,
   }
 });
 
+// Detailed affiliate data with referrals
+router.get('/affiliates', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const referrals = await Referral.find()
+      .populate('affiliate', 'username email promoCode affiliateStats')
+      .populate('referredUser', 'username balance email createdAt');
+
+    const affiliatesMap = new Map();
+
+    referrals.forEach(ref => {
+      if (!ref.affiliate) {
+        return;
+      }
+
+      const affiliateId = ref.affiliate._id.toString();
+      if (!affiliatesMap.has(affiliateId)) {
+        affiliatesMap.set(affiliateId, {
+          _id: affiliateId,
+          username: ref.affiliate.username,
+          email: ref.affiliate.email,
+          promoCode: ref.affiliate.promoCode,
+          totalDeposits: 0,
+          totalLosses: 0,
+          totalCommission: 0,
+          pendingPayout: ref.affiliate.affiliateStats?.pendingPayout || 0,
+          affiliateBalance: ref.affiliate.affiliateStats?.affiliateBalance || 0,
+          referredUsers: 0,
+          referredUsersList: []
+        });
+      }
+
+      const affiliateEntry = affiliatesMap.get(affiliateId);
+      const depositTotal = ref.depositTotal || 0;
+      const lossTotal = ref.lossTotal || 0;
+      const commission = depositTotal * 0.5;
+
+      affiliateEntry.totalDeposits += depositTotal;
+      affiliateEntry.totalLosses += lossTotal;
+      affiliateEntry.totalCommission += commission;
+      affiliateEntry.referredUsers += 1;
+
+      affiliateEntry.referredUsersList.push({
+        username: ref.referredUser?.username || 'Unknown',
+        email: ref.referredUser?.email || null,
+        totalDeposits: depositTotal,
+        totalLosses: lossTotal,
+        joinedAt: ref.joinedAt
+      });
+    });
+
+    const affiliates = Array.from(affiliatesMap.values()).sort((a, b) => b.totalDeposits - a.totalDeposits);
+
+    res.json({ affiliates });
+
+  } catch (error) {
+    console.error('Affiliate list error:', error);
+    res.status(500).json({ error: 'Failed to fetch affiliates' });
+  }
+});
+
 // Fetch latest users
 router.get('/users', authenticateToken, requireAdmin, async (req, res) => {
   try {

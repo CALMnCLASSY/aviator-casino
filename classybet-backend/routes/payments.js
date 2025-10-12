@@ -15,8 +15,8 @@ router.post('/stk-push',
   authenticateToken,
   [
     body('amount').isNumeric().custom(value => {
-      if (value < 10 || value > 150000) {
-        throw new Error('Amount must be between KES 10 and KES 150,000');
+      if (value < 100 || value > 150000) {
+        throw new Error('Amount must be between KES 100 and KES 150,000');
       }
       return true;
     }),
@@ -157,6 +157,65 @@ router.post('/confirm-deposit',
     } catch (error) {
       console.error('Deposit confirmation error:', error);
       res.status(500).json({ error: 'Failed to confirm deposit' });
+    }
+  }
+);
+
+// Cancel pending deposit (Admin only)
+router.post('/cancel-deposit',
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const { transactionId, reason } = req.body;
+
+      const admin = await User.findById(req.userId);
+      if (!admin || !admin.isAdmin) {
+        return res.status(403).json({ error: 'Access denied. Admin only.' });
+      }
+
+      const transaction = await Transaction.findOne({ reference: transactionId });
+      if (!transaction) {
+        return res.status(404).json({ error: 'Transaction not found' });
+      }
+
+      if (transaction.status !== 'pending') {
+        return res.status(400).json({ error: 'Only pending deposits can be cancelled' });
+      }
+
+      transaction.status = 'cancelled';
+      transaction.processedBy = admin._id;
+      transaction.processedAt = new Date();
+      transaction.metadata = {
+        ...(transaction.metadata || {}),
+        cancelledBy: admin._id,
+        cancelReason: reason || 'Cancelled by admin',
+        cancelledAt: new Date()
+      };
+
+      await transaction.save();
+
+      try {
+        await sendTelegramNotification(
+          `⛔ Deposit Cancelled\n\n` +
+          `User ID: ${transaction.user}\n` +
+          `Amount: KES ${transaction.amount}\n` +
+          `Reference: ${transaction.reference}\n` +
+          `Reason: ${reason || 'Not specified'}\n` +
+          `Admin: ${admin.username || admin.email}\n` +
+          `Time: ${new Date().toLocaleString()}`
+        );
+      } catch (notifyError) {
+        console.error('Failed to send cancellation notification:', notifyError.message);
+      }
+
+      res.json({
+        message: 'Deposit cancelled successfully',
+        transaction
+      });
+
+    } catch (error) {
+      console.error('Deposit cancellation error:', error);
+      res.status(500).json({ error: 'Failed to cancel deposit' });
     }
   }
 );

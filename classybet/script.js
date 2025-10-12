@@ -39,8 +39,8 @@ class AviatorGame {
         // Betting state - will be set by authentication system
         this.playerBalance = 0;
         this.bets = {
-            bet1: { placed: false, amount: 0, cashedOut: false, pending: false },
-            bet2: { placed: false, amount: 0, cashedOut: false, pending: false }
+            bet1: { placed: false, pending: false, amount: 0, cashedOut: false, multiplier: 0, winnings: 0, apiId: null },
+            bet2: { placed: false, pending: false, amount: 0, cashedOut: false, multiplier: 0, winnings: 0, apiId: null }
         };
         
         // Auto-betting state
@@ -48,6 +48,9 @@ class AviatorGame {
             bet1: { active: false, count: 0, wins: 0, profit: 0 },
             bet2: { active: false, count: 0, wins: 0, profit: 0 }
         };
+
+        this.minBetAmount = 10;
+        this.reservedBalance = 0;
         
         this.loadImage();
         this.initializeElements();
@@ -191,6 +194,31 @@ class AviatorGame {
         return `KES ${numAmount.toFixed(2)}`;
     }
 
+    updateBalance() {
+        if (this.balanceElement) {
+            this.balanceElement.textContent = this.formatCurrency(this.playerBalance);
+        }
+
+        const navBalance = document.getElementById('nav-balance');
+        if (navBalance) {
+            navBalance.textContent = this.formatCurrency(this.playerBalance);
+        }
+
+        const mobileBalance = document.getElementById('mobile-balance');
+        if (mobileBalance) {
+            mobileBalance.textContent = this.formatCurrency(this.playerBalance);
+        }
+
+        const messageBalance = document.getElementById('message-balance');
+        if (messageBalance) {
+            messageBalance.textContent = this.formatCurrency(this.playerBalance);
+        }
+    }
+
+    getAvailableBalance() {
+        return Math.max(0, this.playerBalance - this.reservedBalance);
+    }
+
     updateCounterGlow(counterElement, multiplier) {
         // Remove all existing glow classes from counter
         counterElement.classList.remove('blue-glow', 'purple-glow', 'pink-glow');
@@ -314,6 +342,7 @@ class AviatorGame {
                 break;
             case 'bet-history':
                 this.openModal('bet-history-modal');
+                this.loadBetHistoryFromServer();
                 break;
             case 'how-to-play':
                 this.openModal('how-to-play-modal');
@@ -647,8 +676,12 @@ class AviatorGame {
 
     setupEventListeners() {
         // Bet button listeners
-        this.betButton1.addEventListener('click', () => this.handleBet('bet1'));
-        this.betButton2.addEventListener('click', () => this.handleBet('bet2'));
+        if (this.betButton1) {
+            this.betButton1.addEventListener('click', () => this.handleBet('bet1'));
+        }
+        if (this.betButton2) {
+            this.betButton2.addEventListener('click', () => this.handleBet('bet2'));
+        }
         
         // Add/Remove bet buttons (inline)
         if (this.addBetButton) {
@@ -694,64 +727,419 @@ class AviatorGame {
 
     }
 
+    updateBetButtons() {
+        const updateButtonState = (betType, button) => {
+            if (!button) return;
+            const bet = this.bets[betType];
+
+            if (bet.pending) {
+                button.textContent = `Cancel ${this.formatCurrency(bet.amount)} `;
+                button.className = 'bet-button cancel';
+                button.disabled = false;
+                return;
+            }
+
+            if (this.gameState === 'waiting' && !bet.placed) {
+                button.textContent = 'BET';
+                button.className = 'bet-button';
+                button.disabled = false;
+                return;
+            }
+
+            if (bet.placed && this.gameState === 'flying' && !bet.cashedOut) {
+                const potentialWin = bet.amount * this.counter;
+                button.textContent = `CASHOUT ${this.formatCurrency(potentialWin)}`;
+                button.className = 'bet-button cashout';
+                button.disabled = false;
+                return;
+            }
+
+            if (bet.cashedOut) {
+                button.textContent = `Won ${this.formatCurrency(bet.winnings)}`;
+                button.className = 'bet-button won';
+                button.disabled = true;
+                return;
+            }
+
+            if (this.gameState === 'flying' && bet.placed) {
+                button.textContent = `${this.formatCurrency(bet.amount)} ACTIVE`;
+                button.className = 'bet-button placed';
+                button.disabled = false;
+            }
+        };
+
+        updateButtonState('bet1', this.betButton1);
+        updateButtonState('bet2', this.betButton2);
+    }
+
+    handleBet(betType) {
+        const bet = this.bets[betType];
+        const button = betType === 'bet1' ? this.betButton1 : this.betButton2;
+        const input = betType === 'bet1' ? this.betInput1 : this.betInput2;
+
+        if (!button || !input) return;
+
+        if (bet.pending) {
+            this.cancelBet(betType);
+            return;
+        }
+
+        if (bet.placed && this.gameState === 'flying' && !bet.cashedOut) {
+            this.cashOut(betType);
+            return;
+        }
+
+        this.placeBet(betType);
+        this.updateBetButtons();
+    }
+
+    placeBet(betType, amount) {
+        const bet = this.bets[betType];
+        const button = betType === 'bet1' ? this.betButton1 : this.betButton2;
+        const input = betType === 'bet1' ? this.betInput1 : this.betInput2;
+
+        if (!button || !input) return;
+
+        if (bet.pending) {
+            this.showGameMessage('Bet queued for the next round.', 'info');
+            return;
+        }
+
+        if (bet.placed && this.gameState === 'flying' && !bet.cashedOut) {
+            this.showGameMessage('Cash out first before placing a new bet.', 'info');
+            return;
+        }
+
+        const amountToBet = typeof amount === 'number' ? amount : parseFloat(input.value);
+
+        if (Number.isNaN(amountToBet) || amountToBet < this.minBetAmount) {
+            this.showGameMessage(`Minimum bet is ${this.formatCurrency(this.minBetAmount)}.`, 'info');
+            return;
+        }
+
+        if (amountToBet > this.getAvailableBalance()) {
+            this.showGameMessage('Insufficient available balance.', 'info');
+            return;
+        }
+
+        bet.pending = true;
+        bet.amount = amountToBet;
+        bet.cashedOut = false;
+        bet.winnings = 0;
+        bet.multiplier = 0;
+
+        this.reservedBalance += amountToBet;
+        this.updateBalance();
+
+        button.textContent = `Cancel ${this.formatCurrency(amountToBet)} `;
+        button.className = 'bet-button cancel';
+        button.disabled = false;
+
+        if (this.gameState === 'flying') {
+            this.showGameMessage(`Bet queued for next round: ${this.formatCurrency(amountToBet)}`, 'info');
+        } else {
+            this.showGameMessage(`Bet placed: ${this.formatCurrency(amountToBet)}`, 'success');
+        }
+
+        console.log(`[BET] Queued ${betType} for ${this.formatCurrency(amountToBet)} | Reserved: ${this.formatCurrency(this.reservedBalance)} | Available: ${this.formatCurrency(this.getAvailableBalance())}`);
+
+        this.updateBetButtons();
+    }
+
+    cancelBet(betType) {
+        const bet = this.bets[betType];
+        const button = betType === 'bet1' ? this.betButton1 : this.betButton2;
+
+        if (!button || !bet.pending) return;
+
+        this.reservedBalance = Math.max(0, this.reservedBalance - bet.amount);
+        bet.pending = false;
+        bet.amount = 0;
+        bet.multiplier = 0;
+        bet.winnings = 0;
+        bet.apiId = null;
+        bet.lastCashoutTime = null;
+
+        this.updateBalance();
+
+        button.textContent = 'BET';
+        button.className = 'bet-button';
+        button.disabled = false;
+
+        this.showGameMessage('Bet cancelled.', 'info');
+        console.log(`[BET] Cancelled ${betType}. Reserved: ${this.formatCurrency(this.reservedBalance)} | Available: ${this.formatCurrency(this.getAvailableBalance())}`);
+        this.updateBetButtons();
+    }
+
+    cashOut(betType) {
+        const bet = this.bets[betType];
+        const button = betType === 'bet1' ? this.betButton1 : this.betButton2;
+
+        if (!button || !bet.placed || bet.cashedOut) return;
+
+        const winnings = bet.amount * this.counter;
+
+        bet.cashedOut = true;
+        bet.winnings = winnings;
+        bet.multiplier = this.counter;
+
+        this.playerBalance += winnings;
+        this.updateBalance();
+
+        this.addBetToHistory({
+            amount: bet.amount,
+            multiplier: this.counter,
+            cashedOut: true
+        });
+
+        button.textContent = `Won ${this.formatCurrency(winnings)}`;
+        button.className = 'bet-button won';
+        button.disabled = true;
+
+        this.showGameMessage(`Cashed out: ${this.formatCurrency(winnings)} (${this.counter.toFixed(2)}x)`, 'success');
+        console.log(`[BET] Cashed out ${betType} at ${this.counter.toFixed(2)}x for ${this.formatCurrency(winnings)}`);
+        this.updateBetButtons();
+
+        setTimeout(() => {
+            this.resetBetAfterPayout(betType);
+        }, 1200);
+    }
+
+    activateQueuedBets() {
+        let totalQueued = 0;
+
+        Object.keys(this.bets).forEach(betType => {
+            const bet = this.bets[betType];
+            const button = betType === 'bet1' ? this.betButton1 : this.betButton2;
+
+            if (bet.pending && bet.amount >= this.minBetAmount) {
+                bet.pending = false;
+                bet.placed = true;
+                bet.cashedOut = false;
+                bet.winnings = 0;
+                bet.multiplier = 0;
+
+                totalQueued += bet.amount;
+
+                if (button) {
+                    button.textContent = `${this.formatCurrency(bet.amount)} ACTIVE`;
+                    button.className = 'bet-button placed';
+                    button.disabled = false;
+                }
+
+                // Record bet history entry for queued bet activation
+                this.addBetToHistory({
+                    amount: bet.amount,
+                    cashedOut: false,
+                    multiplier: null,
+                    placedAt: new Date().toISOString()
+                });
+
+                // Inform backend when available
+                this.syncBetWithBackend(betType, bet.amount);
+
+                console.log(`[BET] Activated ${betType} for ${this.formatCurrency(bet.amount)} | Balance: ${this.formatCurrency(this.playerBalance)}`);
+            }
+        });
+
+        if (totalQueued > 0) {
+            this.reservedBalance = Math.max(0, this.reservedBalance - totalQueued);
+            this.playerBalance = Math.max(0, this.playerBalance - totalQueued);
+            this.updateBalance();
+        }
+
+        this.updateBetButtons();
+    }
+
+    async loadBetHistoryFromServer() {
+        try {
+            if (!window.classyBetAPI || !classyBetAPI.isAuthenticated()) {
+                // Show local bet history if not authenticated
+                this.displayLocalBetHistory();
+                return;
+            }
+
+            const token = localStorage.getItem('user_token');
+            const isLocal = window.location.hostname === 'localhost' || 
+                           window.location.hostname === '127.0.0.1' ||
+                           window.location.protocol === 'file:';
+            const apiBase = isLocal ? 'http://localhost:3001' : 'https://aviator-casino.onrender.com';
+            
+            const response = await fetch(`${apiBase}/api/game/bet-history`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                this.displayServerBetHistory(data.bets);
+            } else {
+                this.displayLocalBetHistory();
+            }
+        } catch (error) {
+            console.error('Failed to load bet history:', error);
+            this.displayLocalBetHistory();
+        }
+    }
+
+    displayServerBetHistory(bets) {
+        const container = document.querySelector('.bet-history-content');
+        if (!container) return;
+
+        if (!bets || bets.length === 0) {
+            container.innerHTML = `
+                <p class="text-center text-muted">No betting history available yet.</p>
+                <p class="text-center text-grey">Start playing to see your bet history here!</p>
+            `;
+            return;
+        }
+
+        const historyHTML = `
+            <div class="bet-history-list">
+                <table class="bet-history-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Round</th>
+                            <th>Bet Amount</th>
+                            <th>Multiplier</th>
+                            <th>Win Amount</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${bets.map(bet => `
+                            <tr class="bet-row ${bet.status}">
+                                <td>${new Date(bet.createdAt).toLocaleDateString()}</td>
+                                <td>${bet.gameRound || 'N/A'}</td>
+                                <td>${this.formatCurrency(bet.amount)}</td>
+                                <td>${bet.actualMultiplier ? bet.actualMultiplier.toFixed(2) + 'x' : '-'}</td>
+                                <td>${bet.winAmount ? this.formatCurrency(bet.winAmount) : '-'}</td>
+                                <td><span class="status-badge ${bet.status}">${bet.status}</span></td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+
+        container.innerHTML = historyHTML;
+    }
+
+    displayLocalBetHistory() {
+        const container = document.querySelector('.bet-history-content');
+        if (!container) return;
+
+        if (!this.betHistory || this.betHistory.length === 0) {
+            container.innerHTML = `
+                <p class="text-center text-muted">No betting history available yet.</p>
+                <p class="text-center text-grey">Start playing to see your bet history here!</p>
+            `;
+            return;
+        }
+
+        const historyHTML = `
+            <div class="bet-history-list">
+                <table class="bet-history-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Bet Amount</th>
+                            <th>Multiplier</th>
+                            <th>Win Amount</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${this.betHistory.slice(0, 50).map(bet => `
+                            <tr class="bet-row ${bet.cashedOut ? 'won' : 'lost'}">
+                                <td>${bet.placedAt ? new Date(bet.placedAt).toLocaleDateString() : 'Today'}</td>
+                                <td>${this.formatCurrency(bet.amount)}</td>
+                                <td>${bet.multiplier ? bet.multiplier.toFixed(2) + 'x' : '-'}</td>
+                                <td>${bet.cashedOut && bet.multiplier ? this.formatCurrency(bet.amount * bet.multiplier) : '-'}</td>
+                                <td><span class="status-badge ${bet.cashedOut ? 'won' : 'lost'}">${bet.cashedOut ? 'Won' : 'Lost'}</span></td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+
+        container.innerHTML = historyHTML;
+    }
+
+    resetBetAfterPayout(betType) {
+        const bet = this.bets[betType];
+        if (!bet) return;
+
+        bet.placed = false;
+        bet.pending = false;
+        bet.cashedOut = false;
+        bet.amount = 0;
+        bet.multiplier = 0;
+        bet.winnings = 0;
+        bet.apiId = null;
+
+        const button = betType === 'bet1' ? this.betButton1 : this.betButton2;
+        if (button) {
+            button.textContent = 'BET';
+            button.className = 'bet-button';
+            button.disabled = false;
+        }
+
+        this.updateBetButtons();
+    }
+
     setupChatListeners() {
-    // Support multiple chat toggles including header button
-    const chatToggle = document.getElementById('chat-toggle') || document.getElementById('chat-toggle-nav') || document.getElementById('chat-toggle-sidebar');
-    const chatToggleBtn = document.getElementById('chat-toggle-btn');
-    const chatCloseBtn = document.getElementById('chat-close-btn');
+        const chatToggle = document.getElementById('chat-toggle') || document.getElementById('chat-toggle-nav') || document.getElementById('chat-toggle-sidebar');
+        const chatToggleBtn = document.getElementById('chat-toggle-btn');
+        const chatCloseBtn = document.getElementById('chat-close-btn');
         const rightSidebar = document.getElementById('right-sidebar');
         const sendChatBtn = document.getElementById('send-chat');
         const chatInput = document.getElementById('chat-input');
 
-        // Enhanced mobile chat handling
+        if (!rightSidebar) {
+            return;
+        }
+
         const isMobile = () => window.innerWidth <= 900;
-        
-        // Initialize chat state - chat is hidden by default
+
         const initializeChatState = () => {
             rightSidebar.classList.remove('chat-open');
             if (chatToggle) chatToggle.classList.remove('active');
             if (chatToggleBtn) chatToggleBtn.classList.remove('active');
-            
-            if (isMobile()) {
-                // On mobile, left sidebar is shown at bottom via CSS
-                // No need to manipulate mobile bets section
-            }
         };
 
-        // Chat toggle functionality for both buttons
         const handleChatToggle = () => {
             const isOpen = rightSidebar.classList.contains('chat-open');
-            
+
             if (isOpen) {
-                // Close chat
                 rightSidebar.classList.remove('chat-open');
                 if (chatToggle) chatToggle.classList.remove('active');
                 if (chatToggleBtn) {
                     chatToggleBtn.classList.remove('active');
-                    chatToggleBtn.classList.remove('chat-hidden'); // Show chat button
+                    chatToggleBtn.classList.remove('chat-hidden');
                 }
             } else {
-                // Open chat
                 rightSidebar.classList.add('chat-open');
                 if (chatToggle) chatToggle.classList.add('active');
                 if (chatToggleBtn) {
                     chatToggleBtn.classList.add('active');
-                    chatToggleBtn.classList.add('chat-hidden'); // Hide chat button
+                    chatToggleBtn.classList.add('chat-hidden');
                 }
             }
         };
 
-        // Close chat function
         const handleChatClose = () => {
             rightSidebar.classList.remove('chat-open');
             if (chatToggle) chatToggle.classList.remove('active');
             if (chatToggleBtn) {
                 chatToggleBtn.classList.remove('active');
-                chatToggleBtn.classList.remove('chat-hidden'); // Show chat button again
+                chatToggleBtn.classList.remove('chat-hidden');
             }
         };
 
-        // Add event listeners for all buttons
         if (chatToggle) {
             chatToggle.addEventListener('click', handleChatToggle);
         }
@@ -762,18 +1150,16 @@ class AviatorGame {
             chatCloseBtn.addEventListener('click', handleChatClose);
         }
 
-        // Close chat when clicking outside on mobile
         document.addEventListener('click', (e) => {
-            if (isMobile() && 
-                rightSidebar.classList.contains('chat-open') && 
-                !rightSidebar.contains(e.target) && 
+            if (isMobile() &&
+                rightSidebar.classList.contains('chat-open') &&
+                !rightSidebar.contains(e.target) &&
                 !e.target.closest('#chat-toggle-btn') &&
                 !(chatToggle && chatToggle.contains(e.target))) {
                 handleChatClose();
             }
         });
 
-        // Sidebar toggle (hamburger) for left sidebar on mobile
         const sidebarToggleBtn = document.getElementById('sidebar-toggle');
         const leftSidebar = document.getElementById('left-sidebar');
         if (sidebarToggleBtn && leftSidebar) {
@@ -788,25 +1174,26 @@ class AviatorGame {
             });
         }
 
-        sendChatBtn.addEventListener('click', () => this.sendChatMessage());
-        chatInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                this.sendChatMessage();
-            }
-        });
+        if (sendChatBtn) {
+            sendChatBtn.addEventListener('click', () => this.sendChatMessage());
+        }
+        if (chatInput) {
+            chatInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    this.sendChatMessage();
+                }
+            });
+        }
 
-        // Handle window resize with proper state management
         window.addEventListener('resize', () => {
             initializeChatState();
         });
 
-        // Initialize on load
         initializeChatState();
     }
-    
+
     // Add a bet to history
     addBetToHistory(bet) {
-        // Initialize betHistory if it doesn't exist
         if (!this.betHistory) {
             this.betHistory = [];
         }
@@ -822,26 +1209,21 @@ class AviatorGame {
             status: bet.cashedOut ? 'win' : 'loss'
         };
 
-        // Add to personal history
         this.betHistory.unshift(betRecord);
-        
-        // Keep only last 50 bets
+
         if (this.betHistory.length > 50) {
             this.betHistory.pop();
         }
-        
-        // Save to localStorage
+
         this.saveBetHistory();
     }
 
-    // Save bet history to localStorage
     saveBetHistory() {
         const isDemo = localStorage.getItem('isDemo') === 'true';
         const storageKey = isDemo ? 'demo_bet_history' : 'bet_history';
         localStorage.setItem(storageKey, JSON.stringify(this.betHistory));
     }
 
-    // Load bet history from localStorage
     loadBetHistory() {
         const isDemo = localStorage.getItem('isDemo') === 'true';
         const storageKey = isDemo ? 'demo_bet_history' : 'bet_history';
@@ -851,7 +1233,6 @@ class AviatorGame {
         }
     }
 
-    // Add a round to history
     addRoundToHistory(crashPoint) {
         const roundRecord = {
             roundNumber: this.roundNumber,
@@ -861,24 +1242,19 @@ class AviatorGame {
             totalWinners: this.allBetsData.filter(bet => bet.cashedOut).length
         };
 
-        // Add to round history
         this.roundHistory.unshift(roundRecord);
-        
-        // Keep only last 100 rounds
+
         if (this.roundHistory.length > 100) {
             this.roundHistory.pop();
         }
-        
-        // Save to localStorage
+
         this.saveRoundHistory();
     }
 
-    // Save round history to localStorage
     saveRoundHistory() {
         localStorage.setItem('round_history', JSON.stringify(this.roundHistory));
     }
 
-    // Load round history from localStorage
     loadRoundHistory() {
         const history = localStorage.getItem('round_history');
         if (history) {
@@ -886,14 +1262,12 @@ class AviatorGame {
         }
     }
 
-    // Get the last N rounds with highest multipliers
     getTopMultipliers(n = 10) {
         return [...this.roundHistory]
             .sort((a, b) => b.crashPoint - a.crashPoint)
             .slice(0, n);
     }
 
-    // Get the last N bets with highest winnings
     getTopWinnings(n = 10) {
         return [...this.betHistory]
             .filter(bet => bet.status === 'win')
@@ -903,59 +1277,60 @@ class AviatorGame {
 
     sendChatMessage() {
         const chatInput = document.getElementById('chat-input');
+        if (!chatInput) return;
+
         const message = chatInput.value.trim();
-        if (message) {
-            this.addChatMessage('You', message);
-            chatInput.value = '';
-            
-            // Simulate a response from other players occasionally
-            if (Math.random() > 0.7) {
-                setTimeout(() => {
-                    const responses = [
-                        'Good luck! 🍀',
-                        'Nice! 👍',
-                        'Let\'s win big! 💰',
-                        'Same here!',
-                        'Hope it flies high! 🚀'
-                    ];
-                    const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-                    this.generateRandomChatMessage(randomResponse);
-                }, 1000 + Math.random() * 2000);
-            }
+        if (!message) return;
+
+        this.addChatMessage('You', message);
+        chatInput.value = '';
+
+        if (Math.random() > 0.7) {
+            setTimeout(() => {
+                const responses = [
+                    'Good luck! 🍀',
+                    'Nice! 👍',
+                    'Let\'s win big! 💰',
+                    'Same here!',
+                    'Hope it flies high! 🚀'
+                ];
+                const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+                this.generateRandomChatMessage(randomResponse);
+            }, 1000 + Math.random() * 2000);
         }
     }
 
     addChatMessage(user, message, isSystem = false) {
-        // Chat functionality removed - empty stub to prevent errors
         return;
     }
 
     initializeChat() {
-        // Update online count to 100+
-        document.querySelector('.online-count span').textContent = `${Math.floor(Math.random() * 150 + 100)} online`;
-        
-        // Add some initial messages to show the chat is active
+        const updateOnlineCount = () => {
+            const span = document.querySelector('.online-count span');
+            if (span) {
+                span.textContent = `${Math.floor(Math.random() * 150 + 100)} online`;
+            }
+        };
+
+        updateOnlineCount();
+
         setTimeout(() => {
             this.addChatMessage('W***4821', 'Good luck everyone! 🍀');
         }, 500);
-        
+
         setTimeout(() => {
             this.addChatMessage('K***7392', 'Going for big wins today! 💰');
         }, 1500);
-        
+
         setTimeout(() => {
             this.addChatMessage('', '🎉 Welcome to Aviator! Place your bets and cash out before the plane crashes!', true);
         }, 2500);
-        
-        // Add frequent random chat messages
+
         setInterval(() => {
             this.generateRandomChatMessage();
-        }, Math.random() * 3000 + 2000); // Every 2-5 seconds
-        
-        // Update online count periodically
-        setInterval(() => {
-            document.querySelector('.online-count span').textContent = `${Math.floor(Math.random() * 150 + 100)} online`;
-        }, 30000); // Every 30 seconds
+        }, Math.random() * 3000 + 2000);
+
+        setInterval(updateOnlineCount, 30000);
     }
 
     generateRandomChatMessage(customMessage = null) {
@@ -963,7 +1338,7 @@ class AviatorGame {
         const randomLetter = letters[Math.floor(Math.random() * letters.length)];
         const randomNumber = Math.floor(Math.random() * 9999);
         const username = `${randomLetter}***${randomNumber}`;
-        
+
         const message = customMessage || (() => {
             const messages = [
                 'Going big this round! 🚀',
@@ -989,108 +1364,13 @@ class AviatorGame {
             ];
             return messages[Math.floor(Math.random() * messages.length)];
         })();
-        
+
         this.addChatMessage(username, message);
     }
 
-    showSecondBet() {
-        this.secondBetPanel.style.display = 'block';
-        if (this.addBetButton) {
-            this.addBetButton.style.display = 'none';
-        }
-        
-        // Add data attribute for CSS spacing
-        document.body.setAttribute('data-second-bet-active', 'true');
-        
-        // Trigger height recalculation on mobile
-        this.adjustBettingControlsHeight();
-    }
-    
-    hideSecondBet() {
-        this.secondBetPanel.style.display = 'none';
-        if (this.addBetButton) {
-            this.addBetButton.style.display = 'inline-flex';
-        }
-        
-        // Remove data attribute for CSS spacing
-        document.body.removeAttribute('data-second-bet-active');
-        
-        // Reset second bet completely if hidden
-        this.bets.bet2 = { placed: false, amount: 0, cashedOut: false, pending: false, multiplier: 0 };
-        this.betButton2.textContent = 'BET';
-        this.betButton2.className = 'bet-button';
-        this.betButton2.disabled = false;
-        
-        // Trigger height recalculation on mobile
-        this.adjustBettingControlsHeight();
-    }
-    
-    adjustBettingControlsHeight() {
-        // Force browser to recalculate layout on mobile
-        const bettingControls = document.getElementById('betting-controls');
-        if (bettingControls && window.innerWidth <= 768) {
-            // Trigger a reflow by accessing offsetHeight
-            const height = bettingControls.offsetHeight;
-            
-            // Update data attribute based on second bet panel visibility
-            const secondBetPanel = document.getElementById('second-bet-panel');
-            if (secondBetPanel && secondBetPanel.style.display !== 'none') {
-                document.body.setAttribute('data-second-bet-active', 'true');
-            } else {
-                document.body.removeAttribute('data-second-bet-active');
-            }
-            
-            // Force a layout recalculation
-            setTimeout(() => {
-                bettingControls.style.height = 'auto';
-            }, 10);
-        }
-    }
-    
-    resetButtonStates() {
-        // Ensure all buttons start in proper BET state
-        [this.betButton1, this.betButton2].forEach((button, index) => {
-            if (button) {
-                const betType = index === 0 ? 'bet1' : 'bet2';
-                const bet = this.bets[betType];
-                
-                // Force reset to BET state
-                button.textContent = 'BET';
-                button.className = 'bet-button';
-                button.disabled = false;
-                button.removeAttribute('data-disabled-until-reset');
-                
-                // Reset bet state
-                bet.placed = false;
-                bet.cashedOut = false;
-                bet.pending = false;
-                bet.amount = 0;
-                bet.multiplier = 0;
-                bet.winnings = 0;
-            }
-        });
-    }
-    
-    toggleAutoFeatures(betNumber) {
-        const toggle = document.getElementById(`mode-toggle-${betNumber}`);
-        const autoFeatures = document.getElementById(`auto-features-${betNumber}`);
-        
-        if (toggle && autoFeatures) {
-            if (toggle.checked) {
-                autoFeatures.style.display = 'block';
-            } else {
-                autoFeatures.style.display = 'none';
-                // Reset auto options when switching to manual mode
-                const autoBetToggle = document.getElementById(`auto-bet-toggle-${betNumber}`);
-                const autoCashoutToggle = document.getElementById(`auto-cashout-toggle-${betNumber}`);
-                if (autoBetToggle) autoBetToggle.checked = false;
-                if (autoCashoutToggle) autoCashoutToggle.checked = false;
-            }
-        }
-    }
-
     toggleSecondBet() {
-        // Legacy function - keeping for compatibility
+        if (!this.secondBetPanel) return;
+
         if (this.secondBetPanel.style.display === 'none') {
             this.showSecondBet();
         } else {
@@ -1098,252 +1378,111 @@ class AviatorGame {
         }
     }
 
-    handleBet(betType) {
-        const bet = this.bets[betType];
-        const input = betType === 'bet1' ? this.betInput1 : this.betInput2;
-        const button = betType === 'bet1' ? this.betButton1 : this.betButton2;
+    showSecondBet() {
+        if (!this.secondBetPanel) return;
 
-        // Prevent any action if button is disabled (e.g., after cashout)
-        if (button.disabled || button.getAttribute('data-disabled-until-reset') === 'true') {
-            return;
-        }
-        
-        // Add cooldown check to prevent rapid successive clicks after cashout
-        if (bet.lastCashoutTime && (Date.now() - bet.lastCashoutTime) < 1000) {
-            return;
+        this.secondBetPanel.style.display = 'block';
+        if (this.addBetButton) {
+            this.addBetButton.style.display = 'none';
         }
 
-        if (bet.placed && !bet.cashedOut && this.gameState === 'flying') {
-            // Cash out during flight
-            this.cashOut(betType);
-        } else if (bet.pending) {
-            // Cancel pending bet
-            this.cancelBet(betType);
-        } else if (!bet.placed && !bet.cashedOut && !bet.pending) {
-            // Only allow new bet if no bet is active or pending
-            this.placeBet(betType);
-        }
+        document.body.setAttribute('data-second-bet-active', 'true');
+        this.adjustBettingControlsHeight();
     }
 
-    placeBet(betType, customAmount = null) {
-        const bet = this.bets[betType];
-        const input = betType === 'bet1' ? this.betInput1 : this.betInput2;
-        const button = betType === 'bet1' ? this.betButton1 : this.betButton2;
-        const amount = customAmount != null ? customAmount : parseFloat(input.value);
-        const MAX_BET = 10000; // Maximum bet amount
+    hideSecondBet() {
+        if (!this.secondBetPanel) return;
 
-        // Validate bet conditions
-        if (isNaN(amount) || amount <= 0) {
-            this.messageElement.textContent = 'Please enter a valid bet amount';
-            return;
+        this.secondBetPanel.style.display = 'none';
+        if (this.addBetButton) {
+            this.addBetButton.style.display = 'inline-flex';
         }
 
-        if (amount > this.playerBalance) {
-            this.messageElement.textContent = 'Insufficient balance';
-            return;
-        }
+        document.body.removeAttribute('data-second-bet-active');
 
-        if (amount > MAX_BET) {
-            this.messageElement.textContent = `Maximum bet is ${this.formatCurrency(MAX_BET)}`;
-            return;
-        }
+        this.bets.bet2 = { placed: false, amount: 0, cashedOut: false, pending: false, multiplier: 0, winnings: 0 };
+        this.betButton2.textContent = 'BET';
+        this.betButton2.className = 'bet-button';
+        this.betButton2.disabled = false;
 
-        if (bet.placed || bet.cashedOut) {
-            this.messageElement.textContent = 'Bet already placed';
-            return;
-        }
-
-        // Handle bet based on game state
-        if (this.gameState === 'waiting') {
-            // Place bet immediately for current round
-            bet.amount = amount;
-            bet.placed = true;
-            bet.cashedOut = false;
-            bet.pending = false;
-            
-            // Update UI
-            button.textContent = `${this.formatCurrency(amount)} PLACED`;
-            button.className = 'bet-button placed';
-            this.messageElement.textContent = `Bet placed: ${this.formatCurrency(amount)} - Ready for takeoff!`;
-            
-            // Update balance
-            this.updatePlayerBalance(this.playerBalance - amount, 'bet');
-        } else {
-            // Queue bet for next round
-            bet.amount = amount;
-            bet.placed = false;
-            bet.cashedOut = false;
-            bet.pending = true;
-            
-            // Update UI
-            button.textContent = 'CANCEL';
-            button.className = 'bet-button cancel';
-            this.messageElement.textContent = `Bet queued for next round: ${this.formatCurrency(amount)}`;
-            
-            // Update balance
-            this.updatePlayerBalance(this.playerBalance - amount, 'bet');
-        }
+        this.adjustBettingControlsHeight();
     }
 
-    cancelBet(betType) {
-        const bet = this.bets[betType];
-        const button = betType === 'bet1' ? this.betButton1 : this.betButton2;
+    adjustBettingControlsHeight() {
+        const bettingControls = document.getElementById('betting-controls');
+        if (bettingControls && window.innerWidth <= 768) {
+            void bettingControls.offsetHeight;
 
-        if (!bet.pending) return;
-
-        // Refund the bet amount
-        const refundAmount = bet.amount;
-        this.updatePlayerBalance(this.playerBalance + refundAmount, 'bet_cancel');
-        
-        // Reset bet state
-        bet.pending = false;
-        bet.placed = false;
-        bet.amount = 0;
-        bet.cashedOut = false;
-
-        button.textContent = 'BET';
-        button.className = 'bet-button';
-        
-        // Show refund message
-        this.showGameMessage(`Bet cancelled: ${this.formatCurrency(refundAmount)} refunded`, 'info');
-        
-        // Add to chat
-    }
-
-    // Update bet buttons during flight to show potential cashout
-    updateBetButtons() {
-        Object.keys(this.bets).forEach(betType => {
-            const bet = this.bets[betType];
-            const button = betType === 'bet1' ? this.betButton1 : this.betButton2;
-            
-            if (bet.placed && this.gameState === 'flying') {
-                // Show cashout option during flight
-                const potentialWinnings = (bet.amount * this.counter).toFixed(2);
-                button.textContent = `CASH OUT ${this.formatCurrency(potentialWinnings)}`;
-                button.className = 'bet-button placed active';
-                button.disabled = false;
-            } else if (bet.pending) {
-                // Show cancel option for pending bets
-                button.textContent = 'CANCEL';
-                button.className = 'bet-button cancel';
-                button.disabled = false;
-            } else if (!bet.placed && !bet.pending) {
-                // Show BET button when no bet is active
-                if (this.gameState === 'waiting') {
-                    button.textContent = 'BET';
-                    button.className = 'bet-button';
-                    button.disabled = false;
-                } else {
-                    // During flight or crash, show "BET" but disabled
-                    button.textContent = 'BET';
-                    button.className = 'bet-button disabled';
-                    button.disabled = true;
-                }
-            } else if (bet.placed && this.gameState === 'waiting') {
-                // Show placed amount during waiting state
-                button.textContent = `${this.formatCurrency(bet.amount)} PLACED`;
-                button.className = 'bet-button placed';
-                button.disabled = false;
+            const secondBetPanel = document.getElementById('second-bet-panel');
+            if (secondBetPanel && secondBetPanel.style.display !== 'none') {
+                document.body.setAttribute('data-second-bet-active', 'true');
+            } else {
+                document.body.removeAttribute('data-second-bet-active');
             }
-        });
+
+            setTimeout(() => {
+                bettingControls.style.height = 'auto';
+            }, 10);
+        }
     }
 
-    resetBetButton(betType, immediately = false) {
-        const bet = this.bets[betType];
-        const button = betType === 'bet1' ? this.betButton1 : this.betButton2;
+    resetButtonStates() {
+        [this.betButton1, this.betButton2].forEach((button, index) => {
+            if (!button) return;
 
-        const resetFn = () => {
+            const betType = index === 0 ? 'bet1' : 'bet2';
+            const bet = this.bets[betType];
+
             button.textContent = 'BET';
             button.className = 'bet-button';
             button.disabled = false;
             button.removeAttribute('data-disabled-until-reset');
-            
-            // Reset bet state
+
             bet.placed = false;
             bet.cashedOut = false;
+            bet.pending = false;
             bet.amount = 0;
             bet.multiplier = 0;
             bet.winnings = 0;
-        };
-
-        if (immediately) {
-            resetFn();
-        } else {
-            setTimeout(resetFn, 1500);
-        }
+        });
     }
 
-    cashOut(betType) {
-        const bet = this.bets[betType];
-        const button = betType === 'bet1' ? this.betButton1 : this.betButton2;
+    toggleAutoFeatures(betNumber) {
+        const toggle = document.getElementById(`mode-toggle-${betNumber}`);
+        const autoFeatures = document.getElementById(`auto-features-${betNumber}`);
 
-        if (!bet.placed || bet.cashedOut || !this.isFlying) {
-            this.messageElement.textContent = "Can't cash out now";
+        if (!toggle || !autoFeatures) {
             return;
         }
 
-        const winnings = bet.amount * this.counter;
-        const originalAmount = bet.amount;
-        
-        // Update balance using the proper method
-        this.updatePlayerBalance(this.playerBalance + winnings, 'cashout');
-
-        // Add to bet history
-        this.addBetToHistory({
-            amount: originalAmount,
-            cashedOut: true,
-            multiplier: this.counter,
-            winnings: winnings
-        });
-
-        // Show cashout success message
-        this.showGameMessage(`Cashed out: ${this.formatCurrency(winnings)} (${this.counter.toFixed(2)}x)`, 'success');
-
-        // Immediately reset button state
-        button.textContent = 'BET';
-        button.className = 'bet-button';
-        button.disabled = false;
-
-        // Reset bet state
-        bet.placed = false;
-        bet.cashedOut = false;
-        bet.amount = 0;
-        bet.multiplier = this.counter;
-        bet.winnings = winnings;
-    }
-
-    updateBalance() {
-        // Update game header balance
-        if (this.balanceElement) {
-            this.balanceElement.textContent = this.formatCurrency(this.playerBalance);
-        }
-        
-        // Update navigation balance as well for consistency
-        const navBalance = document.getElementById('nav-balance');
-        if (navBalance) {
-            navBalance.textContent = this.formatCurrency(this.playerBalance);
+        if (toggle.checked) {
+            autoFeatures.style.display = 'block';
+        } else {
+            autoFeatures.style.display = 'none';
+            const autoBetToggle = document.getElementById(`auto-bet-toggle-${betNumber}`);
+            const autoCashoutToggle = document.getElementById(`auto-cashout-toggle-${betNumber}`);
+            if (autoBetToggle) autoBetToggle.checked = false;
+            if (autoCashoutToggle) autoCashoutToggle.checked = false;
         }
     }
 
     updateCounterDisplay() {
-        // Calculate visible count based on screen width
         const screenWidth = window.innerWidth;
         let visibleCount;
-        
+
         if (screenWidth >= 1200) {
-            visibleCount = 10; // Large screens show 10 rounds
+            visibleCount = 16;
         } else if (screenWidth >= 992) {
-            visibleCount = 8; // Medium screens show 8 rounds
+            visibleCount = 12;
         } else if (screenWidth >= 768) {
-            visibleCount = 6; // Small screens show 6 rounds
+            visibleCount = 10;
         } else {
-            visibleCount = 4; // Very small screens show 4 rounds
+            visibleCount = 8;
         }
-        
+
         const visibleMultipliers = this.counterDepo.slice(0, visibleCount);
         const hiddenMultipliers = this.counterDepo.slice(visibleCount);
 
-        // Update visible multipliers with click handlers
         this.lastCounters.innerHTML = visibleMultipliers.map((i, index) => {
             let classNameForCounter = '';
             if (i < 2.00) {
@@ -1356,33 +1495,32 @@ class AviatorGame {
             return `<p class="${classNameForCounter}" data-round="${this.roundNumber - index}" data-multiplier="${i}" onclick="game.showRoundInfo(${this.roundNumber - index}, ${i})">${i.toFixed(2)}</p>`;
         }).join('');
 
-        // Update hidden multipliers with click handlers
         const hiddenRoundsContainer = document.getElementById('hidden-rounds');
         const showMoreBtn = document.getElementById('show-more-rounds');
-        
-        if (hiddenMultipliers.length > 0) {
-            hiddenRoundsContainer.innerHTML = `
-                <div class="hidden-rounds-grid">
-                    ${hiddenMultipliers.map((i, index) => {
-                        let classNameForCounter = '';
-                        if (i < 2.00) {
-                            classNameForCounter = 'blueBorder';
-                        } else if (i >= 2 && i < 10) {
-                            classNameForCounter = 'purpleBorder';
-                        } else {
-                            classNameForCounter = 'burgundyBorder';
-                        }
-                        const roundNum = this.roundNumber - visibleCount - index;
-                        return `<p class="${classNameForCounter}" data-round="${roundNum}" data-multiplier="${i}" onclick="game.showRoundInfo(${roundNum}, ${i})">${i.toFixed(2)}</p>`;
-                    }).join('')}
-                </div>
-            `;
-            
-            // Show the show-more button
-            showMoreBtn.style.display = 'flex';
-        } else {
-            // Hide the show-more button if no hidden rounds
-            showMoreBtn.style.display = 'none';
+
+        if (hiddenRoundsContainer && showMoreBtn) {
+            if (hiddenMultipliers.length > 0) {
+                hiddenRoundsContainer.innerHTML = `
+                    <div class="hidden-rounds-grid">
+                        ${hiddenMultipliers.map((i, index) => {
+                            let classNameForCounter = '';
+                            if (i < 2.00) {
+                                classNameForCounter = 'blueBorder';
+                            } else if (i >= 2 && i < 10) {
+                                classNameForCounter = 'purpleBorder';
+                            } else {
+                                classNameForCounter = 'burgundyBorder';
+                            }
+                            const roundNum = this.roundNumber - visibleCount - index;
+                            return `<p class="${classNameForCounter}" data-round="${roundNum}" data-multiplier="${i}" onclick="game.showRoundInfo(${roundNum}, ${i})">${i.toFixed(2)}</p>`;
+                        }).join('')}
+                    </div>
+                `;
+                showMoreBtn.style.display = 'flex';
+            } else {
+                hiddenRoundsContainer.innerHTML = '';
+                showMoreBtn.style.display = 'none';
+            }
         }
     }
 
@@ -1619,6 +1757,12 @@ class AviatorGame {
         this.ctx.restore();
     }
 
+    drawCrashedFrame() {
+        if (this.image && this.image.complete) {
+            this.ctx.drawImage(this.image, this.x - 22, this.y - 65, 150, 70);
+        }
+    }
+
     handleCrash() {
         this.gameState = 'crashed';
         cancelAnimationFrame(this.animationId);
@@ -1676,33 +1820,10 @@ class AviatorGame {
         // Update display to show final crashed state before countdown
         this.updateAllBetsDisplay();
         
-        // Handle uncashed player bets
-        Object.keys(this.bets).forEach(betType => {
-            const bet = this.bets[betType];
-            const button = betType === 'bet1' ? this.betButton1 : this.betButton2;
-            if (bet.placed && !bet.cashedOut) {
-                // Keep the lost bet amount to show in red
-                const lostAmount = bet.amount;
-                button.textContent = `Lost ${this.formatCurrency(lostAmount)}`;
-                button.className = 'bet-button lost';
-                button.style.animation = '';
-                bet.placed = false;
-                bet.cashedOut = false;
-                bet.amount = 0;
-                
-                // Add to bet history
-                this.addBetToHistory({
-                    amount: lostAmount,
-                    cashedOut: false,
-                    multiplier: parseFloat(crashMultiplier)
-                });
-                
-                // Display a loss message
-                this.showGameMessage(`Lost bet: ${this.formatCurrency(lostAmount)}`, 'crash');
-            }
-        });
 
-        // Add crash to history (left side of previous rounds)
+        // Clear canvas and redraw
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.drawCrashedFrame();
         this.counterDepo.unshift(parseFloat(crashMultiplier));
         this.updateCounterDisplay();
 
@@ -1718,20 +1839,13 @@ class AviatorGame {
         const crashSpeed = 20; // pixels per frame - very fast upward movement
         
         // Ensure no lingering path/shadow gets drawn during crash
-        const drawCrashedFrame = () => {
-            // Only draw the plane sprite at its current position
-            if (this.image && this.image.complete) {
-                this.ctx.drawImage(this.image, this.x - 22, this.y - 65, 150, 70);
-            }
-        };
-        
         const animateCrashFrame = () => {
             // Move plane upwards rapidly
             this.y -= crashSpeed;
             
             // Clear canvas and redraw
             this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-            drawCrashedFrame();
+            this.drawCrashedFrame();
             
             // Continue animation until plane is off-screen
             if (this.y > -50) { // Continue until well above canvas
@@ -1899,7 +2013,13 @@ class AviatorGame {
         Object.keys(this.bets).forEach(betType => {
             const bet = this.bets[betType];
             const button = betType === 'bet1' ? this.betButton1 : this.betButton2;
-            if (!bet.placed && !bet.pending) {
+            if (!button) return;
+
+            if (bet.pending) {
+                button.textContent = `Cancel ${this.formatCurrency(bet.amount)} (Queued)`;
+                button.className = 'bet-button cancel';
+                button.style.animation = '';
+            } else if (!bet.placed) {
                 button.textContent = 'BET';
                 button.className = 'bet-button';
                 button.style.animation = '';
@@ -1976,41 +2096,43 @@ class AviatorGame {
         Object.keys(this.bets).forEach(betType => {
             const bet = this.bets[betType];
             const button = betType === 'bet1' ? this.betButton1 : this.betButton2;
-            
+
+            if (!button) {
+                return;
+            }
+
             // Clear any cooldown timers and disabled states
             bet.lastCashoutTime = null;
             button.removeAttribute('data-disabled-until-reset');
             button.disabled = false;
-            
-            if (bet.pending) {
-                // Convert pending bet to active bet for new round
-                bet.pending = false;
-                bet.placed = true;
-                bet.cashedOut = false;
-                bet.winnings = 0;
-                
-                button.textContent = `${this.formatCurrency(bet.amount)} PLACED`;
-                button.className = 'bet-button placed';
-            } else {
-                // Completely reset all other bets (including cashed out ones)
-                bet.placed = false;
-                bet.cashedOut = false;
-                bet.pending = false;
-                bet.amount = 0;
-                bet.multiplier = 0;
-                bet.winnings = 0;
-                
-                button.textContent = 'BET';
-                button.className = 'bet-button';
+
+            if (bet.pending && bet.amount >= this.minBetAmount) {
+                // Queue activation happens below after loop to adjust balances
+                return;
             }
+
+            // Reset non-queued bets
+            bet.placed = false;
+            bet.cashedOut = false;
+            bet.pending = false;
+            bet.amount = 0;
+            bet.multiplier = 0;
+            bet.winnings = 0;
+            bet.apiId = null;
+
+            button.textContent = 'BET';
+            button.className = 'bet-button';
         });
-        
+
+        // Activate any bets that were queued during the previous round
+        this.activateQueuedBets();
+
         // DON'T clear bets here - they remain visible during flight
         // Bets will be cleared and repopulated during startCountdown (waiting phase)
-        
+
         // Execute auto-bets for new round ONLY if auto-betting is enabled
         this.executeAutoBets();
-        
+
         this.startGame();
     }
 
@@ -2335,54 +2457,70 @@ class AviatorGame {
 
     setupAutoBetting() {
         // Auto-betting state is already initialized in constructor
-        
-        // Handle bet button clicks in auto mode
-        const betButton1 = document.getElementById('bet-button-1');
-        const betButton2 = document.getElementById('bet-button-2');
-        
-        const originalPlaceBet1 = this.placeBet.bind(this, 'bet1');
-        const originalPlaceBet2 = this.placeBet.bind(this, 'bet2');
-        
-        betButton1.addEventListener('click', (e) => {
-            if (betButton1.classList.contains('auto-mode')) {
-                this.toggleAutoBet('bet1');
-            } else {
-                originalPlaceBet1();
+
+        const ensureAutoMode = (betType) => {
+            const betNumber = betType === 'bet1' ? '1' : '2';
+            const modeToggle = document.getElementById(`mode-toggle-${betNumber}`);
+            const autoToggle = document.getElementById(`auto-bet-toggle-${betNumber}`);
+            const button = document.getElementById(`bet-button-${betNumber}`);
+
+            if (!modeToggle || !autoToggle || !button) return false;
+
+            if (!modeToggle.checked || !autoToggle.checked) {
+                // Ensure manual mode if auto features aren't enabled
+                button.classList.remove('auto-mode');
+                this.autoBetState[betType].active = false;
+                return false;
             }
-        });
-        
-        betButton2.addEventListener('click', (e) => {
-            if (betButton2.classList.contains('auto-mode')) {
-                this.toggleAutoBet('bet2');
-            } else {
-                originalPlaceBet2();
-            }
-        });
+
+            button.classList.add('auto-mode');
+            return true;
+        };
+
+        // Manual bet clicks are handled in setupEventListeners(); auto mode toggles
+        // only affect button styling/state when toggles are enabled.
     }
 
     toggleAutoBet(betType) {
         const state = this.autoBetState[betType];
         const betNumber = betType === 'bet1' ? '1' : '2';
         const button = document.getElementById(`bet-button-${betNumber}`);
-        
+        const modeToggle = document.getElementById(`mode-toggle-${betNumber}`);
+        const autoEnableToggle = document.getElementById(`auto-bet-toggle-${betNumber}`);
+
+        if (!modeToggle || !autoEnableToggle || !modeToggle.checked || !autoEnableToggle.checked) {
+            // Auto features disabled - revert to manual mode
+            if (button) {
+                button.classList.remove('auto-mode');
+                button.textContent = 'BET';
+            }
+            state.active = false;
+            return;
+        }
+
         if (state.active) {
             // Stop auto-betting
             state.active = false;
-            button.textContent = 'START AUTO BET';
-            button.classList.remove('auto-active');
+            if (button) {
+                button.textContent = 'START AUTO BET';
+                button.classList.remove('auto-active');
+            }
         } else {
             // Start auto-betting
             const autoBetInput = document.getElementById(`auto-bet-input-${betNumber}`);
             const amount = parseFloat(autoBetInput.value);
-            
+
             if (amount <= 0 || amount > this.playerBalance) {
                 this.messageElement.textContent = 'Invalid auto-bet amount!';
                 return;
             }
-            
+
             state.active = true;
-            button.textContent = 'STOP AUTO BET';
-            button.classList.add('auto-active');
+            if (button) {
+                button.textContent = 'STOP AUTO BET';
+                button.classList.add('auto-active');
+                button.classList.add('auto-mode');
+            }
             
             // Place first auto bet if game is waiting
             if (this.gameState === 'waiting') {
@@ -2394,22 +2532,22 @@ class AviatorGame {
     placeAutoBet(betType) {
         const state = this.autoBetState[betType];
         if (!state.active) return;
-        
+
         const betNumber = betType === 'bet1' ? '1' : '2';
         const autoBetInput = document.getElementById(`auto-bet-input-${betNumber}`);
         const amount = parseFloat(autoBetInput.value);
-        
+
         if (amount > this.playerBalance) {
             // Stop auto-betting if insufficient funds
             this.toggleAutoBet(betType);
             this.messageElement.textContent = 'Insufficient funds for auto-bet!';
             return;
         }
-        
+
         // Place the bet
         this.placeBet(betType, amount);
-        
-        // Update stats
+
+        // Update stats when bet successfully queued
         state.count++;
         this.updateAutoBetStats(betType);
     }
@@ -2420,7 +2558,7 @@ class AviatorGame {
         
         document.getElementById(`auto-bet-count-${betNumber}`).textContent = state.count;
         document.getElementById(`auto-win-count-${betNumber}`).textContent = state.wins;
-    document.getElementById(`auto-profit-${betNumber}`).textContent = this.formatCurrency(state.profit);
+        document.getElementById(`auto-profit-${betNumber}`).textContent = this.formatCurrency(state.profit);
     }
 
     handleAutoCashout() {
@@ -2471,19 +2609,19 @@ class AviatorGame {
             const betNumber = betType === 'bet1' ? '1' : '2';
             const autoToggle = document.getElementById(`auto-bet-toggle-${betNumber}`);
             
-            // Only execute auto-bet if toggle is enabled
+            // Only execute auto-bet if toggle is enabled and auto state active
             if (!autoToggle || !autoToggle.checked) {
-                return; // Auto-bet is not enabled for this bet
+                return;
             }
-            
+
             const state = this.autoBetState[betType];
             if (!state || !state.active) {
-                return; // Auto-bet state is not active
+                return;
             }
-            
+
             const input = document.getElementById(`bet-input-${betNumber}`);
             const amount = parseFloat(input.value);
-            
+
             if (amount > 0 && amount <= this.playerBalance) {
                 this.placeBet(betType, amount);
                 state.count++;
@@ -2497,6 +2635,26 @@ class AviatorGame {
                 this.messageElement.textContent = 'Auto-betting stopped: Insufficient funds';
             }
         });
+    }
+
+    async syncBetWithBackend(betType, amount) {
+        if (!window.classyBetAPI || !classyBetAPI.isAuthenticated()) {
+            return;
+        }
+
+        try {
+            const autoToggle = document.getElementById(`auto-bet-toggle-${betType === 'bet1' ? '1' : '2'}`);
+            const autoCashout = document.getElementById(`auto-cashout-value-${betType === 'bet1' ? '1' : '2'}`);
+            const autoCashoutValue = autoCashout ? parseFloat(autoCashout.value) : null;
+
+            const result = await classyBetAPI.placeBet(amount, autoToggle && autoToggle.checked ? autoCashoutValue : null);
+
+            if (result && result.success && result.bet && result.bet._id) {
+                this.bets[betType].apiId = result.bet._id;
+            }
+        } catch (error) {
+            console.error('Failed to sync bet with backend:', error);
+        }
     }
 }
 
@@ -2709,6 +2867,7 @@ function setupAuthEventListeners() {
         if (data.authenticated) {
             showUserView();
             updateUserDisplay(data.user);
+            integrateGameWithAPI();
         } else {
             showGuestView();
         }
@@ -2983,8 +3142,8 @@ function isDemo() {
         let phoneNumber = document.getElementById('deposit-phone').value;
 
         // Validate amount
-        if (isNaN(amount) || amount < 10 || amount > 150000) {
-            showError('deposit-error', 'Amount must be between KES 10 and KES 150,000');
+        if (isNaN(amount) || amount < 50 || amount > 150000) {
+            showError('deposit-error', 'Amount must be between KES 50 and KES 150,000');
             return;
         }
         
@@ -3085,8 +3244,10 @@ function isDemo() {
         window.open(adminUrl, '_blank');
     });
     
-    document.getElementById('logout-btn').addEventListener('click', () => {
-    });
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => logout());
+    }
 
 // Modal utility functions
 function showModal(modalId) {
