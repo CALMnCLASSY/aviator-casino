@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const User = require('../models/User');
 const Referral = require('../models/Referral');
 
-const DEFAULT_COMMISSION_RATE = 0.5;
+const DEFAULT_COMMISSION_RATE = 0.4; // 40% commission
 
 const toObjectId = (value) => {
   try {
@@ -95,8 +95,8 @@ const recordAffiliateDeposit = async (user, amount) => {
     return;
   }
 
-  // Calculate 50% commission on deposits
-  const commissionRate = 0.5; // 50% of deposits
+  // Calculate 40% commission on deposits
+  const commissionRate = 0.4; // 40% of deposits
   const commission = amount * commissionRate;
 
   referral.depositTotal += amount;

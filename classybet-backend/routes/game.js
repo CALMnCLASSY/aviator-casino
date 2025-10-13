@@ -294,9 +294,14 @@ router.post('/end-round',
 
       await Promise.all(updates);
 
+      // Get updated user balance
+      const requestingUser = await User.findById(req.user.id);
+      const newBalance = requestingUser ? requestingUser.balance : null;
+
       res.json({
         message: 'Round ended successfully',
-        processedBets: activeBets.length
+        processedBets: activeBets.length,
+        newBalance
       });
 
     } catch (error) {

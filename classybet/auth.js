@@ -262,6 +262,10 @@ class AuthManager {
         let email = document.getElementById('email').value.trim();
         email = email ? email.toLowerCase() : null;
         
+        // Get promo code if provided
+        const promoCodeInput = document.getElementById('promoCode');
+        const promoCode = promoCodeInput ? promoCodeInput.value.trim() : '';
+        
         const formData = {
             username: document.getElementById('username').value.trim(),
             email: email,
@@ -269,6 +273,11 @@ class AuthManager {
             phone: phone,
             countryCode: document.getElementById('countryCode').value
         };
+        
+        // Add promo code if provided
+        if (promoCode) {
+            formData.promoCode = promoCode;
+        }
         
         console.log('Sending registration data:', {
             ...formData,

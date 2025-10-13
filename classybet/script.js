@@ -53,15 +53,24 @@ class AviatorGame {
         this.reservedBalance = 0;
         this.activeRoundMeta = null;
         this.nextRoundMeta = null;
+        this.roundQueue = []; // Queue of upcoming rounds from backend
         this.roundSyncInProgress = false;
         this.forcedCrashMultiplier = null;
+        this.backendControlled = true; // Always use backend multipliers
+        this.autoStartEnabled = true; // Auto-start game loop
 
         this.loadImage();
         this.initializeElements();
         this.setupEventListeners();
         this.updateBalance();
         this.updateCounterDisplay();
-        this.startGame();
+        
+        // Auto-start game loop after initialization
+        if (this.autoStartEnabled) {
+            this.initializeGameLoop();
+        } else {
+            this.startGame();
+        }
         this.initializeAllBets();
         this.setupGameMenu();
         this.setupResponsiveLayout();
@@ -1881,11 +1890,19 @@ class AviatorGame {
         const crashMultiplier = this.forcedCrashMultiplier || this.counter;
         const crashMultiplierStr = crashMultiplier.toFixed(2);
         
-        // End round on backend if authenticated
+        // End round on backend if authenticated and sync balance
         if (window.classyBetAPI && typeof classyBetAPI.endRound === 'function' && classyBetAPI.isAuthenticated()) {
-            classyBetAPI.endRound(crashMultiplier).catch(error => {
-                console.warn('Failed to end round on backend:', error);
-            });
+            classyBetAPI.endRound(crashMultiplier)
+                .then(result => {
+                    if (result && result.success && result.data && result.data.newBalance !== undefined) {
+                        // Update game balance from backend
+                        this.playerBalance = result.data.newBalance;
+                        this.updateBalance();
+                    }
+                })
+                .catch(error => {
+                    console.warn('Failed to sync balance after round:', error);
+                });
         }
         
         // Add round to history
@@ -2013,11 +2030,16 @@ class AviatorGame {
         }, 3000);
     }
 
-    startCountdown() {
+    async startCountdown() {
         this.gameState = 'waiting';
 
-        this.fetchRoundSchedule().catch(error => {
-            console.warn('Round schedule sync failed:', error);
+        // Clear the previous round
+        this.activeRoundMeta = null;
+        this.forcedCrashMultiplier = null;
+
+        // Fetch and ensure we have the next round ready
+        await this.ensureRoundMeta().catch(error => {
+            console.warn('Failed to prepare next round:', error);
         });
 
         // Reset and seed All Bets for the upcoming round during waiting only
@@ -2172,20 +2194,18 @@ class AviatorGame {
                 
                 // Add 1 second wait before starting the game
                 setTimeout(() => {
-                    this.ensureRoundMeta()
-                        .catch(error => {
-                            console.warn('Failed to ensure round meta before next round:', error);
-                        })
-                        .then(() => {
-                            this.resetGame();
-                        });
+                    this.resetGame();
                 }, 1000);
             }
         }, 1000);
     }
 
     resetGame() {
-        this.randomStop = Math.random() * (10 - 0.8) + 0.8;
+        // Only use random if backend multiplier is not available
+        if (!this.forcedCrashMultiplier) {
+            this.randomStop = Math.random() * (10 - 0.8) + 0.8;
+        }
+        // Otherwise randomStop is already set by ensureRoundMeta
         this.counter = 1.0;
         this.x = this.startX; // Reset to starting position (bottom left)
         this.y = this.startY; // Reset to starting position (bottom left)
@@ -3493,6 +3513,17 @@ function integrateGameWithAPI() {
 
     game.__apiIntegrated = true;
 }
+
+// Initialize game loop with backend round synchronization
+AviatorGame.prototype.initializeGameLoop = async function() {
+    console.log('Initializing backend-controlled game loop...');
+    
+    // Fetch initial round schedule
+    await this.fetchRoundSchedule();
+    
+    // Start the countdown for first round
+    this.startCountdown();
+};
 
 // Initialize everything when page loads
 document.addEventListener('DOMContentLoaded', () => {

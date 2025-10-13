@@ -16,7 +16,7 @@ async function fetchRoundSchedule() {
             headers['Authorization'] = `Bearer ${token}`;
         }
 
-        const response = await fetch(`${baseURL}/api/rounds/state?limit=5`, {
+        const response = await fetch(`${baseURL}/api/rounds/state?limit=10`, {
             headers
         });
 
@@ -42,7 +42,24 @@ async function fetchRoundSchedule() {
             .filter(Boolean)
             .sort((a, b) => a.startTime - b.startTime);
 
-        this.nextRoundMeta = normalized.length > 0 ? normalized[0] : null;
+        // Store all upcoming rounds, not just the first one
+        if (!this.roundQueue) {
+            this.roundQueue = [];
+        }
+        
+        // Update the queue with new rounds
+        normalized.forEach(round => {
+            const exists = this.roundQueue.find(r => r.roundId === round.roundId);
+            if (!exists) {
+                this.roundQueue.push(round);
+            }
+        });
+        
+        // Sort queue by start time
+        this.roundQueue.sort((a, b) => a.startTime - b.startTime);
+        
+        // Set nextRoundMeta to the first available round
+        this.nextRoundMeta = this.roundQueue.length > 0 ? this.roundQueue[0] : null;
     } catch (error) {
         console.warn('Failed to fetch round schedule:', error);
     } finally {
@@ -71,25 +88,36 @@ function normalizeRoundEntry(round) {
 }
 
 async function ensureRoundMeta() {
-    if (!this.nextRoundMeta) {
+    if (!this.roundQueue) {
+        this.roundQueue = [];
+    }
+    
+    // Fetch if queue is empty
+    if (this.roundQueue.length === 0) {
         await this.fetchRoundSchedule();
     }
 
-    if (this.nextRoundMeta) {
-        this.activeRoundMeta = this.nextRoundMeta;
-        this.nextRoundMeta = null;
+    // Pop the next round from the queue ONLY if we don't already have an active round
+    if (!this.activeRoundMeta && this.roundQueue.length > 0) {
+        this.activeRoundMeta = this.roundQueue.shift();
+        this.nextRoundMeta = this.roundQueue.length > 0 ? this.roundQueue[0] : null;
 
         if (this.activeRoundMeta && this.activeRoundMeta.multiplier) {
             this.forcedCrashMultiplier = this.activeRoundMeta.multiplier;
             this.randomStop = Math.max(1.01, this.forcedCrashMultiplier);
         }
 
+        // Set game round for betting
         if (window.classyBetAPI && typeof classyBetAPI.setGameRound === 'function' && classyBetAPI.isAuthenticated()) {
             classyBetAPI.setGameRound(this.activeRoundMeta.roundId);
         }
-    } else {
-        this.activeRoundMeta = null;
-        this.forcedCrashMultiplier = null;
+        
+        // Fetch more rounds if queue is running low
+        if (this.roundQueue.length < 3) {
+            this.fetchRoundSchedule().catch(err => console.warn('Background round fetch failed:', err));
+        }
+    } else if (!this.activeRoundMeta) {
+        console.warn('No rounds available in queue');
     }
 }
 
