@@ -9,6 +9,7 @@ class ClassyBetAPI {
         this.user = null;
         this.gameRound = null;
         this.currentBet = null;
+        this.lastRoundMultiplier = null;
         this.callbacks = {
             onAuthChange: [],
             onBalanceUpdate: [],
@@ -295,7 +296,12 @@ class ClassyBetAPI {
             const data = await response.json();
 
             if (response.ok) {
+                this.lastRoundMultiplier = crashMultiplier;
+                this.gameRound = null;
                 this.currentBet = null;
+                this.user.balance = data.newBalance;
+                this.saveUserToStorage();
+                this.emit('onBalanceUpdate', this.user.balance);
                 return { success: true, data };
             }
 

@@ -4,7 +4,9 @@ const router = express.Router();
 const {
   getRoundState,
   getRoundById,
-  getRoundsInRange
+  getRoundsInRange,
+  ROUND_INTERVAL_SECONDS,
+  ROUND_DURATION_MS
 } = require('../utils/roundScheduler');
 
 router.get('/state', async (req, res) => {
@@ -69,6 +71,13 @@ router.get('/range', async (req, res) => {
     console.error('Round range fetch error:', error);
     res.status(500).json({ error: 'Failed to fetch rounds' });
   }
+});
+
+router.get('/config', (req, res) => {
+  res.json({
+    roundIntervalSeconds: ROUND_INTERVAL_SECONDS,
+    roundDurationMs: ROUND_DURATION_MS
+  });
 });
 
 module.exports = router;

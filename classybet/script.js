@@ -51,7 +51,11 @@ class AviatorGame {
 
         this.minBetAmount = 10;
         this.reservedBalance = 0;
-        
+        this.activeRoundMeta = null;
+        this.nextRoundMeta = null;
+        this.roundSyncInProgress = false;
+        this.forcedCrashMultiplier = null;
+
         this.loadImage();
         this.initializeElements();
         this.setupEventListeners();
@@ -578,8 +582,8 @@ class AviatorGame {
             const isExpanded = allBetsContainer.classList.contains('expanded');
             allBetsContainer.classList.toggle('expanded');
             showMoreBetsBtn.innerHTML = isExpanded ? 
-                '<i class="fas fa-chevron-down"></i> Show All Bets' : 
-                '<i class="fas fa-chevron-up"></i> Show Less';
+                '<i class="fas fa-chevron-up"></i> Show Less' : 
+                '<i class="fas fa-chevron-down"></i> Show All Bets';
         });
     }
 
@@ -1524,56 +1528,148 @@ class AviatorGame {
         }
     }
 
+    resetButtonStates() {
+    [this.betButton1, this.betButton2].forEach((button, index) => {
+        if (!button) return;
+
+        const betType = index === 0 ? 'bet1' : 'bet2';
+        const bet = this.bets[betType];
+
+        button.textContent = 'BET';
+        button.className = 'bet-button';
+        button.disabled = false;
+        button.removeAttribute('data-disabled-until-reset');
+
+        bet.placed = false;
+        bet.cashedOut = false;
+        bet.pending = false;
+        bet.amount = 0;
+        bet.multiplier = 0;
+        bet.winnings = 0;
+    });
+    }
+
+    toggleAutoFeatures(betNumber) {
+    const toggle = document.getElementById(`mode-toggle-${betNumber}`);
+    const autoFeatures = document.getElementById(`auto-features-${betNumber}`);
+
+    if (!toggle || !autoFeatures) {
+        return;
+    }
+
+    if (toggle.checked) {
+        autoFeatures.style.display = 'block';
+    } else {
+        autoFeatures.style.display = 'none';
+        const autoBetToggle = document.getElementById(`auto-bet-toggle-${betNumber}`);
+        const autoCashoutToggle = document.getElementById(`auto-cashout-toggle-${betNumber}`);
+        if (autoBetToggle) autoBetToggle.checked = false;
+        if (autoCashoutToggle) autoCashoutToggle.checked = false;
+    }
+    }
+
+    updateCounterDisplay() {
+    const screenWidth = window.innerWidth;
+    let visibleCount;
+
+    if (screenWidth >= 1200) {
+        visibleCount = 16;
+    } else if (screenWidth >= 992) {
+        visibleCount = 12;
+    } else if (screenWidth >= 768) {
+        visibleCount = 10;
+    } else {
+        visibleCount = 8;
+    }
+
+    const visibleMultipliers = this.counterDepo.slice(0, visibleCount);
+    const hiddenMultipliers = this.counterDepo.slice(visibleCount);
+
+    this.lastCounters.innerHTML = visibleMultipliers.map((i, index) => {
+        let classNameForCounter = '';
+        if (i < 2.00) {
+            classNameForCounter = 'blueBorder';
+        } else if (i >= 2 && i < 10) {
+            classNameForCounter = 'purpleBorder';
+        } else {
+            classNameForCounter = 'burgundyBorder';
+        }
+        return `<p class="${classNameForCounter}" data-round="${this.roundNumber - index}" data-multiplier="${i}" onclick="game.showRoundInfo(${this.roundNumber - index}, ${i})">${i.toFixed(2)}</p>`;
+    }).join('');
+
+    const hiddenRoundsContainer = document.getElementById('hidden-rounds');
+    const showMoreBtn = document.getElementById('show-more-rounds');
+
+    if (hiddenRoundsContainer && showMoreBtn) {
+        if (hiddenMultipliers.length > 0) {
+            hiddenRoundsContainer.innerHTML = `
+                <div class="hidden-rounds-grid">
+                    ${hiddenMultipliers.map((i, index) => {
+                        let classNameForCounter = '';
+                        if (i < 2.00) {
+                            classNameForCounter = 'blueBorder';
+                        } else if (i >= 2 && i < 10) {
+                            classNameForCounter = 'purpleBorder';
+                        } else {
+                            classNameForCounter = 'burgundyBorder';
+                        }
+                        const roundNum = this.roundNumber - visibleCount - index;
+                        return `<p class="${classNameForCounter}" data-round="${roundNum}" data-multiplier="${i}" onclick="game.showRoundInfo(${roundNum}, ${i})">${i.toFixed(2)}</p>`;
+                    }).join('')}
+                </div>
+            `;
+            showMoreBtn.style.display = 'flex';
+        } else {
+            hiddenRoundsContainer.innerHTML = '';
+            showMoreBtn.style.display = 'none';
+        }
+    }
+    }
+
     startGame() {
         this.gameState = 'flying';
-        this.roundNumber++;
-        this.lastUpdateTime = Date.now(); // Reset timing for smooth progression
-        
-        // Reset plane position to starting point (bottom left)
+        if (this.activeRoundMeta) {
+            this.roundNumber = this.activeRoundMeta.roundId;
+        } else {
+            this.roundNumber++;
+        }
+        this.lastUpdateTime = Date.now();
+
         this.x = this.startX;
         this.y = this.startY;
         this.counter = 1.0;
-        this.dotPath = []; // Clear the previous path
+        this.dotPath = [];
         this.isFlying = true;
-        
-        // Start background rotation during flying state
+
         const bgImage = document.getElementById('bg-image');
         if (bgImage) {
             bgImage.classList.add('rotating');
         }
-        
-        // Set initial counter glow (starts at 1.00x - blue glow)
+
         const counterElement = document.getElementById('counter');
         if (counterElement) {
             this.updateCounterGlow(counterElement, 1.0);
         }
-        
+
         this.animationId = requestAnimationFrame(() => this.draw());
     }
 
     draw() {
         const currentTime = Date.now();
-        
-        // Update counter every ~100ms for smooth but not too frequent updates
+
         if (currentTime - this.lastUpdateTime > 100) {
             this.lastUpdateTime = currentTime;
-            
-            // Update counter with realistic Aviator progression - starts slow, speeds up gradually
+
             let increment;
             if (this.counter < 1.5) {
-                // Very slow start (like real Aviator)
                 increment = 0.01;
             } else if (this.counter < 2.0) {
-                // Slightly faster
                 increment = 0.015;
             } else if (this.counter < 5.0) {
-                // Medium speed
                 increment = 0.02 + (this.counter - 2.0) * 0.005;
             } else if (this.counter < 10.0) {
-                // Faster progression
                 increment = 0.035 + (this.counter - 5.0) * 0.01;
             } else {
-                // Very fast at high multipliers
                 increment = 0.085 + (this.counter - 10.0) * 0.015;
             }
             
@@ -1581,7 +1677,6 @@ class AviatorGame {
             const counterElement = document.getElementById('counter');
             counterElement.textContent = this.counter.toFixed(2) + 'x';
             
-            // Update counter glow based on multiplier value
             this.updateCounterGlow(counterElement, this.counter);
         }
 
@@ -1783,16 +1878,24 @@ class AviatorGame {
         this.animateCrash();
         
         // Store the crash multiplier
-        const crashMultiplier = this.counter.toFixed(2);
+        const crashMultiplier = this.forcedCrashMultiplier || this.counter;
+        const crashMultiplierStr = crashMultiplier.toFixed(2);
+        
+        // End round on backend if authenticated
+        if (window.classyBetAPI && typeof classyBetAPI.endRound === 'function' && classyBetAPI.isAuthenticated()) {
+            classyBetAPI.endRound(crashMultiplier).catch(error => {
+                console.warn('Failed to end round on backend:', error);
+            });
+        }
         
         // Add round to history
-        this.addRoundToHistory(parseFloat(crashMultiplier));
+        this.addRoundToHistory(parseFloat(crashMultiplierStr));
         
         // Update counter to show "FLEW AWAY" above the multiplier
         const counterElement = document.getElementById('counter');
         counterElement.innerHTML = `
             <div style="color: white; font-size: 0.8em; margin-bottom: 8px; font-weight: bold; text-shadow: none;">FLEW AWAY</div>
-            <div class="final-multiplier">${crashMultiplier}x</div>
+            <div class="final-multiplier">${crashMultiplierStr}x</div>
         `;
         // Add crashed class for sizing/animation
         counterElement.classList.add('crashed');
@@ -1912,6 +2015,10 @@ class AviatorGame {
 
     startCountdown() {
         this.gameState = 'waiting';
+
+        this.fetchRoundSchedule().catch(error => {
+            console.warn('Round schedule sync failed:', error);
+        });
 
         // Reset and seed All Bets for the upcoming round during waiting only
         this.allBetsData = [];
@@ -2065,7 +2172,13 @@ class AviatorGame {
                 
                 // Add 1 second wait before starting the game
                 setTimeout(() => {
-                    this.resetGame();
+                    this.ensureRoundMeta()
+                        .catch(error => {
+                            console.warn('Failed to ensure round meta before next round:', error);
+                        })
+                        .then(() => {
+                            this.resetGame();
+                        });
                 }, 1000);
             }
         }, 1000);
@@ -2840,7 +2953,8 @@ document.addEventListener('DOMContentLoaded', () => {
             // Initialize authentication system
             window.classyBetAPI = new ClassyBetAPI();
             setupAuthEventListeners();
-            
+            integrateGameWithAPI();
+
             console.log('Game initialized successfully');
             
             // Hide preloader after game is initialized
@@ -3142,8 +3256,8 @@ function isDemo() {
         let phoneNumber = document.getElementById('deposit-phone').value;
 
         // Validate amount
-        if (isNaN(amount) || amount < 50 || amount > 150000) {
-            showError('deposit-error', 'Amount must be between KES 50 and KES 150,000');
+        if (isNaN(amount) || amount < 100 || amount > 150000) {
+            showError('deposit-error', 'Amount must be between KES 100 and KES 150,000');
             return;
         }
         
@@ -3285,85 +3399,99 @@ function showSuccess(elementId, message) {
     }
 }
 
+let integrateGameRetries = 0;
+const MAX_INTEGRATE_RETRIES = 20;
+
 // Enhanced game integration
 function integrateGameWithAPI() {
-    if (window.game && classyBetAPI.isAuthenticated()) {
-        // Generate new game round ID
-        const roundId = classyBetAPI.generateGameRound();
-        classyBetAPI.setGameRound(roundId);
-        game.roundNumber = roundId;
-        
-        // Override game betting functions to use API
-        const originalPlaceBet = game.placeBet;
-        game.placeBet = async function(betSlot, amount, autoCashout = null) {
-            const betInput = betSlot === 'bet1' ? this.betInput1 : this.betInput2;
-            const effectiveAmount = typeof amount === 'number' ? amount : parseFloat(betInput ? betInput.value : NaN);
-
-            // Fallback to original behaviour when API is unavailable or user isn't authenticated
-            if (!window.classyBetAPI || !classyBetAPI.isAuthenticated()) {
-                return originalPlaceBet.call(this, betSlot, effectiveAmount);
-            }
-
-            const MAX_BET = 10000;
-            if (isNaN(effectiveAmount) || effectiveAmount <= 0) {
-                this.messageElement.textContent = 'Please enter a valid bet amount';
-                return false;
-            }
-            if (effectiveAmount > this.playerBalance) {
-                this.messageElement.textContent = 'Insufficient balance';
-                return false;
-            }
-            if (effectiveAmount > MAX_BET) {
-                this.messageElement.textContent = `Maximum bet is ${this.formatCurrency(MAX_BET)}`;
-                return false;
-            }
-
-            try {
-                const result = await classyBetAPI.placeBet(effectiveAmount, autoCashout);
-                if (result && result.success) {
-                    originalPlaceBet.call(this, betSlot, effectiveAmount);
-                    if (result.bet && result.bet._id && this.bets[betSlot]) {
-                        this.bets[betSlot].apiId = result.bet._id;
-                    }
-                    return true;
-                }
-
-                const errorMsg = result && result.error ? result.error : 'Unable to place bet right now';
-                this.showGameMessage(errorMsg, 'error');
-                return false;
-            } catch (error) {
-                console.error('Failed to place bet via API:', error);
-                this.showGameMessage('Network error while placing bet', 'error');
-                return false;
-            }
-        };
-
-        const originalCashOut = game.cashOut;
-        game.cashOut = async function(betSlot) {
-            const bet = this.bets[betSlot];
-
-            // Use original behaviour when API is unavailable or bet lacks an API reference
-            if (!window.classyBetAPI || !classyBetAPI.isAuthenticated() || !bet || !bet.apiId) {
-                return originalCashOut.call(this, betSlot);
-            }
-
-            try {
-                const result = await classyBetAPI.cashout(this.counter);
-                if (result && result.success) {
-                    originalCashOut.call(this, betSlot);
-                    return true;
-                }
-
-                const errorMsg = result && result.error ? result.error : 'Cashout failed. Please try again';
-                this.showGameMessage(errorMsg, 'error');
-                return false;
-            } catch (error) {
-                console.error('Cashout failed:', error);
-                this.showGameMessage('Cashout failed. Please try again.', 'error');
-                return false;
-            }
-        };
+    if (!window.game || !window.classyBetAPI) {
+        if (integrateGameRetries < MAX_INTEGRATE_RETRIES) {
+            integrateGameRetries += 1;
+            setTimeout(integrateGameWithAPI, 300);
+        }
+        return;
     }
+
+    if (!classyBetAPI.isAuthenticated() || game.__apiIntegrated) {
+        return;
+    }
+
+    integrateGameRetries = 0;
+
+    const roundId = classyBetAPI.generateGameRound();
+    classyBetAPI.setGameRound(roundId);
+    game.roundNumber = roundId;
+    const originalPlaceBet = game.placeBet;
+
+    game.placeBet = async function(betSlot, amount, autoCashout = null) {
+        const betInput = betSlot === 'bet1' ? this.betInput1 : this.betInput2;
+        const effectiveAmount = typeof amount === 'number' ? amount : parseFloat(betInput ? betInput.value : NaN);
+
+        if (!window.classyBetAPI || !classyBetAPI.isAuthenticated()) {
+            return originalPlaceBet.call(this, betSlot, effectiveAmount);
+        }
+
+        const MAX_BET = 10000;
+        if (isNaN(effectiveAmount) || effectiveAmount <= 0) {
+            this.messageElement.textContent = 'Please enter a valid bet amount';
+            return false;
+        }
+        if (effectiveAmount > this.playerBalance) {
+            this.messageElement.textContent = 'Insufficient balance';
+            return false;
+        }
+        if (effectiveAmount > MAX_BET) {
+            this.messageElement.textContent = `Maximum bet is ${this.formatCurrency(MAX_BET)}`;
+            return false;
+        }
+
+        try {
+            const result = await classyBetAPI.placeBet(effectiveAmount, autoCashout);
+            if (result && result.success) {
+                originalPlaceBet.call(this, betSlot, effectiveAmount);
+                if (result.bet && result.bet._id && this.bets[betSlot]) {
+                    this.bets[betSlot].apiId = result.bet._id;
+                }
+                return true;
+            }
+
+            const errorMsg = result && result.error ? result.error : 'Unable to place bet right now';
+            this.showGameMessage(errorMsg, 'error');
+            return false;
+        } catch (error) {
+            console.error('Failed to place bet via API:', error);
+            this.showGameMessage('Network error while placing bet', 'error');
+            return false;
+        }
+    };
+
+    const originalCashOut = game.cashOut;
+
+    game.cashOut = async function(betSlot) {
+        const bet = this.bets[betSlot];
+
+        if (!window.classyBetAPI || !classyBetAPI.isAuthenticated() || !bet || !bet.apiId) {
+            return originalCashOut.call(this, betSlot);
+        }
+
+        try {
+            const result = await classyBetAPI.cashout(this.counter);
+            if (result && result.success) {
+                originalCashOut.call(this, betSlot);
+                return true;
+            }
+
+            const errorMsg = result && result.error ? result.error : 'Cashout failed. Please try again';
+            this.showGameMessage(errorMsg, 'error');
+            return false;
+        } catch (error) {
+            console.error('Cashout failed:', error);
+            this.showGameMessage('Cashout failed. Please try again.', 'error');
+            return false;
+        }
+    };
+
+    game.__apiIntegrated = true;
 }
 
 // Initialize everything when page loads
