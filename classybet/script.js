@@ -814,7 +814,7 @@ class AviatorGame {
         if (!button || !input) return;
 
         if (bet.pending) {
-            this.showGameMessage('Bet queued for the next round.', 'info');
+            this.showGameMessage('Bet already queued for next round.', 'info');
             return;
         }
 
@@ -835,6 +835,7 @@ class AviatorGame {
             return;
         }
 
+        // Queue the bet - it will be activated during countdown
         bet.pending = true;
         bet.amount = amountToBet;
         bet.cashedOut = false;
@@ -844,7 +845,7 @@ class AviatorGame {
         this.reservedBalance += amountToBet;
         this.updateBalance();
 
-        button.textContent = `Cancel ${this.formatCurrency(amountToBet)} `;
+        button.textContent = `Cancel ${this.formatCurrency(amountToBet)}`;
         button.className = 'bet-button cancel';
         button.disabled = false;
 
@@ -896,8 +897,51 @@ class AviatorGame {
         bet.winnings = winnings;
         bet.multiplier = this.counter;
 
-        this.playerBalance += winnings;
-        this.updateBalance();
+        // Sync cashout with backend via WebSocket
+        if (window.gameSocket && gameSocket.connected && window.classyBetAPI && classyBetAPI.isAuthenticated() && bet.apiId) {
+            // Get userId from game.currentUser (where it's actually stored)
+            const userId = this.currentUser?.username || classyBetAPI.currentUser?.username;
+            if (userId) {
+                console.log('[CASHOUT] Requesting cashout via WebSocket:', {
+                    userId,
+                    betId: bet.apiId,
+                    multiplier: this.counter
+                });
+                
+                gameSocket.cashout(userId, bet.apiId, this.counter)
+                    .then(result => {
+                        console.log('[CASHOUT] Response received:', result);
+                        if (result && result.success) {
+                            if (result.newBalance !== undefined) {
+                                this.playerBalance = result.newBalance;
+                                
+                                // Update localStorage to persist the balance
+                                const userData = localStorage.getItem('userData');
+                                if (userData) {
+                                    const user = JSON.parse(userData);
+                                    user.balance = result.newBalance;
+                                    localStorage.setItem('userData', JSON.stringify(user));
+                                }
+                                
+                                this.updateBalance();
+                                console.log('[CASHOUT] ✅ Balance updated from backend:', result.newBalance);
+                            } else {
+                                console.warn('[CASHOUT] ⚠️ Success but no newBalance in response:', result);
+                            }
+                        } else {
+                            console.error('[CASHOUT] ❌ Cashout failed:', result);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('[CASHOUT] ❌ Failed to sync with backend:', error);
+                    });
+            } else {
+                console.error('[CASHOUT] No user ID available', {
+                    gameCurrentUser: this.currentUser,
+                    apiCurrentUser: classyBetAPI.currentUser
+                });
+            }
+        }
 
         this.addBetToHistory({
             amount: bet.amount,
@@ -918,47 +962,83 @@ class AviatorGame {
         }, 1200);
     }
 
-    activateQueuedBets() {
+    async activateQueuedBets() {
         let totalQueued = 0;
 
-        Object.keys(this.bets).forEach(betType => {
+        for (const betType of Object.keys(this.bets)) {
             const bet = this.bets[betType];
             const button = betType === 'bet1' ? this.betButton1 : this.betButton2;
 
             if (bet.pending && bet.amount >= this.minBetAmount) {
-                bet.pending = false;
-                bet.placed = true;
-                bet.cashedOut = false;
-                bet.winnings = 0;
-                bet.multiplier = 0;
-
-                totalQueued += bet.amount;
-
-                if (button) {
-                    button.textContent = `${this.formatCurrency(bet.amount)} ACTIVE`;
-                    button.className = 'bet-button placed';
-                    button.disabled = false;
+                // Get userId
+                const userId = this.currentUser?.username;
+                if (!userId || !window.gameSocket || !window.gameSocket.connected) {
+                    console.warn('[BET] Cannot activate - not connected or no user');
+                    continue;
                 }
 
-                // Record bet history entry for queued bet activation
-                this.addBetToHistory({
-                    amount: bet.amount,
-                    cashedOut: false,
-                    multiplier: null,
-                    placedAt: new Date().toISOString()
-                });
+                try {
+                    // Get auto-cashout value if enabled
+                    const autoToggle = document.getElementById(`auto-bet-toggle-${betType === 'bet1' ? '1' : '2'}`);
+                    const autoCashoutInput = document.getElementById(`auto-cashout-value-${betType === 'bet1' ? '1' : '2'}`);
+                    const autoCashoutValue = (autoToggle && autoToggle.checked && autoCashoutInput) 
+                        ? parseFloat(autoCashoutInput.value) 
+                        : null;
 
-                // Inform backend when available
-                this.syncBetWithBackend(betType, bet.amount);
+                    console.log(`[BET] Activating queued ${betType} via WebSocket:`, {
+                        amount: bet.amount,
+                        userId,
+                        autoCashout: autoCashoutValue
+                    });
 
-                console.log(`[BET] Activated ${betType} for ${this.formatCurrency(bet.amount)} | Balance: ${this.formatCurrency(this.playerBalance)}`);
+                    // Place bet via WebSocket
+                    const result = await gameSocket.placeBet(userId, bet.amount, autoCashoutValue);
+
+                    if (result && result.success) {
+                        // ✅ Bet activated successfully
+                        bet.pending = false;
+                        bet.placed = true;
+                        bet.cashedOut = false;
+                        bet.winnings = 0;
+                        bet.multiplier = 0;
+                        bet.apiId = result.betId;
+
+                        totalQueued += bet.amount;
+
+                        // Update balance from backend response
+                        if (result.newBalance !== undefined) {
+                            this.playerBalance = result.newBalance;
+                            
+                            // Update localStorage
+                            const userData = localStorage.getItem('userData');
+                            if (userData) {
+                                const user = JSON.parse(userData);
+                                user.balance = result.newBalance;
+                                localStorage.setItem('userData', JSON.stringify(user));
+                            }
+                            
+                            this.updateBalance();
+                        }
+
+                        if (button) {
+                            button.textContent = 'Cash Out';
+                            button.className = 'bet-button active';
+                            button.disabled = false;
+                        }
+
+                        console.log(`[BET] ✅ Activated ${betType} for ${this.formatCurrency(bet.amount)} | New balance: ${this.formatCurrency(this.playerBalance)}`);
+                    } else {
+                        // ❌ Bet failed - keep it queued
+                        console.error(`[BET] ❌ Failed to activate ${betType}:`, result);
+                    }
+                } catch (error) {
+                    console.error(`[BET] Error activating ${betType}:`, error);
+                }
             }
-        });
+        }
 
         if (totalQueued > 0) {
             this.reservedBalance = Math.max(0, this.reservedBalance - totalQueued);
-            this.playerBalance = Math.max(0, this.playerBalance - totalQueued);
-            this.updateBalance();
         }
 
         this.updateBetButtons();
@@ -1905,6 +1985,10 @@ class AviatorGame {
                 });
         }
         
+        // Clear the active round AFTER it's been played
+        this.activeRoundMeta = null;
+        this.forcedCrashMultiplier = null;
+        
         // Add round to history
         this.addRoundToHistory(parseFloat(crashMultiplierStr));
         
@@ -2033,11 +2117,8 @@ class AviatorGame {
     async startCountdown() {
         this.gameState = 'waiting';
 
-        // Clear the previous round
-        this.activeRoundMeta = null;
-        this.forcedCrashMultiplier = null;
-
         // Fetch and ensure we have the next round ready
+        // Don't clear activeRoundMeta here - it will be cleared after the round plays
         await this.ensureRoundMeta().catch(error => {
             console.warn('Failed to prepare next round:', error);
         });
@@ -2201,11 +2282,13 @@ class AviatorGame {
     }
 
     resetGame() {
-        // Only use random if backend multiplier is not available
+        // Always use backend multiplier - no random fallback
         if (!this.forcedCrashMultiplier) {
-            this.randomStop = Math.random() * (10 - 0.8) + 0.8;
+            console.error('No backend multiplier available! Game cannot start.');
+            this.randomStop = 1.5; // Emergency fallback
+        } else {
+            this.randomStop = this.forcedCrashMultiplier;
         }
-        // Otherwise randomStop is already set by ensureRoundMeta
         this.counter = 1.0;
         this.x = this.startX; // Reset to starting position (bottom left)
         this.y = this.startY; // Reset to starting position (bottom left)
@@ -2728,6 +2811,29 @@ class AviatorGame {
         });
     }
 
+    handleGameStateUpdate(state) {
+        // Handle game state updates from WebSocket
+        if (!state) return;
+        
+        console.log('[GAME STATE] Update received:', state.state, 'Round:', state.roundId);
+        
+        // When round starts flying, check if any bets should be activated
+        if (state.state === 'flying') {
+            Object.keys(this.bets).forEach(betType => {
+                const bet = this.bets[betType];
+                const button = betType === 'bet1' ? this.betButton1 : this.betButton2;
+                
+                // If bet is placed and has an apiId, make sure button shows "Cash Out"
+                if (bet.placed && bet.apiId && !bet.cashedOut && button) {
+                    button.textContent = 'Cash Out';
+                    button.className = 'bet-button active';
+                    button.disabled = false;
+                    console.log(`[GAME STATE] Bet ${betType} is active for round ${state.roundId}`);
+                }
+            });
+        }
+    }
+
     executeAutoBets() {
         // Execute auto-bets at the start of each round
         // Make sure autoBetState exists
@@ -2770,29 +2876,34 @@ class AviatorGame {
         });
     }
 
-    async syncBetWithBackend(betType, amount) {
-        if (!window.classyBetAPI || !classyBetAPI.isAuthenticated()) {
-            return;
-        }
-
-        try {
-            const autoToggle = document.getElementById(`auto-bet-toggle-${betType === 'bet1' ? '1' : '2'}`);
-            const autoCashout = document.getElementById(`auto-cashout-value-${betType === 'bet1' ? '1' : '2'}`);
-            const autoCashoutValue = autoCashout ? parseFloat(autoCashout.value) : null;
-
-            const result = await classyBetAPI.placeBet(amount, autoToggle && autoToggle.checked ? autoCashoutValue : null);
-
-            if (result && result.success && result.bet && result.bet._id) {
-                this.bets[betType].apiId = result.bet._id;
-            }
-        } catch (error) {
-            console.error('Failed to sync bet with backend:', error);
-        }
-    }
+    // ❌ REMOVED: syncBetWithBackend - bets are now placed directly via placeBet()
 }
 
 // Global game instance for onclick handlers
 let game;
+
+// WebSocket Initialization
+async function initializeWebSocket() {
+    const API_BASE_URL = window.location.hostname === 'localhost' 
+        ? 'http://localhost:3001' 
+        : 'https://your-backend.onrender.com';
+    
+    try {
+        console.log('[WebSocket] Connecting to:', API_BASE_URL);
+        await gameSocket.connect(API_BASE_URL);
+        console.log('[WebSocket] ✅ Connected to game server');
+        
+        // Listen for game state updates
+        gameSocket.onStateUpdate = (state) => {
+            if (game && game.handleGameStateUpdate) {
+                game.handleGameStateUpdate(state);
+            }
+        };
+        
+    } catch (error) {
+        console.error('[WebSocket] ❌ Connection failed:', error);
+    }
+}
 
 // Preloader Management
 function showPreloader() {
@@ -2973,7 +3084,9 @@ document.addEventListener('DOMContentLoaded', () => {
             // Initialize authentication system
             window.classyBetAPI = new ClassyBetAPI();
             setupAuthEventListeners();
-            integrateGameWithAPI();
+            
+            // Initialize WebSocket connection
+            initializeWebSocket();
 
             console.log('Game initialized successfully');
             
@@ -3001,7 +3114,7 @@ function setupAuthEventListeners() {
         if (data.authenticated) {
             showUserView();
             updateUserDisplay(data.user);
-            integrateGameWithAPI();
+            // API integration now handled by syncBetWithBackend
         } else {
             showGuestView();
         }
@@ -3420,99 +3533,8 @@ function showSuccess(elementId, message) {
 }
 
 let integrateGameRetries = 0;
-const MAX_INTEGRATE_RETRIES = 20;
-
-// Enhanced game integration
-function integrateGameWithAPI() {
-    if (!window.game || !window.classyBetAPI) {
-        if (integrateGameRetries < MAX_INTEGRATE_RETRIES) {
-            integrateGameRetries += 1;
-            setTimeout(integrateGameWithAPI, 300);
-        }
-        return;
-    }
-
-    if (!classyBetAPI.isAuthenticated() || game.__apiIntegrated) {
-        return;
-    }
-
-    integrateGameRetries = 0;
-
-    const roundId = classyBetAPI.generateGameRound();
-    classyBetAPI.setGameRound(roundId);
-    game.roundNumber = roundId;
-    const originalPlaceBet = game.placeBet;
-
-    game.placeBet = async function(betSlot, amount, autoCashout = null) {
-        const betInput = betSlot === 'bet1' ? this.betInput1 : this.betInput2;
-        const effectiveAmount = typeof amount === 'number' ? amount : parseFloat(betInput ? betInput.value : NaN);
-
-        if (!window.classyBetAPI || !classyBetAPI.isAuthenticated()) {
-            return originalPlaceBet.call(this, betSlot, effectiveAmount);
-        }
-
-        const MAX_BET = 10000;
-        if (isNaN(effectiveAmount) || effectiveAmount <= 0) {
-            this.messageElement.textContent = 'Please enter a valid bet amount';
-            return false;
-        }
-        if (effectiveAmount > this.playerBalance) {
-            this.messageElement.textContent = 'Insufficient balance';
-            return false;
-        }
-        if (effectiveAmount > MAX_BET) {
-            this.messageElement.textContent = `Maximum bet is ${this.formatCurrency(MAX_BET)}`;
-            return false;
-        }
-
-        try {
-            const result = await classyBetAPI.placeBet(effectiveAmount, autoCashout);
-            if (result && result.success) {
-                originalPlaceBet.call(this, betSlot, effectiveAmount);
-                if (result.bet && result.bet._id && this.bets[betSlot]) {
-                    this.bets[betSlot].apiId = result.bet._id;
-                }
-                return true;
-            }
-
-            const errorMsg = result && result.error ? result.error : 'Unable to place bet right now';
-            this.showGameMessage(errorMsg, 'error');
-            return false;
-        } catch (error) {
-            console.error('Failed to place bet via API:', error);
-            this.showGameMessage('Network error while placing bet', 'error');
-            return false;
-        }
-    };
-
-    const originalCashOut = game.cashOut;
-
-    game.cashOut = async function(betSlot) {
-        const bet = this.bets[betSlot];
-
-        if (!window.classyBetAPI || !classyBetAPI.isAuthenticated() || !bet || !bet.apiId) {
-            return originalCashOut.call(this, betSlot);
-        }
-
-        try {
-            const result = await classyBetAPI.cashout(this.counter);
-            if (result && result.success) {
-                originalCashOut.call(this, betSlot);
-                return true;
-            }
-
-            const errorMsg = result && result.error ? result.error : 'Cashout failed. Please try again';
-            this.showGameMessage(errorMsg, 'error');
-            return false;
-        } catch (error) {
-            console.error('Cashout failed:', error);
-            this.showGameMessage('Cashout failed. Please try again.', 'error');
-            return false;
-        }
-    };
-
-    game.__apiIntegrated = true;
-}
+// OLD INTEGRATION REMOVED - Now using syncBetWithBackend for all bet/cashout operations
+// This prevents duplicate balance deductions and ensures backend is source of truth
 
 // Initialize game loop with backend round synchronization
 AviatorGame.prototype.initializeGameLoop = async function() {
@@ -3529,10 +3551,7 @@ AviatorGame.prototype.initializeGameLoop = async function() {
 document.addEventListener('DOMContentLoaded', () => {
     checkAuthenticationOnLoad();
     
-    // Wait for game to initialize, then integrate
-    setTimeout(() => {
-        integrateGameWithAPI();
-    }, 1000);
+    // Old integration removed - now using syncBetWithBackend
 });
 
 // Close modals when clicking outside

@@ -39,33 +39,33 @@ function generateMultiplier(roundId, startTime) {
   const intVal = parseInt(hash.substring(0, 8), 16);
   const random = (intVal % 100000) / 100000; // 0.00000 - 0.99999
   
-  // Distribution:
-  // 65% -> 1.00x - 1.75x
-  // 10% -> 1.76x - 2.85x
-  // 20% -> 2.86x - 7.45x
-  // 5%  -> 7.46x - 50.00x
+  // Distribution: MOSTLY LOW MULTIPLIERS
+  // 80% -> 1.00x - 1.99x (very low)
+  // 12% -> 2.00x - 4.99x (low-medium)
+  // 6%  -> 5.00x - 9.99x (medium)
+  // 2%  -> 10.00x - 100.00x (high)
   
   let multiplier;
   
-  if (random < 0.65) {
-    // 65% chance: 1.00x - 1.75x
-    const range = 0.75; // 1.75 - 1.00
-    multiplier = 1.00 + (random / 0.65) * range;
-  } else if (random < 0.75) {
-    // 10% chance: 1.76x - 2.85x
-    const range = 1.09; // 2.85 - 1.76
-    const normalized = (random - 0.65) / 0.10;
-    multiplier = 1.76 + normalized * range;
-  } else if (random < 0.95) {
-    // 20% chance: 2.86x - 7.45x
-    const range = 4.59; // 7.45 - 2.86
-    const normalized = (random - 0.75) / 0.20;
-    multiplier = 2.86 + normalized * range;
+  if (random < 0.80) {
+    // 80% chance: 1.00x - 1.99x (VERY LOW)
+    const range = 0.99; // 1.99 - 1.00
+    multiplier = 1.00 + (random / 0.80) * range;
+  } else if (random < 0.92) {
+    // 12% chance: 2.00x - 4.99x (LOW-MEDIUM)
+    const range = 2.99; // 4.99 - 2.00
+    const normalized = (random - 0.80) / 0.12;
+    multiplier = 2.00 + normalized * range;
+  } else if (random < 0.98) {
+    // 6% chance: 5.00x - 9.99x (MEDIUM)
+    const range = 4.99; // 9.99 - 5.00
+    const normalized = (random - 0.92) / 0.06;
+    multiplier = 5.00 + normalized * range;
   } else {
-    // 5% chance: 7.46x - 50.00x
-    const range = 42.54; // 50.00 - 7.46
-    const normalized = (random - 0.95) / 0.05;
-    multiplier = 7.46 + normalized * range;
+    // 2% chance: 10.00x - 100.00x (HIGH)
+    const range = 90.00; // 100.00 - 10.00
+    const normalized = (random - 0.98) / 0.02;
+    multiplier = 10.00 + normalized * range;
   }
   
   return Number(multiplier.toFixed(2));

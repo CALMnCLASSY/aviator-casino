@@ -102,6 +102,12 @@ async function ensureRoundMeta() {
         this.activeRoundMeta = this.roundQueue.shift();
         this.nextRoundMeta = this.roundQueue.length > 0 ? this.roundQueue[0] : null;
 
+        console.log('[ROUND] Prepared round:', {
+            roundId: this.activeRoundMeta.roundId,
+            multiplier: this.activeRoundMeta.multiplier,
+            queueRemaining: this.roundQueue.length
+        });
+
         if (this.activeRoundMeta && this.activeRoundMeta.multiplier) {
             this.forcedCrashMultiplier = this.activeRoundMeta.multiplier;
             this.randomStop = Math.max(1.01, this.forcedCrashMultiplier);
@@ -110,6 +116,9 @@ async function ensureRoundMeta() {
         // Set game round for betting
         if (window.classyBetAPI && typeof classyBetAPI.setGameRound === 'function' && classyBetAPI.isAuthenticated()) {
             classyBetAPI.setGameRound(this.activeRoundMeta.roundId);
+            console.log('[ROUND] Game round set for betting:', this.activeRoundMeta.roundId);
+        } else {
+            console.warn('[ROUND] Cannot set game round - API not ready');
         }
         
         // Fetch more rounds if queue is running low
@@ -117,7 +126,9 @@ async function ensureRoundMeta() {
             this.fetchRoundSchedule().catch(err => console.warn('Background round fetch failed:', err));
         }
     } else if (!this.activeRoundMeta) {
-        console.warn('No rounds available in queue');
+        console.warn('[ROUND] No rounds available in queue');
+    } else {
+        console.log('[ROUND] Active round already set:', this.activeRoundMeta.roundId);
     }
 }
 
