@@ -2886,7 +2886,7 @@ let game;
 async function initializeWebSocket() {
     const API_BASE_URL = window.location.hostname === 'localhost' 
         ? 'http://localhost:3001' 
-        : 'https://your-backend.onrender.com';
+        : 'https://aviator-casino.onrender.com';
     
     try {
         console.log('[WebSocket] Connecting to:', API_BASE_URL);

@@ -373,7 +373,7 @@ router.get('/transactions', async (req, res) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const { page = 1, limit = 20, type } = req.query;
     
-    const filter = { userId: decoded.userId };
+    const filter = { user: decoded.userId };  // ✅ Changed from userId to user
     if (type) {
       filter.type = type;
     }

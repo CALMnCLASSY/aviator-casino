@@ -72,44 +72,55 @@ function generateMultiplier(roundId, startTime) {
 }
 
 async function populateRoundSchedule() {
-  const now = new Date();
-  const alignedStart = alignToInterval(now);
-  const targetEndTime = new Date(alignedStart.getTime() + ROUND_LOOKAHEAD * ROUND_DURATION_MS);
+  try {
+    const now = new Date();
+    const alignedStart = alignToInterval(now);
+    const targetEndTime = new Date(alignedStart.getTime() + ROUND_LOOKAHEAD * ROUND_DURATION_MS);
 
-  const existing = await RoundSchedule.find({
-    startTime: { $gte: alignedStart, $lte: targetEndTime }
-  }).select('roundId').lean();
+    const existing = await RoundSchedule.find({
+      startTime: { $gte: alignedStart, $lte: targetEndTime }
+    }).select('roundId').lean();
 
-  const existingIds = new Set(existing.map((r) => r.roundId));
-  const bulkOps = [];
+    const existingIds = new Set(existing.map((r) => r.roundId));
+    const bulkOps = [];
 
-  for (
-    let cursor = alignedStart;
-    cursor <= targetEndTime;
-    cursor = new Date(cursor.getTime() + ROUND_DURATION_MS)
-  ) {
-    const roundId = computeRoundId(cursor);
-    if (existingIds.has(roundId)) {
-      continue;
+    for (
+      let cursor = alignedStart;
+      cursor <= targetEndTime;
+      cursor = new Date(cursor.getTime() + ROUND_DURATION_MS)
+    ) {
+      const roundId = computeRoundId(cursor);
+      if (existingIds.has(roundId)) {
+        continue;
+      }
+
+      const multiplier = generateMultiplier(roundId, cursor);
+      bulkOps.push({
+        updateOne: {
+          filter: { roundId },
+          update: {
+            $set: {
+              roundId,
+              startTime: cursor,
+              multiplier,
+              status: 'pending'
+            }
+          },
+          upsert: true
+        }
+      });
     }
 
-    const multiplier = generateMultiplier(roundId, cursor);
-    bulkOps.push({
-      updateOne: {
-        filter: { roundId },
-        update: {
-          roundId,
-          startTime: cursor,
-          multiplier,
-          status: 'pending'
-        },
-        upsert: true
-      }
-    });
-  }
-
-  if (bulkOps.length) {
-    await RoundSchedule.bulkWrite(bulkOps, { ordered: false });
+    if (bulkOps.length > 0) {
+      const result = await RoundSchedule.bulkWrite(bulkOps, { ordered: false });
+      console.log(`✅ Populated ${bulkOps.length} rounds (${result.upsertedCount} new, ${result.modifiedCount} updated)`);
+      return bulkOps.length;
+    }
+    
+    return 0;
+  } catch (error) {
+    console.error('❌ Error populating rounds:', error.message);
+    throw error;
   }
 }
 
