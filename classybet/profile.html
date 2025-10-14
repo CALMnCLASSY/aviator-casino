@@ -511,6 +511,12 @@
                     <input type="password" id="register-password" class="form-control" minlength="6" required>
                 </div>
                 
+                <div class="form-group">
+                    <label for="register-promo">Referral Code (Optional)</label>
+                    <input type="text" id="register-promo" class="form-control" placeholder="Enter referral code">
+                    <small style="color: #999; font-size: 0.85rem;">Have a referral code? Enter it to support your referrer!</small>
+                </div>
+                
                 <button type="submit" class="btn btn-primary" style="width: 100%;">
                     <i class="fas fa-user-plus"></i> Register
                 </button>
@@ -587,7 +593,7 @@
                         <div id="referral-cta" style="margin-top: 1.5rem; display: none;">
                             <div style="background: rgba(48, 252, 190, 0.12); border-radius: 12px; padding: 1.25rem; text-align: left;">
                                 <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
-                                    <div>
+                                    <div style="flex: 1;">
                                         <div style="font-size: 1rem; color: #30fcbe; font-weight: 600; margin-bottom: 0.25rem;">Affiliate Promo Code</div>
                                         <div style="font-size: 1.35rem; font-weight: 700; letter-spacing: 0.05em;" id="referral-code">N/A</div>
                                         <div style="color: #ccc; font-size: 0.85rem; margin-top: 0.25rem;" id="referral-highlight">Share this code to start earning commissions.</div>
@@ -599,6 +605,22 @@
                                         <button class="btn" id="view-referral-details" style="background: rgba(48, 252, 190, 0.18); color: #0a0f1a; padding: 0.6rem 1.1rem;">
                                             <i class="fas fa-chart-line"></i> View Details
                                         </button>
+                                    </div>
+                                </div>
+                                
+                                <!-- Affiliate Link Section -->
+                                <div style="margin-top: 1.25rem; padding-top: 1.25rem; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+                                    <div style="font-size: 1rem; color: #30fcbe; font-weight: 600; margin-bottom: 0.5rem;">Your Unique Affiliate Link</div>
+                                    <div style="background: rgba(0, 0, 0, 0.3); border-radius: 8px; padding: 0.75rem; display: flex; align-items: center; gap: 0.75rem;">
+                                        <input type="text" id="affiliate-link" readonly 
+                                            style="flex: 1; background: transparent; border: none; color: #fff; font-size: 0.9rem; outline: none; cursor: pointer;"
+                                            value="https://aviatorhub.xyz/?ref=LOADING">
+                                        <button class="btn btn-primary" id="copy-affiliate-link" style="padding: 0.5rem 1rem; white-space: nowrap;">
+                                            <i class="fas fa-link"></i> Copy Link
+                                        </button>
+                                    </div>
+                                    <div style="color: #999; font-size: 0.8rem; margin-top: 0.5rem;">
+                                        <i class="fas fa-info-circle"></i> Share this link - new users will automatically use your promo code!
                                     </div>
                                 </div>
                             </div>
@@ -949,11 +971,34 @@
         let authToken = localStorage.getItem('user_token');
         let currentUser = null;
 
+        // Check for referral code in URL
+        function checkReferralCode() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const refCode = urlParams.get('ref');
+            
+            if (refCode) {
+                const promoInput = document.getElementById('register-promo');
+                if (promoInput) {
+                    promoInput.value = refCode.toUpperCase();
+                    // Highlight the field
+                    promoInput.style.border = '2px solid #30fcbe';
+                    promoInput.style.background = 'rgba(48, 252, 190, 0.1)';
+                }
+                
+                // Show register form if not logged in
+                if (!authToken) {
+                    showRegisterForm();
+                }
+            }
+        }
+
         // Check if already logged in
         if (authToken) {
             loadUserProfile();
         } else {
             showLoginForm();
+            // Check for referral code after showing login
+            setTimeout(checkReferralCode, 100);
         }
 
         // Login form handler
@@ -994,12 +1039,18 @@
             const email = document.getElementById('register-email').value;
             const phone = document.getElementById('register-phone').value;
             const password = document.getElementById('register-password').value;
+            const referralCode = document.getElementById('register-promo').value.trim();
+            
+            const payload = { username, email, phone, password };
+            if (referralCode) {
+                payload.referralCode = referralCode;
+            }
             
             try {
                 const response = await fetch(`${API_BASE}/api/auth/register`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, email, phone, password })
+                    body: JSON.stringify(payload)
                 });
                 
                 const data = await response.json();
@@ -1229,6 +1280,12 @@
                     referralHighlight.textContent = referredUsers > 0
                         ? `You've referred ${referredUsers} player${referredUsers === 1 ? '' : 's'} so far. Keep sharing to grow your earnings.`
                         : 'Share this code to start earning commissions.';
+                    
+                    // Set affiliate link
+                    const affiliateLinkInput = document.getElementById('affiliate-link');
+                    if (affiliateLinkInput) {
+                        affiliateLinkInput.value = `https://aviatorhub.xyz/?ref=${promoCode}`;
+                    }
                 } else {
                     referralCTA.style.display = 'none';
                 }
@@ -1415,6 +1472,36 @@
             referralDetailsButton.addEventListener('click', () => {
                 showSection('transactions');
                 alert('Referral analytics coming soon. Contact support for detailed breakdown.');
+            });
+        }
+
+        // Copy affiliate link button handler
+        const copyAffiliateLinkButton = document.getElementById('copy-affiliate-link');
+        if (copyAffiliateLinkButton) {
+            copyAffiliateLinkButton.addEventListener('click', () => {
+                const linkInput = document.getElementById('affiliate-link');
+                const linkText = linkInput?.value;
+                
+                if (!linkText || linkText.includes('LOADING')) {
+                    alert('Affiliate link not ready yet.');
+                    return;
+                }
+
+                navigator.clipboard.writeText(linkText).then(() => {
+                    // Change button text temporarily
+                    const originalHTML = copyAffiliateLinkButton.innerHTML;
+                    copyAffiliateLinkButton.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                    copyAffiliateLinkButton.style.background = '#30fcbe';
+                    
+                    setTimeout(() => {
+                        copyAffiliateLinkButton.innerHTML = originalHTML;
+                        copyAffiliateLinkButton.style.background = '';
+                    }, 2000);
+                }).catch(() => {
+                    // Fallback: select the text
+                    linkInput.select();
+                    alert('Link copied! Share it with your friends.');
+                });
             });
         }
 

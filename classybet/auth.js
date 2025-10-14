@@ -15,6 +15,31 @@ class AuthManager {
         this.setupEventListeners();
         this.checkExistingAuth();
         this.generateUserIdPreview();
+        this.checkReferralCode();
+    }
+
+    // Check for referral code in URL and auto-fill
+    checkReferralCode() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const refCode = urlParams.get('ref');
+        
+        if (refCode) {
+            const promoInput = document.getElementById('promoCode');
+            if (promoInput) {
+                promoInput.value = refCode.toUpperCase();
+                // Highlight the field
+                promoInput.style.border = '2px solid #30fcbe';
+                promoInput.style.background = 'rgba(48, 252, 190, 0.1)';
+                promoInput.style.fontWeight = '600';
+            }
+            
+            // Switch to register tab if not already there
+            const registerTab = document.getElementById('registerTab');
+            const loginTab = document.getElementById('loginTab');
+            if (registerTab && loginTab) {
+                switchAuthTab('register');
+            }
+        }
     }
 
     // Load country codes into select
