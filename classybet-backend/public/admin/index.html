@@ -460,6 +460,12 @@
                 <div id="pending-transactions-list"></div>
             </div>
 
+            <!-- Pending Withdrawals -->
+            <div class="card pending-transactions">
+                <h3><i class="fas fa-money-bill-wave"></i> Pending Withdrawals</h3>
+                <div id="pending-withdrawals-list"></div>
+            </div>
+
             <!-- Affiliate / Referral Overview -->
             <div class="card">
                 <h3><i class="fas fa-link"></i> Affiliate Performance</h3>
@@ -585,6 +591,9 @@
                 // Load pending transactions
                 loadPendingTransactions();
                 
+                // Load pending withdrawals
+                loadPendingWithdrawals();
+                
                 // Load all users
                 loadAllUsers();
 
@@ -665,6 +674,58 @@
                 const container = document.getElementById('pending-transactions-list');
                 if (container) {
                     container.innerHTML = '<p class="error">Failed to load pending transactions.</p>';
+                }
+            }
+        }
+
+        async function loadPendingWithdrawals() {
+            try {
+                const response = await fetch(`${API_BASE}/api/admin/transactions/pending-withdrawals`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to load pending withdrawals');
+                }
+
+                const { transactions = [] } = await response.json();
+                const container = document.getElementById('pending-withdrawals-list');
+
+                if (!Array.isArray(transactions) || transactions.length === 0) {
+                    container.innerHTML = '<p>No pending withdrawals</p>';
+                    return;
+                }
+
+                container.innerHTML = transactions.map(tx => {
+                    const username = tx.user?.username || 'Unknown User';
+                    const amount = Number(tx.amount || 0).toLocaleString();
+                    const phone = tx.mpesaPhoneNumber || tx.user?.phone || 'N/A';
+                    const createdAt = tx.createdAt ? new Date(tx.createdAt).toLocaleString() : 'Unknown time';
+                    const reference = tx.reference || tx._id;
+
+                    return `
+                        <div class="transaction-item">
+                            <div class="transaction-info">
+                                <strong>${username}</strong> - KES ${amount}<br>
+                                <small>Phone: ${phone} | ${createdAt}</small><br>
+                                <small>Ref: ${reference}</small>
+                            </div>
+                            <div class="transaction-actions">
+                                <button class="btn btn-success" data-action="confirm-withdrawal" data-reference="${reference}">
+                                    <i class="fas fa-check"></i> Complete
+                                </button>
+                                <button class="btn btn-danger" data-action="cancel-withdrawal" data-reference="${reference}">
+                                    <i class="fas fa-times"></i> Cancel
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('Pending withdrawals error:', error);
+                const container = document.getElementById('pending-withdrawals-list');
+                if (container) {
+                    container.innerHTML = '<p class="error">Failed to load pending withdrawals.</p>';
                 }
             }
         }
@@ -929,6 +990,70 @@
             }
         }
 
+        async function confirmWithdrawal(transactionId) {
+            if (!confirm('Have you sent the money to the user via M-Pesa?')) {
+                return;
+            }
+
+            const receiptNumber = prompt('Enter M-Pesa receipt number (optional):');
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/payments/confirm-withdrawal`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ transactionId, mpesaReceiptNumber: receiptNumber })
+                });
+
+                if (response.ok) {
+                    alert('Withdrawal completed successfully');
+                    loadPendingWithdrawals();
+                    loadDashboardData();
+                } else {
+                    const data = await response.json();
+                    alert('Error: ' + (data.error || 'Unable to complete withdrawal'));
+                }
+            } catch (error) {
+                alert('Withdrawal confirmation failed');
+            }
+        }
+
+        async function cancelWithdrawal(transactionId) {
+            const reason = prompt('Enter reason for cancelling this withdrawal:');
+            if (!reason) {
+                alert('Reason is required to cancel a withdrawal');
+                return;
+            }
+
+            if (!confirm('This will refund the amount to the user. Continue?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/api/payments/cancel-withdrawal`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ transactionId, reason })
+                });
+
+                if (response.ok) {
+                    alert('Withdrawal cancelled and amount refunded to user');
+                    loadPendingWithdrawals();
+                    loadDashboardData();
+                } else {
+                    const data = await response.json();
+                    alert('Error: ' + (data.error || 'Unable to cancel withdrawal'));
+                }
+            } catch (error) {
+                alert('Cancellation failed');
+            }
+        }
+
         function showError(elementId, message) {
             const element = document.getElementById(elementId);
             element.textContent = message;
@@ -961,6 +1086,12 @@
                         break;
                     case 'cancel-deposit':
                         cancelDeposit(target.dataset.reference);
+                        break;
+                    case 'confirm-withdrawal':
+                        confirmWithdrawal(target.dataset.reference);
+                        break;
+                    case 'cancel-withdrawal':
+                        cancelWithdrawal(target.dataset.reference);
                         break;
                 }
             });

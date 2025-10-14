@@ -269,4 +269,225 @@ router.get('/deposit-info', authenticateToken, async (req, res) => {
   }
 });
 
+// Request withdrawal
+router.post('/withdraw',
+  authenticateToken,
+  [
+    body('amount').isNumeric().custom(value => {
+      if (value < 200) {
+        throw new Error('Minimum withdrawal amount is KES 200');
+      }
+      if (value > 150000) {
+        throw new Error('Maximum withdrawal amount is KES 150,000');
+      }
+      return true;
+    }),
+    body('phoneNumber').matches(/^254[0-9]{9}$/).withMessage('Invalid phone number format')
+  ],
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ 
+          error: 'Validation failed', 
+          details: errors.array() 
+        });
+      }
+
+      const { amount, phoneNumber } = req.body;
+      const user = await User.findById(req.userId);
+
+      // Check if user has sufficient balance
+      if (user.balance < amount) {
+        return res.status(400).json({ 
+          error: 'Insufficient balance',
+          currentBalance: user.balance
+        });
+      }
+
+      // Deduct balance immediately
+      const balanceBefore = user.balance;
+      user.balance -= parseFloat(amount);
+      await user.save();
+
+      // Create pending withdrawal transaction
+      const transaction = new Transaction({
+        user: user._id,
+        type: 'withdrawal',
+        amount: parseFloat(amount),
+        balanceBefore: balanceBefore,
+        balanceAfter: user.balance,
+        status: 'pending',
+        description: `M-Pesa withdrawal of KES ${amount}`,
+        mpesaPhoneNumber: phoneNumber
+      });
+
+      await transaction.save();
+
+      // Send Telegram notification to admin
+      await sendTelegramNotification(
+        `💸 Withdrawal Request!\n\n` +
+        `User: ${user.username}\n` +
+        `Phone: ${phoneNumber}\n` +
+        `Amount: KES ${amount}\n` +
+        `Transaction ID: ${transaction.reference}\n` +
+        `New Balance: KES ${user.balance.toFixed(2)}\n` +
+        `Time: ${new Date().toLocaleString()}\n\n` +
+        `⚠️ Please process this withdrawal and send money to ${phoneNumber}`
+      );
+
+      // Send Slack notification
+      await sendSlackMessage(
+        process.env.SLACK_WEBHOOK_WITHDRAWAL_REQUEST,
+        `:money_with_wings: *Withdrawal Request*\n` +
+        `User: ${user.username}\n` +
+        `Phone: ${phoneNumber}\n` +
+        `Amount: KES ${amount}\n` +
+        `Transaction ID: ${transaction.reference}\n` +
+        `New Balance: KES ${user.balance.toFixed(2)}\n` +
+        `Time: ${new Date().toLocaleString('en-KE', { timeZone: 'Africa/Nairobi' })}\n\n` +
+        `⚠️ Please process this withdrawal and send money to ${phoneNumber}`
+      );
+
+      res.json({
+        success: true,
+        message: 'Withdrawal request submitted successfully. Your balance has been deducted and the withdrawal is pending approval.',
+        transactionId: transaction.reference,
+        newBalance: user.balance,
+        status: 'pending'
+      });
+
+    } catch (error) {
+      console.error('Withdrawal request error:', error);
+      res.status(500).json({ error: 'Failed to process withdrawal request' });
+    }
+  }
+);
+
+// Confirm withdrawal (Admin only)
+router.post('/confirm-withdrawal',
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const { transactionId, mpesaReceiptNumber } = req.body;
+      
+      // Check if user is admin
+      const admin = await User.findById(req.userId);
+      if (!admin.isAdmin) {
+        return res.status(403).json({ error: 'Access denied. Admin only.' });
+      }
+
+      const transaction = await Transaction.findOne({ reference: transactionId });
+      if (!transaction) {
+        return res.status(404).json({ error: 'Transaction not found' });
+      }
+
+      if (transaction.status !== 'pending') {
+        return res.status(400).json({ error: 'Transaction already processed' });
+      }
+
+      if (transaction.type !== 'withdrawal') {
+        return res.status(400).json({ error: 'Not a withdrawal transaction' });
+      }
+
+      // Update transaction
+      transaction.status = 'completed';
+      transaction.mpesaReceiptNumber = mpesaReceiptNumber;
+      transaction.processedBy = admin._id;
+      transaction.processedAt = new Date();
+      await transaction.save();
+
+      const user = await User.findById(transaction.user);
+
+      // Send confirmation notification
+      await sendTelegramNotification(
+        `✅ Withdrawal Completed!\n\n` +
+        `User: ${user.username}\n` +
+        `Amount: KES ${transaction.amount}\n` +
+        `Phone: ${transaction.mpesaPhoneNumber}\n` +
+        `M-Pesa Receipt: ${mpesaReceiptNumber}\n` +
+        `Processed by: ${admin.username}\n` +
+        `Time: ${new Date().toLocaleString()}`
+      );
+
+      res.json({
+        message: 'Withdrawal confirmed successfully',
+        transaction
+      });
+
+    } catch (error) {
+      console.error('Withdrawal confirmation error:', error);
+      res.status(500).json({ error: 'Failed to confirm withdrawal' });
+    }
+  }
+);
+
+// Cancel withdrawal (Admin only) - Refunds balance
+router.post('/cancel-withdrawal',
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const { transactionId, reason } = req.body;
+
+      const admin = await User.findById(req.userId);
+      if (!admin || !admin.isAdmin) {
+        return res.status(403).json({ error: 'Access denied. Admin only.' });
+      }
+
+      const transaction = await Transaction.findOne({ reference: transactionId });
+      if (!transaction) {
+        return res.status(404).json({ error: 'Transaction not found' });
+      }
+
+      if (transaction.status !== 'pending') {
+        return res.status(400).json({ error: 'Only pending withdrawals can be cancelled' });
+      }
+
+      if (transaction.type !== 'withdrawal') {
+        return res.status(400).json({ error: 'Not a withdrawal transaction' });
+      }
+
+      // Refund the balance
+      const user = await User.findById(transaction.user);
+      user.balance += transaction.amount;
+      await user.save();
+
+      transaction.status = 'cancelled';
+      transaction.processedBy = admin._id;
+      transaction.processedAt = new Date();
+      transaction.balanceAfter = user.balance; // Update to reflect refund
+      transaction.metadata = {
+        ...(transaction.metadata || {}),
+        cancelledBy: admin._id,
+        cancelReason: reason || 'Cancelled by admin',
+        cancelledAt: new Date(),
+        refunded: true
+      };
+
+      await transaction.save();
+
+      await sendTelegramNotification(
+        `⛔ Withdrawal Cancelled & Refunded\n\n` +
+        `User: ${user.username}\n` +
+        `Amount: KES ${transaction.amount}\n` +
+        `Reference: ${transaction.reference}\n` +
+        `Reason: ${reason || 'Not specified'}\n` +
+        `Refunded Balance: KES ${user.balance.toFixed(2)}\n` +
+        `Admin: ${admin.username}\n` +
+        `Time: ${new Date().toLocaleString()}`
+      );
+
+      res.json({
+        message: 'Withdrawal cancelled and balance refunded successfully',
+        transaction,
+        newBalance: user.balance
+      });
+
+    } catch (error) {
+      console.error('Withdrawal cancellation error:', error);
+      res.status(500).json({ error: 'Failed to cancel withdrawal' });
+    }
+  }
+);
+
 module.exports = router;

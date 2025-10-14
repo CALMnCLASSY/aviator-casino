@@ -1077,89 +1077,116 @@ class AviatorGame {
     }
 
     displayServerBetHistory(bets) {
-        const container = document.querySelector('.bet-history-content');
+        const container = document.getElementById('bet-history-content');
         if (!container) return;
 
         if (!bets || bets.length === 0) {
             container.innerHTML = `
-                <p class="text-center text-muted">No betting history available yet.</p>
-                <p class="text-center text-grey">Start playing to see your bet history here!</p>
+                <div style="text-align: center; padding: 2rem; color: #ccc;">
+                    <i class="fas fa-history" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.3;"></i>
+                    <p style="font-size: 1.1rem; margin-bottom: 0.5rem;">No betting history available yet.</p>
+                    <p style="font-size: 0.9rem; color: #999;">Start playing to see your bet history here!</p>
+                </div>
             `;
             return;
         }
 
-        const historyHTML = `
-            <div class="bet-history-list">
-                <table class="bet-history-table">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Round</th>
-                            <th>Bet Amount</th>
-                            <th>Multiplier</th>
-                            <th>Win Amount</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${bets.map(bet => `
-                            <tr class="bet-row ${bet.status}">
-                                <td>${new Date(bet.createdAt).toLocaleDateString()}</td>
-                                <td>${bet.gameRound || 'N/A'}</td>
-                                <td>${this.formatCurrency(bet.amount)}</td>
-                                <td>${bet.actualMultiplier ? bet.actualMultiplier.toFixed(2) + 'x' : '-'}</td>
-                                <td>${bet.winAmount ? this.formatCurrency(bet.winAmount) : '-'}</td>
-                                <td><span class="status-badge ${bet.status}">${bet.status}</span></td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            </div>
-        `;
+        // Store all bets for filtering
+        this.allBets = bets;
+        
+        const historyHTML = bets.map(bet => {
+            const isWon = bet.status === 'cashed_out' || bet.winAmount > 0;
+            const statusClass = isWon ? 'won' : 'lost';
+            const date = new Date(bet.createdAt);
+            const dateStr = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+            
+            return `
+                <div class="bet-history-item ${statusClass}" data-status="${statusClass}">
+                    <div class="bet-info">
+                        <div class="bet-amount">Bet: ${this.formatCurrency(bet.betAmount || bet.amount)}</div>
+                        <div class="bet-multiplier">${bet.multiplier ? bet.multiplier.toFixed(2) + 'x' : 'Crashed'} • Round ${bet.gameRound || 'N/A'}</div>
+                        <div class="bet-date">${dateStr}</div>
+                    </div>
+                    <div class="bet-result ${statusClass}">
+                        ${isWon ? '+' + this.formatCurrency(bet.winAmount) : this.formatCurrency(0)}
+                    </div>
+                </div>
+            `;
+        }).join('');
 
         container.innerHTML = historyHTML;
+        
+        // Setup filter buttons
+        this.setupBetHistoryFilters();
     }
 
     displayLocalBetHistory() {
-        const container = document.querySelector('.bet-history-content');
+        const container = document.getElementById('bet-history-content');
         if (!container) return;
 
         if (!this.betHistory || this.betHistory.length === 0) {
             container.innerHTML = `
-                <p class="text-center text-muted">No betting history available yet.</p>
-                <p class="text-center text-grey">Start playing to see your bet history here!</p>
+                <div style="text-align: center; padding: 2rem; color: #ccc;">
+                    <i class="fas fa-history" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.3;"></i>
+                    <p style="font-size: 1.1rem; margin-bottom: 0.5rem;">No betting history available yet.</p>
+                    <p style="font-size: 0.9rem; color: #999;">Start playing to see your bet history here!</p>
+                </div>
             `;
             return;
         }
 
-        const historyHTML = `
-            <div class="bet-history-list">
-                <table class="bet-history-table">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Bet Amount</th>
-                            <th>Multiplier</th>
-                            <th>Win Amount</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${this.betHistory.slice(0, 50).map(bet => `
-                            <tr class="bet-row ${bet.cashedOut ? 'won' : 'lost'}">
-                                <td>${bet.placedAt ? new Date(bet.placedAt).toLocaleDateString() : 'Today'}</td>
-                                <td>${this.formatCurrency(bet.amount)}</td>
-                                <td>${bet.multiplier ? bet.multiplier.toFixed(2) + 'x' : '-'}</td>
-                                <td>${bet.cashedOut && bet.multiplier ? this.formatCurrency(bet.amount * bet.multiplier) : '-'}</td>
-                                <td><span class="status-badge ${bet.cashedOut ? 'won' : 'lost'}">${bet.cashedOut ? 'Won' : 'Lost'}</span></td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            </div>
-        `;
+        // Store all bets for filtering
+        this.allBets = this.betHistory;
+        
+        const historyHTML = this.betHistory.slice(0, 50).map(bet => {
+            const isWon = bet.cashedOut;
+            const statusClass = isWon ? 'won' : 'lost';
+            const date = bet.placedAt ? new Date(bet.placedAt) : new Date();
+            const dateStr = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+            const winAmount = isWon && bet.multiplier ? bet.amount * bet.multiplier : 0;
+            
+            return `
+                <div class="bet-history-item ${statusClass}" data-status="${statusClass}">
+                    <div class="bet-info">
+                        <div class="bet-amount">Bet: ${this.formatCurrency(bet.amount)}</div>
+                        <div class="bet-multiplier">${bet.multiplier ? bet.multiplier.toFixed(2) + 'x' : 'Crashed'}</div>
+                        <div class="bet-date">${dateStr}</div>
+                    </div>
+                    <div class="bet-result ${statusClass}">
+                        ${isWon ? '+' + this.formatCurrency(winAmount) : this.formatCurrency(0)}
+                    </div>
+                </div>
+            `;
+        }).join('');
 
         container.innerHTML = historyHTML;
+        
+        // Setup filter buttons
+        this.setupBetHistoryFilters();
+    }
+
+    setupBetHistoryFilters() {
+        const filterBtns = document.querySelectorAll('.filter-btn');
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                // Remove active class from all buttons
+                filterBtns.forEach(b => b.classList.remove('active'));
+                // Add active class to clicked button
+                btn.classList.add('active');
+                
+                // Filter bets
+                const filter = btn.dataset.filter;
+                const allItems = document.querySelectorAll('.bet-history-item');
+                
+                allItems.forEach(item => {
+                    if (filter === 'all') {
+                        item.style.display = 'flex';
+                    } else {
+                        item.style.display = item.dataset.status === filter ? 'flex' : 'none';
+                    }
+                });
+            });
+        });
     }
 
     resetBetAfterPayout(betType) {
@@ -2815,7 +2842,7 @@ class AviatorGame {
         // Handle game state updates from WebSocket
         if (!state) return;
         
-        console.log('[GAME STATE] Update received:', state.state, 'Round:', state.roundId);
+        // ❌ REMOVED: Game state console log (security)
         
         // When round starts flying, check if any bets should be activated
         if (state.state === 'flying') {
@@ -2828,7 +2855,7 @@ class AviatorGame {
                     button.textContent = 'Cash Out';
                     button.className = 'bet-button active';
                     button.disabled = false;
-                    console.log(`[GAME STATE] Bet ${betType} is active for round ${state.roundId}`);
+                    // ❌ REMOVED: Bet activation console log (security)
                 }
             });
         }

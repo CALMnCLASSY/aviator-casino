@@ -960,14 +960,86 @@
                     </button>
                 </div>
                 <div class="modal-body">
-                    <div class="bet-history-content">
-                        <p class="text-center text-muted">No betting history available yet.</p>
-                        <p class="text-center text-grey">Start playing to see your bet history here!</p>
+                    <div class="bet-history-filters" style="margin-bottom: 1rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                        <button class="filter-btn active" data-filter="all">All Bets</button>
+                        <button class="filter-btn" data-filter="won">Won</button>
+                        <button class="filter-btn" data-filter="lost">Lost</button>
+                    </div>
+                    <div id="bet-history-content" class="bet-history-content">
+                        <div style="text-align: center; padding: 2rem; color: #ccc;">
+                            <i class="fas fa-spinner fa-spin" style="font-size: 2rem; margin-bottom: 1rem;"></i>
+                            <p>Loading bet history...</p>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <style>
+        .bet-history-content {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .bet-history-item {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .bet-history-item.won {
+            border-left: 3px solid #30fcbe;
+        }
+        .bet-history-item.lost {
+            border-left: 3px solid #fb024c;
+        }
+        .bet-info {
+            flex: 1;
+        }
+        .bet-amount {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #fff;
+        }
+        .bet-multiplier {
+            font-size: 1rem;
+            color: #30fcbe;
+        }
+        .bet-result {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        .bet-result.won {
+            color: #30fcbe;
+        }
+        .bet-result.lost {
+            color: #fb024c;
+        }
+        .bet-date {
+            font-size: 0.85rem;
+            color: #999;
+        }
+        .filter-btn {
+            padding: 0.5rem 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .filter-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+        .filter-btn.active {
+            background: #30fcbe;
+            color: #0a0f1a;
+            border-color: #30fcbe;
+        }
+    </style>
 
     <script src="./api.js?v=2.4"></script>
     <script src="./gameSocket.js?v=2.5"></script>

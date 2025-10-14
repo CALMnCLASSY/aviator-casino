@@ -1071,6 +1071,78 @@
             }
         });
 
+        // Withdrawal form handler
+        document.getElementById('withdraw-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const amount = document.getElementById('withdraw-amount').value;
+            let phoneNumber = document.getElementById('withdraw-phone').value;
+            
+            // Validate amount
+            if (amount < 200 || amount > 150000) {
+                showError('withdraw-error', 'Amount must be between KES 200 and KES 150,000');
+                return;
+            }
+
+            // Check if user has sufficient balance
+            if (currentUser && parseFloat(amount) > currentUser.balance) {
+                showError('withdraw-error', 'Insufficient balance');
+                return;
+            }
+
+            // Format and validate phone number
+            phoneNumber = phoneNumber.replace(/\D/g, ''); // Remove non-digits
+            if (phoneNumber.startsWith('0')) {
+                phoneNumber = '254' + phoneNumber.substring(1);
+            } else if (phoneNumber.startsWith('+')) {
+                phoneNumber = phoneNumber.substring(1);
+            }
+
+            // Validate phone number format
+            if (!/^254[0-9]{9}$/.test(phoneNumber)) {
+                showError('withdraw-error', 'Invalid phone number format. Use format: 254XXXXXXXXX or 07XXXXXXXX');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/payments/withdraw`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ amount: parseFloat(amount), phoneNumber })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showSuccess('withdraw-success', 
+                        `Withdrawal request submitted successfully! ` +
+                        `KES ${amount} ` +
+                        `Transaction ID: ${data.transactionId}. ` +
+                        `Your withdrawal will be processed shortly.`
+                    );
+                    document.getElementById('withdraw-form').reset();
+                    
+                    // Update balance in UI
+                    if (data.newBalance !== undefined) {
+                        currentUser.balance = data.newBalance;
+                        updateProfileUI();
+                    }
+                    
+                    // Reload transactions to show the pending withdrawal
+                    setTimeout(() => {
+                        loadTransactions();
+                    }, 1000);
+                } else {
+                    showError('withdraw-error', data.error || 'Withdrawal request failed');
+                }
+            } catch (error) {
+                showError('withdraw-error', 'Withdrawal request failed. Please try again.');
+            }
+        });
+
         async function loadUserProfile() {
             try {
                 const response = await fetch(`${API_BASE}/api/auth/profile`, {

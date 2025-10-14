@@ -245,6 +245,21 @@ router.get('/transactions/pending', authenticateToken, requireAdmin, async (req,
   }
 });
 
+// Pending withdrawal transactions
+router.get('/transactions/pending-withdrawals', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const transactions = await Transaction.find({ type: 'withdrawal', status: 'pending' })
+      .populate('user', 'username email balance phone')
+      .sort({ createdAt: -1 })
+      .limit(50);
+
+    res.json({ transactions });
+  } catch (error) {
+    console.error('Pending withdrawals error:', error);
+    res.status(500).json({ error: 'Failed to fetch pending withdrawals' });
+  }
+});
+
 // Detailed affiliate data with referrals
 router.get('/affiliates', authenticateToken, requireAdmin, async (req, res) => {
   try {
