@@ -2395,6 +2395,10 @@ class AviatorGame {
             depositBtn.addEventListener('click', () => {
                 const depositModal = document.getElementById('deposit-modal');
                 if (depositModal) {
+                    const instructionsSection = depositModal.querySelector('.deposit-instructions');
+                    if (instructionsSection) {
+                        instructionsSection.style.display = 'none';
+                    }
                     depositModal.style.display = 'flex';
                 }
             });
@@ -3414,6 +3418,7 @@ function isDemo() {
         
         const amount = parseFloat(document.getElementById('deposit-amount').value);
         let phoneNumber = document.getElementById('deposit-phone').value;
+        const instructionsSection = document.querySelector('#deposit-modal .deposit-instructions');
 
         // Validate amount
         if (isNaN(amount) || amount < 100 || amount > 150000) {
@@ -3435,6 +3440,10 @@ function isDemo() {
             return;
         }
         
+        if (instructionsSection) {
+            instructionsSection.style.display = 'block';
+        }
+
         const result = await classyBetAPI.depositSTK(amount, phoneNumber);
 
         // Keep local API instance in sync with latest user data after deposit attempt
@@ -3526,14 +3535,27 @@ function isDemo() {
 // Modal utility functions
 function showModal(modalId) {
     document.getElementById(modalId).style.display = 'block';
+    if (modalId === 'deposit-modal') {
+        const instructionsSection = document.querySelector('#deposit-modal .deposit-instructions');
+        if (instructionsSection) {
+            instructionsSection.style.display = 'none';
+        }
+    }
 }
 
 function closeModal(modalId) {
     document.getElementById(modalId).style.display = 'none';
-    
+
     // Clear error messages
     const errorElements = document.querySelectorAll('.error-message, .success-message');
     errorElements.forEach(el => el.style.display = 'none');
+
+    if (modalId === 'deposit-modal') {
+        const instructionsSection = document.querySelector('#deposit-modal .deposit-instructions');
+        if (instructionsSection) {
+            instructionsSection.style.display = 'none';
+        }
+    }
 }
 
 function switchModal(fromModal, toModal) {

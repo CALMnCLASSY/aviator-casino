@@ -700,7 +700,7 @@ input[type=number] {
 
 @media (max-width: 768px) {
     .game-logo .aviator-logo-image {
-        height: 45px;
+        height: 28px;
     }
     
     .site-logo img {

@@ -50,15 +50,27 @@ class AuthManager {
         // Clear existing options
         countrySelect.innerHTML = '';
 
+        const sortedCountries = [...window.countryCodes].sort((a, b) => a.name.localeCompare(b.name));
+        const kenyaIndex = sortedCountries.findIndex(country => country.name === 'Kenya');
+        if (kenyaIndex > 0) {
+            const [kenya] = sortedCountries.splice(kenyaIndex, 1);
+            sortedCountries.unshift(kenya);
+        }
+
         // Add country codes
-        window.countryCodes.forEach(country => {
+        sortedCountries.forEach(country => {
             const option = document.createElement('option');
             option.value = country.code;
-            option.textContent = `${country.flag} ${country.code}`;
+            option.textContent = `${country.flag} ${country.name} (${country.code})`;
             option.setAttribute('data-pattern', country.pattern);
             option.setAttribute('data-placeholder', country.placeholder);
             countrySelect.appendChild(option);
         });
+
+        const kenyaOption = countrySelect.querySelector('option[value="+254"]');
+        if (kenyaOption) {
+            kenyaOption.selected = true;
+        }
 
         // Update phone input when country changes
         countrySelect.addEventListener('change', () => {
@@ -74,7 +86,9 @@ class AuthManager {
         if (countrySelect.selectedOptions[0]) {
             const phoneInput = document.getElementById('phone');
             if (phoneInput) {
-                phoneInput.placeholder = countrySelect.selectedOptions[0].getAttribute('data-placeholder');
+                const selectedOption = countrySelect.selectedOptions[0];
+                phoneInput.placeholder = selectedOption.getAttribute('data-placeholder');
+                phoneInput.pattern = selectedOption.getAttribute('data-pattern');
             }
         }
     }
