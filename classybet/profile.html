@@ -564,7 +564,8 @@
                         <i class="fas fa-users"></i>
                         <div class="menu-item-content">
                             <div class="menu-item-title">Affiliate Program</div>
-                            <div class="menu-item-description">Earn commissions when friends register</div>
+                            <div class="menu-item-description">Earn bonuses when friends register and get paid 15% of their wins.</div>
+                            <div class="menu-item-description">Get a 100KES Free Bet every time you refer someone.</div>
                         </div>
                         <i class="fas fa-chevron-down menu-item-arrow" id="affiliate-toggle-icon"></i>
                     </div>
@@ -576,6 +577,8 @@
                                 <p style="color: #ccc; margin-bottom: 1rem;">
                                     Create your personal promo code and earn commissions when friends register using it. Choose a code that is easy to remember.
                                 </p>
+                                <p>Get a 15% win bonus for your friend's winnings</p>
+                                <p>Get a 100KES Free Bet every time you refer someone</p>
                                 <div id="affiliate-join-success" class="success" style="display: none;"></div>
                                 <div id="affiliate-join-error" class="error" style="display: none;"></div>
                                 <form id="affiliate-join-form">
@@ -715,7 +718,7 @@
                             <div class="form-group">
                                 <label for="deposit-amount">Amount (KES)</label>
                                 <input type="number" id="deposit-amount" class="form-control" min="10" max="50000" step="1" required>
-                                <small style="color: #ccc;">Minimum: KES 100, Maximum: KES 150,000</small>
+                                <small style="color: #ccc;">Minimum: KES 150, Maximum: KES 150,000</small>
                             </div>
                             
                             <div class="form-group">
@@ -771,8 +774,8 @@
                         <form id="withdraw-form">
                             <div class="form-group">
                                 <label for="withdraw-amount">Amount (KES)</label>
-                                <input type="number" id="withdraw-amount" class="form-control" min="100" step="1" required>
-                                <small style="color: #ccc;">Minimum withdrawal: KES 200</small>
+                                <input type="number" id="withdraw-amount" class="form-control" min="1200" step="1" required>
+                                <small style="color: #ccc;">Minimum withdrawal: KES 1200</small>
                             </div>
                             
                             <div class="form-group">
@@ -1079,8 +1082,8 @@
             let phoneNumber = document.getElementById('deposit-phone').value;
             
             // Validate amount
-            if (amount < 10 || amount > 150000) {
-                showError('deposit-error', 'Amount must be between KES 10 and KES 150,000');
+            if (amount < 150 || amount > 150000) {
+                showError('deposit-error', 'Amount must be between KES 150 and KES 150,000');
                 return;
             }
 
@@ -1136,8 +1139,8 @@
             let phoneNumber = document.getElementById('withdraw-phone').value;
             
             // Validate amount
-            if (amount < 200 || amount > 150000) {
-                showError('withdraw-error', 'Amount must be between KES 200 and KES 150,000');
+            if (amount < 1200 || amount > 150000) {
+                showError('withdraw-error', 'Amount must be between KES 1200 and KES 150,000');
                 return;
             }
 
