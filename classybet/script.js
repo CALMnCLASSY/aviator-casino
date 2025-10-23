@@ -19,7 +19,13 @@ class AviatorGame {
         this.startY = this.canvas.height;
         this.dotPath = [];
         this.counter = 1.0;
-        this.counterDepo = [1.01, 18.45, 2.00, 5.21, 1.22, 1.25, 2.03, 4.55, 65.11, 1.03, 1.10, 3.01, 8.85, 6.95, 11.01, 2.07, 4.05, 1.51, 1.02, 1.95, 1.05, 3.99, 2.89, 4.09, 11.20, 2.55];
+        if (!localStorage.getItem('round_state_cleared')) {
+            localStorage.removeItem('roundHistory');
+            localStorage.removeItem('round_history');
+            localStorage.setItem('round_state_cleared', 'true');
+        }
+        // Load round history from localStorage or use default if not exists
+        this.counterDepo = JSON.parse(localStorage.getItem('roundHistory') || '[1.01, 18.45, 2.00, 5.21, 1.22, 1.25, 2.03, 4.55, 65.11, 1.03, 1.10, 3.01, 8.85, 6.95, 11.01, 2.07, 4.05, 1.51, 1.02, 1.95, 1.05, 3.99, 2.89, 4.09, 11.20, 2.55]');
         this.randomStop = Math.random() * (10 - 0.8) + 0.8;
         this.isFlying = true;
         this.hoverOffset = 0; // For vertical hovering animation
@@ -55,6 +61,7 @@ class AviatorGame {
         this.nextRoundMeta = null;
         this.roundQueue = []; // Queue of upcoming rounds from backend
         this.roundSyncInProgress = false;
+        this._ensuringRound = false;
         this.forcedCrashMultiplier = null;
         this.backendControlled = true; // Always use backend multipliers
         this.autoStartEnabled = true; // Auto-start game loop
@@ -1368,6 +1375,13 @@ class AviatorGame {
             this.roundHistory.pop();
         }
 
+        // Add to counterDepo and save to localStorage
+        this.counterDepo.unshift(parseFloat(crashPoint));
+        if (this.counterDepo.length > 100) {
+            this.counterDepo.pop();
+        }
+        localStorage.setItem('roundHistory', JSON.stringify(this.counterDepo));
+        
         this.saveRoundHistory();
     }
 
@@ -1996,6 +2010,10 @@ class AviatorGame {
         // Store the crash multiplier
         const crashMultiplier = this.forcedCrashMultiplier || this.counter;
         const crashMultiplierStr = crashMultiplier.toFixed(2);
+
+        // Clear the active round BEFORE triggering async operations
+        this.activeRoundMeta = null;
+        this.forcedCrashMultiplier = null;
         
         // End round on backend if authenticated and sync balance
         if (window.classyBetAPI && typeof classyBetAPI.endRound === 'function' && classyBetAPI.isAuthenticated()) {
@@ -2011,10 +2029,6 @@ class AviatorGame {
                     console.warn('Failed to sync balance after round:', error);
                 });
         }
-        
-        // Clear the active round AFTER it's been played
-        this.activeRoundMeta = null;
-        this.forcedCrashMultiplier = null;
         
         // Add round to history
         this.addRoundToHistory(parseFloat(crashMultiplierStr));
@@ -2055,7 +2069,6 @@ class AviatorGame {
         // Clear canvas and redraw
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         this.drawCrashedFrame();
-        this.counterDepo.unshift(parseFloat(crashMultiplier));
         this.updateCounterDisplay();
 
         this.messageElement.textContent = 'Round ended - Place your bet for the next round';
@@ -2144,11 +2157,13 @@ class AviatorGame {
     async startCountdown() {
         this.gameState = 'waiting';
 
-        // Fetch and ensure we have the next round ready
-        // Don't clear activeRoundMeta here - it will be cleared after the round plays
-        await this.ensureRoundMeta().catch(error => {
+        try {
+            await this.ensureRoundMeta();
+        } catch (error) {
             console.warn('Failed to prepare next round:', error);
-        });
+            setTimeout(() => this.startCountdown(), 1000);
+            return;
+        }
 
         // Reset and seed All Bets for the upcoming round during waiting only
         this.allBetsData = [];

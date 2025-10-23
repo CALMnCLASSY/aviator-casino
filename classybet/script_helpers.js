@@ -92,6 +92,13 @@ async function ensureRoundMeta() {
         this.roundQueue = [];
     }
     
+    if (this._ensuringRound) {
+        return;
+    }
+
+    this._ensuringRound = true;
+
+    try {
     // Fetch if queue is empty
     if (this.roundQueue.length === 0) {
         await this.fetchRoundSchedule();
@@ -111,7 +118,7 @@ async function ensureRoundMeta() {
 
         // Set game round for betting
         if (window.classyBetAPI && typeof classyBetAPI.setGameRound === 'function' && classyBetAPI.isAuthenticated()) {
-            classyBetAPI.setGameRound(this.activeRoundMeta.roundId);
+            await classyBetAPI.setGameRound(this.activeRoundMeta.roundId);
             // ❌ REMOVED: Round ID console log (security)
         }
         
@@ -121,6 +128,9 @@ async function ensureRoundMeta() {
         }
     } else if (!this.activeRoundMeta) {
         // ❌ REMOVED: Round warning console log (security)
+    }
+    } finally {
+        this._ensuringRound = false;
     }
 }
 
