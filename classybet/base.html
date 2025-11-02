@@ -49,11 +49,6 @@
             
             <!-- Authenticated User View -->
             <div id="user-nav" class="user-info" style="display: none;">
-                <div class="user-details">
-                    <span class="username" id="nav-username">Guest</span>
-                    <span class="user-id" id="nav-userid" style="font-size: 11px; color: #888;">ID: ----</span>
-                    <span class="user-balance" id="nav-balance">KES 0.00</span>
-                </div>
                 <button id="profile-btn" class="profile-btn">
                     <i class="fas fa-user-circle"></i>
                     Profile
@@ -108,6 +103,7 @@
                         <div class="game-menu-container">
                             <button id="game-menu-btn" class="game-menu-btn">
                                 <i class="fas fa-bars"></i>
+                                <span class="menu-notification-dot"></span>
                             </button>
                         <div id="game-menu" class="game-menu">
                             <div class="menu-item" data-action="sound">
@@ -130,6 +126,10 @@
                                 <i class="fas fa-history"></i>
                                 <span>My Bet History</span>
                             </div>
+                            <div class="menu-item" data-action="free-bets">
+                                <i class="fas fa-gift"></i>
+                                <span>Free Bets <span class="notification-badge">1</span></span>
+                            </div>
                             <div class="menu-item" data-action="how-to-play">
                                 <i class="fas fa-question-circle"></i>
                                 <span>How to Play</span>
@@ -145,10 +145,6 @@
                             <div class="menu-item" data-action="provably-fair">
                                 <i class="fas fa-check-circle"></i>
                                 <span>Provably Fair</span>
-                            </div>
-                            <div class="menu-item" data-action="free-bets">
-                                <i class="fas fa-gift"></i>
-                                <span>Free Bets</span>
                             </div>
                         </div>
                     </div>
@@ -643,8 +639,9 @@
                 <form id="deposit-form">
                     <div class="form-group">
                         <label for="deposit-amount">Amount (KES)</label>
-                        <input type="number" id="deposit-amount" class="form-control" min="10" max="150000" step="1" required>
-                        <small>Minimum: KES 150, Maximum: KES 150,000</small>
+                        <strong style="color: #a37556;">Get KES 250 Free Bet on your First Deposit</strong>
+                        <input type="number" id="deposit-amount" class="form-control" min="200" max="150000" step="1" required>
+                        <small>Minimum: KES 200, Maximum: KES 150,000</small>
                     </div>
                     <div class="form-group">
                         <label for="deposit-phone">M-Pesa Phone Number</label>
@@ -919,28 +916,24 @@
                         <div class="content">
                             <div class="free-bet-item">
                                 <div class="item-wrapper">
-                                    <div class="rounded-block cash-block selected">
+                                    <div class="rounded-block cash-block selected" id="free-bet-card">
                                         <div class="main-row">
                                             <span class="radio">
                                                 <i class="dot"></i>
                                             </span>
-                                            <div class="cash-block__text">Play with cash</div>
+                                            <div class="cash-block__text">
+                                                <div class="free-bet-title">KES 250 Free Bet</div>
+                                            </div>
                                         </div>
+                                        <div class="free-bet-details">
+                                            <ul>
+                                                <li>Make your first deposit to unlock the bonus.</li>
+                                            </ul>
+                                        </div>
+                                        <button class="cta-button" id="free-bet-claim-button">Claim Free Bet</button>
+                                        <div class="free-bet-status" id="free-bet-status-message"></div>
                                     </div>
                                 </div>
-                            </div>
-                            
-                            <div class="free-bets-header pl-1">
-                                <div>ACTIVE FREE BETS</div>
-                                <div class="archive-btn pl-1 pr-2">
-                                    <div class="history-i"></div>
-                                    <div>Archive</div>
-                                </div>
-                            </div>
-                            
-                            <div class="content__none">
-                                <div class="free-bet-image"></div>
-                                <div class="none-text">No Active Free Bets. Yet!</div>
                             </div>
                         </div>
                     </div>

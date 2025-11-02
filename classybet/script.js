@@ -87,7 +87,8 @@ class AviatorGame {
         this.setupAutoBetting();
         this.setupResponsiveLayout();
         this.setupModalListeners();
-        
+        this.setupFreeBetClaim();
+
         // Preserve user balance from localStorage on initialization
         this.initializeUserBalance();
     }
@@ -362,7 +363,15 @@ class AviatorGame {
                 break;
             case 'bet-history':
                 this.openModal('bet-history-modal');
-                this.loadBetHistoryFromServer();
+                // Load bet history from localStorage first for immediate display
+                this.loadBetHistory();
+                // Then try to load from server if authenticated
+                if (window.classyBetAPI && classyBetAPI.isAuthenticated()) {
+                    this.loadBetHistoryFromServer();
+                } else {
+                    // If not authenticated, display local history
+                    this.displayLocalBetHistory();
+                }
                 break;
             case 'how-to-play':
                 this.openModal('how-to-play-modal');
@@ -435,15 +444,15 @@ class AviatorGame {
     }
 
     setupModalListeners() {
-        // Close button listeners for all modals including deposit modal
-        document.querySelectorAll('.modal .close, .modal-overlay .close').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const modalId = btn.getAttribute('data-modal');
+        const closeButtons = document.querySelectorAll('.modal .close');
+        closeButtons.forEach(button => {
+            button.addEventListener('click', (event) => {
+                const modalId = event.currentTarget.getAttribute('data-modal');
                 if (modalId) {
                     this.closeModal(modalId);
                 } else {
                     // Find closest modal parent and close it
-                    const modal = btn.closest('.modal, .modal-overlay');
+                    const modal = button.closest('.modal, .modal-overlay');
                     if (modal) {
                         modal.style.display = 'none';
                     }
@@ -453,30 +462,41 @@ class AviatorGame {
 
         // Click outside modal to close
         document.querySelectorAll('.modal-overlay').forEach(modal => {
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
+            modal.addEventListener('click', (event) => {
+                if (event.target === modal) {
                     modal.style.display = 'none';
                 }
             });
         });
+    }
 
-        // Copy functionality for provably fair seeds
-        document.querySelectorAll('.copy-icon').forEach(icon => {
-            icon.addEventListener('click', (e) => {
-                const keyElement = e.target.previousElementSibling;
-                const textToCopy = keyElement.textContent.replace('Current: ', '');
-                
-                navigator.clipboard.writeText(textToCopy).then(() => {
-                    // Show copied feedback
-                    const originalHtml = keyElement.innerHTML;
-                    keyElement.innerHTML = '<span style="color: #30fcbe;">Copied!</span>';
-                    setTimeout(() => {
-                        keyElement.innerHTML = originalHtml;
-                    }, 1000);
-                }).catch(() => {
-                    console.log('Copy failed');
-                });
-            });
+    setupFreeBetClaim() {
+        const claimButton = document.getElementById('free-bet-claim-button');
+        const statusMessage = document.getElementById('free-bet-status-message');
+
+        if (!claimButton) {
+            return;
+        }
+
+        claimButton.addEventListener('click', () => {
+            if (statusMessage) {
+                statusMessage.classList.remove('success', 'error');
+                statusMessage.textContent = 'Deposit KES 200 or more to unlock your KES 250 free bet bonus.';
+                statusMessage.classList.add('pending');
+            }
+
+            claimButton.disabled = true;
+            claimButton.textContent = 'Pending Deposit';
+
+            const depositModal = document.getElementById('deposit-modal');
+            if (depositModal) {
+                depositModal.style.display = 'flex';
+            }
+
+            setTimeout(() => {
+                claimButton.disabled = false;
+                claimButton.textContent = 'Claim Free Bet';
+            }, 3000);
         });
     }
 
@@ -900,9 +920,22 @@ class AviatorGame {
 
         const winnings = bet.amount * this.counter;
 
+        // Update bet state first
         bet.cashedOut = true;
         bet.winnings = winnings;
         bet.multiplier = this.counter;
+        
+        // Add to bet history
+        this.addBetToHistory({
+            amount: bet.amount,
+            cashedOut: true,
+            multiplier: this.counter,
+            win: winnings,
+            status: 'win'
+        });
+        
+        // Save the updated bet history
+        this.saveBetHistory();
 
         // Sync cashout with backend via WebSocket
         if (window.gameSocket && gameSocket.connected && window.classyBetAPI && classyBetAPI.isAuthenticated() && bet.apiId) {
@@ -1346,18 +1379,57 @@ class AviatorGame {
     }
 
     saveBetHistory() {
-        const isDemo = localStorage.getItem('isDemo') === 'true';
-        const storageKey = isDemo ? 'demo_bet_history' : 'bet_history';
-        localStorage.setItem(storageKey, JSON.stringify(this.betHistory));
+        try {
+            if (!this.betHistory) {
+                console.warn('saveBetHistory: betHistory is not defined');
+                return;
+            }
+            
+            const isDemo = localStorage.getItem('isDemo') === 'true';
+            const storageKey = isDemo ? 'demo_bet_history' : 'bet_history';
+            
+            // Ensure we're not saving too much data
+            const maxHistoryItems = 100;
+            const historyToSave = this.betHistory.slice(0, maxHistoryItems);
+            
+            localStorage.setItem(storageKey, JSON.stringify(historyToSave));
+            console.log('Bet history saved to localStorage:', historyToSave.length, 'items');
+            
+            // If bet history modal is open, update the display
+            const betHistoryModal = document.getElementById('bet-history-modal');
+            if (betHistoryModal && betHistoryModal.style.display !== 'none') {
+                this.displayLocalBetHistory();
+            }
+        } catch (error) {
+            console.error('Error saving bet history:', error);
+        }
     }
 
     loadBetHistory() {
-        const isDemo = localStorage.getItem('isDemo') === 'true';
-        const storageKey = isDemo ? 'demo_bet_history' : 'bet_history';
-        const history = localStorage.getItem(storageKey);
-        if (history) {
-            this.betHistory = JSON.parse(history);
+        try {
+            const isDemo = localStorage.getItem('isDemo') === 'true';
+            const storageKey = isDemo ? 'demo_bet_history' : 'bet_history';
+            const history = localStorage.getItem(storageKey);
+            
+            if (history) {
+                this.betHistory = JSON.parse(history);
+                console.log('Loaded bet history from localStorage:', this.betHistory);
+                
+                // If bet history modal is open, update the display
+                const betHistoryModal = document.getElementById('bet-history-modal');
+                if (betHistoryModal && betHistoryModal.style.display !== 'none') {
+                    this.displayLocalBetHistory();
+                }
+            } else {
+                console.log('No bet history found in localStorage');
+                this.betHistory = [];
+            }
+        } catch (error) {
+            console.error('Error loading bet history:', error);
+            this.betHistory = [];
         }
+        
+        return this.betHistory;
     }
 
     addRoundToHistory(crashPoint) {
@@ -2049,21 +2121,35 @@ class AviatorGame {
             multiplierElement.style.textShadow = '0 0 10px rgba(255, 68, 68, 0.7)';
         }
         
-        // Mark all active bets as crashed (show empty status for crashed bets)
-        this.allBetsData.forEach(bet => {
-            if (bet.status === '' && !bet.cashedOut) {
+        // Process all active bets and add to history
+        const currentMultiplier = parseFloat(crashMultiplierStr);
+        
+        // Process player's bets
+        Object.keys(this.bets).forEach(betKey => {
+            const bet = this.bets[betKey];
+            if (bet.placed && !bet.cashedOut) {
+                // Add to bet history as a loss (since they didn't cash out)
+                this.addBetToHistory({
+                    amount: bet.amount,
+                    cashedOut: false,
+                    multiplier: currentMultiplier,
+                    win: 0,
+                    status: 'loss'
+                });
+                
+                // Update the bet state
                 bet.crashed = true;
-                bet.status = ''; // Empty status for crashed bets
+                bet.status = 'loss';
+                bet.multiplier = currentMultiplier;
+                bet.winnings = 0;
             }
         });
-        this.allBetsHistory.forEach(bet => {
-            if (bet.status === '' && !bet.cashedOut) {
-                bet.crashed = true;
-                bet.status = ''; // Empty status for crashed bets
-            }
-        });
+        
         // Update display to show final crashed state before countdown
         this.updateAllBetsDisplay();
+        
+        // Save the updated bet history
+        this.saveBetHistory();
         
 
         // Clear canvas and redraw

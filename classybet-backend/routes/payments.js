@@ -15,8 +15,8 @@ router.post('/stk-push',
   authenticateToken,
   [
     body('amount').isNumeric().custom(value => {
-      if (value < 100 || value > 150000) {
-        throw new Error('Amount must be between KES 100 and KES 150,000');
+      if (value < 200 || value > 150000) {
+        throw new Error('Amount must be between KES 200 and KES 150,000');
       }
       return true;
     }),
@@ -274,8 +274,8 @@ router.post('/withdraw',
   authenticateToken,
   [
     body('amount').isNumeric().custom(value => {
-      if (value < 200) {
-        throw new Error('Minimum withdrawal amount is KES 200');
+      if (value < 1200) {
+        throw new Error('Minimum withdrawal amount is KES 1200');
       }
       if (value > 150000) {
         throw new Error('Maximum withdrawal amount is KES 150,000');

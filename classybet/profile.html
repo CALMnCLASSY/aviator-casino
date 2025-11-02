@@ -713,12 +713,12 @@
                         
                         <div id="deposit-error" class="error" style="display: none;"></div>
                         <div id="deposit-success" class="success" style="display: none;"></div>
-                        
+                        <strong style="color: #a37556;">Get KES 250 Free Bet on your first Deposit</strong>
                         <form id="deposit-form">
                             <div class="form-group">
                                 <label for="deposit-amount">Amount (KES)</label>
-                                <input type="number" id="deposit-amount" class="form-control" min="10" max="50000" step="1" required>
-                                <small style="color: #ccc;">Minimum: KES 150, Maximum: KES 150,000</small>
+                                <input type="number" id="deposit-amount" class="form-control" min="200" max="150000" step="1" required>
+                                <small style="color: #ccc;">Minimum: KES 200, Maximum: KES 150,000</small>
                             </div>
                             
                             <div class="form-group">
@@ -1082,8 +1082,8 @@
             let phoneNumber = document.getElementById('deposit-phone').value;
             
             // Validate amount
-            if (amount < 150 || amount > 150000) {
-                showError('deposit-error', 'Amount must be between KES 150 and KES 150,000');
+            if (amount < 200 || amount > 150000) {
+                showError('deposit-error', 'Amount must be between KES 200 and KES 150,000');
                 return;
             }
 

@@ -1037,13 +1037,61 @@ input[type=number] {
 .menu-item {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 12px;
-    border-radius: 8px;
+    padding: 12px 15px;
+    color: #e6f3ff;
     cursor: pointer;
     transition: all 0.3s ease;
-    color: #ffffff;
-    margin-bottom: 5px;
+    border-radius: 8px;
+    margin: 2px 0;
+    position: relative;
+}
+
+/* Notification badge for menu items */
+.notification-badge {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: #ff4d4f;
+    color: white;
+    border-radius: 10px;
+    padding: 2px 6px;
+    font-size: 11px;
+    font-weight: bold;
+    min-width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 0 2px #1f1f1f;
+}
+
+/* Red dot indicator for menu button */
+.menu-notification-dot {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 8px;
+    height: 8px;
+    background-color: #ff4d4f;
+    border-radius: 50%;
+    border: 2px solid #1f1f1f;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(255, 77, 79, 0.7);
+    }
+    70% {
+        transform: scale(1.1);
+        box-shadow: 0 0 0 4px rgba(255, 77, 79, 0);
+    }
+    100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(255, 77, 79, 0);
+    }
 }
 
 .menu-item:hover {
@@ -4135,6 +4183,16 @@ input[type=number] {
     height: 10px;
     background: #30fcbe;
     border-radius: 50%;
+}
+
+.free-bet-status {
+    margin-top: 12px;
+    font-size: 0.95rem;
+    color: #ccc;
+}
+
+.free-bet-status.pending {
+    color: #ffc857;
 }
 
 .free-bets-header {
