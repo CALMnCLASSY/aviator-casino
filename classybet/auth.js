@@ -251,7 +251,7 @@ class AuthManager {
                 
                 // Redirect after short delay
                 setTimeout(() => {
-                    window.location.href = 'base.html';
+                    window.location.href = 'dashboard.html';
                 }, 1000);
                 
             } else {
@@ -355,7 +355,7 @@ class AuthManager {
                 
                 // Redirect after delay to show User ID
                 setTimeout(() => {
-                    window.location.href = 'base.html';
+                    window.location.href = 'dashboard.html';
                 }, 3000);
                 
             } else {
@@ -414,8 +414,8 @@ class AuthManager {
                 
                 console.log('Demo session created via backend');
                 
-                // Redirect to game
-                window.location.href = 'base.html';
+                // Redirect to dashboard
+                window.location.href = 'dashboard.html';
             } else {
                 throw new Error(data.error || 'Failed to create demo session');
             }

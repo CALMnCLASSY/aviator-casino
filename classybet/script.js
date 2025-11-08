@@ -73,9 +73,9 @@ class AviatorGame {
         this.updateCounterDisplay();
         
         // Auto-start game loop after initialization
-        if (this.autoStartEnabled) {
+        if (this.autoStartEnabled && typeof this.initializeGameLoop === 'function') {
             this.initializeGameLoop();
-        } else {
+        } else if (typeof this.startGame === 'function') {
             this.startGame();
         }
         this.initializeAllBets();
@@ -3565,68 +3565,85 @@ function isDemo() {
         }
     });
 
-    // Navigation button events
-    document.getElementById('login-btn').addEventListener('click', () => window.location.href = '/');
-    document.getElementById('register-btn').addEventListener('click', () => window.location.href = '/');
-    document.getElementById('deposit-btn').addEventListener('click', async () => {
-        // Check if user is authenticated via localStorage
-        const token = localStorage.getItem('user_token');
-        const userData = localStorage.getItem('userData');
-        
-        if (token && userData) {
-            try {
-                const user = JSON.parse(userData);
-                
-                // Track deposit tab click
-                await fetch(`${API_BASE}/api/payments/deposit-tab-click`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
+    // Navigation button events (with null checks since navigation was removed)
+    const loginBtn = document.getElementById('login-btn');
+    if (loginBtn) {
+        loginBtn.addEventListener('click', () => window.location.href = '/');
+    }
+    
+    const registerBtn = document.getElementById('register-btn');
+    if (registerBtn) {
+        registerBtn.addEventListener('click', () => window.location.href = '/');
+    }
+    
+    const depositBtn = document.getElementById('deposit-btn');
+    if (depositBtn) {
+        depositBtn.addEventListener('click', async () => {
+            // Check if user is authenticated via localStorage
+            const token = localStorage.getItem('user_token');
+            const userData = localStorage.getItem('userData');
+            
+            if (token && userData) {
+                try {
+                    const user = JSON.parse(userData);
+                    
+                    // Track deposit tab click
+                    await fetch(`${API_BASE}/api/payments/deposit-tab-click`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    }).catch(err => console.log('Deposit tab tracking failed:', err));
+                    
+                    showModal('deposit-modal');
+                    // Pre-fill phone number
+                    if (user.phone) {
+                        const phoneInput = document.getElementById('deposit-phone');
+                        if (phoneInput) {
+                            phoneInput.value = user.phone;
+                        }
                     }
-                }).catch(err => console.log('Deposit tab tracking failed:', err));
-                
-                showModal('deposit-modal');
-                // Pre-fill phone number
-                if (user.phone) {
-                    const phoneInput = document.getElementById('deposit-phone');
-                    if (phoneInput) {
-                        phoneInput.value = user.phone;
-                    }
+                } catch (error) {
+                    console.error('Error opening deposit modal:', error);
+                    showModal('deposit-modal');
                 }
-            } catch (error) {
-                console.error('Error opening deposit modal:', error);
-                showModal('deposit-modal');
+            } else {
+                // Not authenticated, redirect to login
+                window.location.href = '/';
             }
-        } else {
-            // Not authenticated, redirect to login
-            window.location.href = '/';
-        }
-    });
+        });
+    }
     
-    document.getElementById('profile-btn').addEventListener('click', () => {
-        if (!classyBetAPI.isAuthenticated()) {
-            window.location.href = '/';
-            return;
-        }
-        
-        // For localhost, use the full backend URL
-        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-            window.location.href = 'http://localhost:3001/profile';
-            return;
-        }
+    const profileBtn = document.getElementById('profile-btn');
+    if (profileBtn) {
+        profileBtn.addEventListener('click', () => {
+            if (!classyBetAPI.isAuthenticated()) {
+                window.location.href = '/';
+                return;
+            }
+            
+            // For localhost, use the full backend URL
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                window.location.href = 'http://localhost:3001/profile';
+                return;
+            }
 
-        window.location.href = `${window.location.origin}/profile.html`;
-    });
+            window.location.href = `${window.location.origin}/profile.html`;
+        });
+    }
     
-    document.getElementById('admin-btn').addEventListener('click', () => {
-        const isLocal = window.location.hostname === 'localhost' || 
-                       window.location.hostname === '127.0.0.1' ||
-                       window.location.protocol === 'file:';
-        const adminUrl = isLocal ? 'http://localhost:3001/admin' : 'https://aviator-casino.onrender.com/admin';
-        console.log('Admin URL:', adminUrl);
-        window.open(adminUrl, '_blank');
-    });
+    const adminBtn = document.getElementById('admin-btn');
+    if (adminBtn) {
+        adminBtn.addEventListener('click', () => {
+            const isLocal = window.location.hostname === 'localhost' || 
+                           window.location.hostname === '127.0.0.1' ||
+                           window.location.protocol === 'file:';
+            const adminUrl = isLocal ? 'http://localhost:3001/admin' : 'https://aviator-casino.onrender.com/admin';
+            console.log('Admin URL:', adminUrl);
+            window.open(adminUrl, '_blank');
+        });
+    }
     
     const logoutBtn = document.getElementById('logout-btn');
     if (logoutBtn) {
