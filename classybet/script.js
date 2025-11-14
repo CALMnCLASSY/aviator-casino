@@ -339,16 +339,24 @@ class AviatorGame {
         });
 
         // Handle menu item clicks
-        gameMenu.addEventListener('click', (e) => {
+        gameMenu.addEventListener('click', async (e) => {
             const menuItem = e.target.closest('.menu-item');
             if (menuItem) {
+                e.preventDefault();
+                e.stopPropagation();
+                
                 const action = menuItem.dataset.action;
-                this.handleMenuAction(action);
-                // Close menu after action
+                
+                // Close menu immediately for better UX
                 gameMenu.classList.remove('show');
                 setTimeout(() => {
                     gameMenu.style.display = 'none';
                 }, 300);
+                
+                // Handle the action after a small delay to ensure menu is hidden
+                setTimeout(() => {
+                    this.handleMenuAction(action);
+                }, 50);
             }
         });
     }
