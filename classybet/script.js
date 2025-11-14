@@ -355,11 +355,11 @@ class AviatorGame {
 
     handleMenuAction(action) {
         switch (action) {
-            case 'sound':
-                // Toggle sound - already handled by toggle switch
+            case 'deposit':
+                this.handleDepositClick();
                 break;
-            case 'animation':
-                // Toggle animation - already handled by toggle switch
+            case 'exit-to-dashboard':
+                window.location.href = 'dashboard.html';
                 break;
             case 'bet-history':
                 this.openModal('bet-history-modal');
@@ -393,7 +393,43 @@ class AviatorGame {
         // Close menu after action
         document.getElementById('game-menu').classList.remove('show');
     }
-
+    
+    async handleDepositClick() {
+        try {
+            // Track deposit tab click
+            const token = localStorage.getItem('user_token');
+            if (token) {
+                await fetch(`${API_BASE}/api/payments/deposit-tab-click`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                }).catch(err => console.log('Deposit tab tracking failed:', err));
+            }
+            
+            // Show deposit modal
+            const depositModal = document.getElementById('deposit-modal');
+            if (depositModal) {
+                // Pre-fill phone number if available
+                const userData = localStorage.getItem('userData');
+                if (userData) {
+                    try {
+                        const user = JSON.parse(userData);
+                        const phoneInput = document.getElementById('deposit-phone');
+                        if (phoneInput && user.phone) {
+                            phoneInput.value = user.phone;
+                        }
+                    } catch (error) {
+                        console.error('Error parsing user data:', error);
+                    }
+                }
+                depositModal.style.display = 'flex';
+            }
+        } catch (error) {
+            console.error('Error handling deposit click:', error);
+        }
+    }
     // Modal functionality
     openModal(modalId) {
         const modal = document.getElementById(modalId);
