@@ -396,6 +396,16 @@ class AviatorGame {
             case 'free-bets':
                 this.openModal('free-bets-modal');
                 break;
+            case 'exit-demo':
+                // Clear demo session and redirect to index
+                if (confirm('Exit demo mode and sign up for a real account?')) {
+                    localStorage.removeItem('isDemo');
+                    localStorage.removeItem('userData');
+                    localStorage.removeItem('user_token');
+                    localStorage.removeItem('demo_bet_history');
+                    window.location.href = 'index.html';
+                }
+                break;
         }
 
         // Close menu after action
@@ -560,17 +570,52 @@ class AviatorGame {
             return result;
         };
 
-        // Update modal content
+        // Generate hex and decimal values for the result table
+        const generateHexValue = () => {
+            return Math.floor(Math.random() * 0xFFFFFFFFFFFF).toString(16).padStart(13, '0');
+        };
+
+        const hexValue = generateHexValue();
+        const decimalValue = parseInt(hexValue, 16);
+
+        // Update modal content with new structure
         document.getElementById('modal-round-number').textContent = roundNumber;
         document.getElementById('modal-multiplier').textContent = `${multiplier.toFixed(2)}x`;
         document.getElementById('modal-time').textContent = timeString;
-        document.getElementById('modal-hash1').textContent = generateHash(40);
-        document.getElementById('modal-hash2').textContent = generateHash(20);
-        document.getElementById('modal-hash3').textContent = generateHash(20);
-        document.getElementById('modal-hash4').textContent = generateHash(20);
+
+        // Update server seed
+        const serverSeedEl = document.getElementById('modal-server-seed');
+        if (serverSeedEl) {
+            serverSeedEl.textContent = generateHash(40);
+        }
+
+        // Update client seeds for 3 players
+        const player1SeedEl = document.getElementById('modal-player1-seed');
+        const player2SeedEl = document.getElementById('modal-player2-seed');
+        const player3SeedEl = document.getElementById('modal-player3-seed');
+
+        if (player1SeedEl) player1SeedEl.textContent = generateHash(20);
+        if (player2SeedEl) player2SeedEl.textContent = generateHash(20);
+        if (player3SeedEl) player3SeedEl.textContent = generateHash(20);
+
+        // Update combined hash
+        const combinedHashEl = document.getElementById('modal-combined-hash');
+        if (combinedHashEl) {
+            combinedHashEl.textContent = generateHash(80);
+        }
+
+        // Update hash result table
+        const hexValueEl = document.getElementById('modal-hex-value');
+        const decimalValueEl = document.getElementById('modal-decimal-value');
+        const resultValueEl = document.getElementById('modal-result-value');
+
+        if (hexValueEl) hexValueEl.textContent = hexValue;
+        if (decimalValueEl) decimalValueEl.textContent = decimalValue;
+        if (resultValueEl) resultValueEl.textContent = multiplier.toFixed(2);
 
         // Show modal
         modal.style.display = 'block';
+        modal.classList.add('show');
 
         // Add event listeners for closing modal
         const closeBtn = modal.querySelector('.close-modal');
@@ -578,29 +623,32 @@ class AviatorGame {
 
         closeBtn.onclick = () => {
             modal.style.display = 'none';
+            modal.classList.remove('show');
         };
 
         modal.onclick = (e) => {
             if (e.target === modal) {
                 modal.style.display = 'none';
+                modal.classList.remove('show');
             }
         };
 
-        // Add copy functionality to hash items
-        modal.querySelectorAll('.hash-item').forEach(item => {
-            item.onclick = () => {
-                navigator.clipboard.writeText(item.textContent).then(() => {
-                    const originalText = item.textContent;
-                    item.textContent = 'Copied!';
-                    item.style.color = '#30fcbe';
-                    setTimeout(() => {
-                        item.textContent = originalText;
-                        item.style.color = '#ffffff';
-                    }, 1000);
-                }).catch(() => {
-                    console.log('Copy failed');
-                });
-            };
+        // Add copy functionality to seed values
+        const copyToClipboard = (text) => {
+            navigator.clipboard.writeText(text).then(() => {
+                console.log('Copied to clipboard:', text);
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+            });
+        };
+
+        // Make seed values clickable to copy
+        [serverSeedEl, player1SeedEl, player2SeedEl, player3SeedEl, combinedHashEl].forEach(el => {
+            if (el) {
+                el.style.cursor = 'pointer';
+                el.title = 'Click to copy';
+                el.onclick = () => copyToClipboard(el.textContent);
+            }
         });
     }
 
