@@ -11,7 +11,9 @@ const paymentRoutes = require('./routes/payments');
 const adminRoutes = require('./routes/admin');
 const gameRoutes = require('./routes/game');
 const affiliateRoutes = require('./routes/affiliate');
+
 const roundRoutes = require('./routes/rounds');
+const casinoRoutes = require('./routes/casino');
 
 // Import models
 const User = require('./models/User');
@@ -30,10 +32,16 @@ app.use(express.urlencoded({ extended: true }));
 // CORS configuration with multiple frontend domains
 const allowedOrigins = [
   'http://localhost:3000',
+  'http://localhost:3001',
+  'http://localhost:3002',
   'http://localhost:5000',
+  'http://localhost:5001',
+  'http://localhost:5500',
+  'http://localhost:8000',
   'http://localhost:8080',
   'http://127.0.0.1:3000',
   'http://127.0.0.1:5000',
+  'http://127.0.0.1:5500',
   'http://127.0.0.1:8080',
   'https://classybet.netlify.app',
   'https://aviatorhub.xyz',
@@ -43,10 +51,10 @@ const allowedOrigins = [
 ];
 
 app.use(cors({
-  origin: function(origin, callback) {
+  origin: function (origin, callback) {
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
-    
+
     if (allowedOrigins.indexOf(origin) !== -1 || origin.startsWith('file://')) {
       callback(null, true);
     } else {
@@ -113,6 +121,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/game', gameRoutes);
 app.use('/api/affiliates', affiliateRoutes);
 app.use('/api/rounds', roundRoutes);
+app.use('/api/casino', casinoRoutes);
 
 // Serve static files for admin and profile pages
 app.use('/admin', express.static('public/admin'));
@@ -124,15 +133,15 @@ app.use('*', (req, res) => {
 // Global error handler
 app.use((err, req, res, next) => {
   console.error('Global error:', err);
-  
+
   if (err.name === 'ValidationError') {
     return res.status(400).json({ error: 'Validation error', details: err.message });
   }
-  
+
   if (err.name === 'CastError') {
     return res.status(400).json({ error: 'Invalid ID format' });
   }
-  
+
   res.status(500).json({ error: 'Internal server error' });
 });
 
@@ -153,7 +162,7 @@ const gameStateManager = require('./utils/gameStateManager');
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: function(origin, callback) {
+    origin: function (origin, callback) {
       callback(null, true); // Allow all origins for WebSocket
     },
     credentials: true
@@ -170,41 +179,41 @@ io.on('connection', (socket) => {
   // Handle bet placement
   socket.on('place-bet', async (data) => {
     const { userId, amount, autoCashout, token } = data;
-    
+
     try {
       const User = require('./models/User');
       const Bet = require('./models/Bet');
-      
+
       // Find user
       const user = await User.findOne({ username: userId });
       if (!user) {
         return socket.emit('bet-error', { error: 'User not found' });
       }
-      
+
       // Validate amount
       if (amount < 10 || amount > 10000) {
         return socket.emit('bet-error', { error: 'Invalid bet amount' });
       }
-      
+
       // Check balance
       if (user.balance < amount) {
         return socket.emit('bet-error', { error: 'Insufficient balance' });
       }
-      
+
       // Get current game state
       const gameState = gameStateManager.getCurrentState();
-      
+
       // ✅ REMOVED: Countdown constraint - bets can be placed anytime
       // They will be active for the NEXT round if placed during flying
-      
+
       // Deduct balance immediately
       user.balance -= amount;
       await user.save();
-      
+
       // Determine which round this bet is for
       // If currently flying, bet is for next round
       const betRoundId = gameState.state === 'flying' ? gameState.roundId + 1 : gameState.roundId;
-      
+
       // Create bet record with correct field names
       const bet = new Bet({
         user: user._id,  // ✅ Changed from userId
@@ -215,9 +224,9 @@ io.on('connection', (socket) => {
         roundStartTime: new Date()  // ✅ Added required field
       });
       await bet.save();
-      
+
       console.log(`💰 Bet placed: ${userId} - ${amount} KES | New balance: ${user.balance} | Round: ${gameState.roundId}`);
-      
+
       socket.emit('bet-placed', {
         success: true,
         roundId: gameState.roundId,
@@ -234,52 +243,52 @@ io.on('connection', (socket) => {
   // Handle cashout request
   socket.on('cashout', async (data) => {
     const { userId, betId } = data;
-    
+
     try {
       const User = require('./models/User');
       const Bet = require('./models/Bet');
-      
+
       // Find user
       const user = await User.findOne({ username: userId });
       if (!user) {
         return socket.emit('cashout-error', { error: 'User not found' });
       }
-      
+
       // Find bet
       const bet = await Bet.findById(betId);
       if (!bet) {
         return socket.emit('cashout-error', { error: 'Bet not found' });
       }
-      
+
       // Check if already cashed out
       if (bet.status === 'cashed_out') {
         return socket.emit('cashout-error', { error: 'Already cashed out' });
       }
-      
+
       // Check if bet was already crashed
       if (bet.status === 'crashed') {
         return socket.emit('cashout-error', { error: 'Bet already crashed' });
       }
-      
+
       // Get multiplier from data (frontend sends it)
       const currentMultiplier = data.multiplier || 1.00;
-      
+
       // Calculate winnings using correct field name
       const winAmount = bet.betAmount * currentMultiplier;
-      
+
       // Add winnings to balance immediately
       user.balance += winAmount;
       await user.save();
-      
+
       // Update bet record with correct field names
       bet.status = 'cashed_out';  // ✅ Changed from 'won'
       bet.multiplier = currentMultiplier;  // ✅ Changed from cashoutMultiplier
       bet.winAmount = winAmount;
       bet.cashedOutAt = new Date();  // ✅ Added timestamp
       await bet.save();
-      
+
       console.log(`💸 Cashout: ${userId} - ${winAmount} KES at ${currentMultiplier.toFixed(2)}x | New balance: ${user.balance} | Round: ${bet.gameRound}`);
-      
+
       socket.emit('cashout-result', {
         success: true,
         multiplier: currentMultiplier,

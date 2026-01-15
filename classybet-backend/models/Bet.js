@@ -10,6 +10,12 @@ const betSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  gameType: {
+    type: String,
+    required: true,
+    default: 'aviator',
+    index: true
+  },
   betAmount: {
     type: Number,
     required: true,
@@ -55,7 +61,7 @@ const betSchema = new mongoose.Schema({
 });
 
 // Calculate win amount
-betSchema.methods.calculateWin = function() {
+betSchema.methods.calculateWin = function () {
   if (this.status === 'cashed_out' && this.multiplier) {
     this.winAmount = Math.round(this.betAmount * this.multiplier * 100) / 100;
   } else {

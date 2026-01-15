@@ -143,6 +143,14 @@ const userSchema = new mongoose.Schema({
   loginCount: {
     type: Number,
     default: 0
+  },
+  lastGamePlayed: {
+    type: String,
+    default: null
+  },
+  lastActivityAt: {
+    type: Date,
+    default: Date.now
   }
 }, {
   timestamps: true

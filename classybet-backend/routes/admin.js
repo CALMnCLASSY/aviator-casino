@@ -325,7 +325,7 @@ router.get('/users', authenticateToken, requireAdmin, async (req, res) => {
   try {
     const users = await User.find()
       .select('-password')
-      .sort({ createdAt: -1 })
+      .sort({ lastActivityAt: -1, createdAt: -1 }) // Sort by activity first
       .limit(100);
 
     res.json({ users });

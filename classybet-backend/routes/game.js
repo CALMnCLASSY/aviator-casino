@@ -10,7 +10,7 @@ const { recordAffiliateLoss } = require('../utils/affiliate');
 const router = express.Router();
 
 // Place a bet
-router.post('/bet', 
+router.post('/bet',
   authenticateToken,
   [
     body('amount').isNumeric().custom(value => {
@@ -29,9 +29,9 @@ router.post('/bet',
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
-        return res.status(400).json({ 
-          error: 'Validation failed', 
-          details: errors.array() 
+        return res.status(400).json({
+          error: 'Validation failed',
+          details: errors.array()
         });
       }
 
@@ -49,9 +49,9 @@ router.post('/bet',
       }
 
       // Check if user already has a bet for this round
-      const existingBet = await Bet.findOne({ 
-        userId, 
-        gameRound, 
+      const existingBet = await Bet.findOne({
+        userId,
+        gameRound,
         status: { $in: ['pending', 'active'] }
       });
 
@@ -71,7 +71,11 @@ router.post('/bet',
       // Deduct amount from user balance
       user.balance -= amount;
       user.totalBets = (user.totalBets || 0) + 1;
-      
+
+      // Activity Tracking
+      user.lastGamePlayed = 'aviator';
+      user.lastActivityAt = new Date();
+
       await Promise.all([bet.save(), user.save()]);
 
       // Create transaction record
@@ -112,9 +116,9 @@ router.post('/cashout',
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
-        return res.status(400).json({ 
-          error: 'Validation failed', 
-          details: errors.array() 
+        return res.status(400).json({
+          error: 'Validation failed',
+          details: errors.array()
         });
       }
 
@@ -136,7 +140,7 @@ router.post('/cashout',
       }
 
       const winAmount = bet.amount * multiplier;
-      
+
       // Update bet
       bet.status = 'won';
       bet.actualMultiplier = multiplier;
@@ -147,11 +151,11 @@ router.post('/cashout',
       const user = await User.findById(userId);
       user.balance += winAmount;
       user.totalWins = (user.totalWins || 0) + 1;
-      
+
       if (winAmount > (user.biggestWin || 0)) {
         user.biggestWin = winAmount;
       }
-      
+
       if (multiplier > (user.biggestMultiplier || 0)) {
         user.biggestMultiplier = multiplier;
       }
@@ -207,17 +211,17 @@ router.post('/end-round',
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
-        return res.status(400).json({ 
-          error: 'Validation failed', 
-          details: errors.array() 
+        return res.status(400).json({
+          error: 'Validation failed',
+          details: errors.array()
         });
       }
 
       const { gameRound, crashMultiplier } = req.body;
 
       // Process all active bets for this round
-      const activeBets = await Bet.find({ 
-        gameRound, 
+      const activeBets = await Bet.find({
+        gameRound,
         status: { $in: ['pending', 'active'] }
       });
 
@@ -238,15 +242,15 @@ router.post('/end-round',
             const user = await User.findById(bet.userId);
             userUpdates[bet.userId] = user;
           }
-          
+
           const user = userUpdates[bet.userId];
           user.balance += winAmount;
           user.totalWins = (user.totalWins || 0) + 1;
-          
+
           if (winAmount > (user.biggestWin || 0)) {
             user.biggestWin = winAmount;
           }
-          
+
           if (bet.cashoutMultiplier > (user.biggestMultiplier || 0)) {
             user.biggestMultiplier = bet.cashoutMultiplier;
           }
@@ -315,15 +319,15 @@ router.post('/end-round',
 router.get('/active-bets/:gameRound', async (req, res) => {
   try {
     const { gameRound } = req.params;
-    
-    const activeBets = await Bet.find({ 
-      gameRound, 
+
+    const activeBets = await Bet.find({
+      gameRound,
       status: { $in: ['pending', 'active'] }
     })
-    .populate('userId', 'username')
-    .select('userId amount cashoutMultiplier createdAt')
-    .sort({ createdAt: -1 })
-    .limit(50);
+      .populate('userId', 'username')
+      .select('userId amount cashoutMultiplier createdAt')
+      .sort({ createdAt: -1 })
+      .limit(50);
 
     const formattedBets = activeBets.map(bet => ({
       username: bet.userId.username,
@@ -345,8 +349,8 @@ router.get('/my-bet/:gameRound', authenticateToken, async (req, res) => {
     const { gameRound } = req.params;
     const userId = req.user.id;
 
-    const bet = await Bet.findOne({ 
-      userId, 
+    const bet = await Bet.findOne({
+      userId,
       gameRound,
       status: { $in: ['pending', 'active'] }
     });

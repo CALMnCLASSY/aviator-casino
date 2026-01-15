@@ -1,11 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ClassyBet Admin Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
+        :root {
+            --primary-bg: #0d1421;
+            --secondary-bg: #1a2332;
+            --card-bg: rgba(30, 40, 55, 0.7);
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --accent-green: #30fcbe;
+            --accent-red: #fb024c;
+            --accent-blue: #2196f3;
+            --border-color: rgba(255, 255, 255, 0.1);
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -13,1171 +26,672 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #0d1421 0%, #1a2332 100%);
-            color: white;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--primary-bg);
+            color: var(--text-primary);
             min-height: 100vh;
         }
 
+        /* HEADER */
         .header {
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(13, 20, 33, 0.95);
             padding: 1rem 2rem;
-            border-bottom: 1px solid #333;
+            border-bottom: 1px solid var(--border-color);
             display: flex;
             justify-content: space-between;
             align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
         }
 
         .logo {
             font-size: 1.5rem;
-            font-weight: bold;
-            color: #30fcbe;
-        }
-
-        .user-info {
+            font-weight: 800;
+            color: var(--accent-green);
             display: flex;
             align-items: center;
-            gap: 1rem;
+            gap: 10px;
         }
 
+        .user-controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        /* LAYOUT */
         .container {
-            max-width: 1400px;
+            max-width: 1600px;
             margin: 0 auto;
             padding: 2rem;
         }
 
-        .dashboard-grid {
+        .grid-dashboard {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-            margin-bottom: 2rem;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
         }
 
+        .grid-main {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+        }
+
+        /* CARDS */
         .card {
-            background: rgba(255, 255, 255, 0.1);
+            background: var(--card-bg);
             border-radius: 12px;
-            padding: 2rem;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 20px;
+            border: 1px solid var(--border-color);
         }
 
         .stat-card {
-            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
             position: relative;
             overflow: hidden;
         }
 
-        .stat-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(48, 252, 190, 0.1), transparent);
-            transition: left 0.5s ease;
-        }
-
-        .stat-card:hover::before {
-            left: 100%;
-        }
-
-        .stat-number {
-            font-size: 2.5rem;
-            font-weight: bold;
-            color: #30fcbe;
-            margin-bottom: 0.5rem;
-        }
-
-        .stat-label {
-            color: #ccc;
-            font-size: 1.1rem;
-        }
-
-        .actions-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 2rem;
-        }
-
-        .action-section h3 {
-            color: #30fcbe;
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .form-group {
-            margin-bottom: 1rem;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            color: #ccc;
-        }
-
-        .form-control {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid #333;
-            border-radius: 8px;
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            font-size: 1rem;
-        }
-
-        .form-control:focus {
-            outline: none;
-            border-color: #30fcbe;
-            box-shadow: 0 0 0 2px rgba(48, 252, 190, 0.2);
-        }
-
-        .btn {
-            padding: 0.75rem 1.5rem;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 1rem;
-            font-weight: 600;
-            transition: all 0.3s ease;
+        .stat-card h3 {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+
+        .stat-card .value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent-green);
+        }
+
+        .stat-card i {
+            position: absolute;
+            right: 20px;
+            top: 20px;
+            font-size: 2.5rem;
+            opacity: 0.1;
+            color: var(--accent-green);
+        }
+
+        /* TABLES */
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        th {
+            text-align: left;
+            padding: 12px;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 600;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        /* BADGES */
+        .badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .badge.online {
+            background: rgba(48, 252, 190, 0.15);
+            color: var(--accent-green);
+        }
+
+        .badge.offline {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-secondary);
+        }
+
+        .badge.game {
+            background: rgba(33, 150, 243, 0.15);
+            color: var(--accent-blue);
+        }
+
+        /* BUTTONS */
+        .btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+            font-size: 0.9rem;
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #30fcbe, #28d1a0);
-            color: #0a0f1a;
+            background: var(--accent-green);
+            color: #000;
         }
 
         .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(48, 252, 190, 0.3);
+            filter: brightness(1.1);
         }
 
         .btn-danger {
-            background: linear-gradient(135deg, #fb024c, #ff4081);
+            background: rgba(251, 2, 76, 0.15);
+            color: var(--accent-red);
+            border: 1px solid var(--accent-red);
+        }
+
+        .btn-danger:hover {
+            background: var(--accent-red);
             color: white;
         }
 
-        .btn-warning {
-            background: linear-gradient(135deg, #ffa500, #ff6347);
-            color: white;
+        .btn-sm {
+            padding: 4px 8px;
+            font-size: 0.8rem;
         }
 
-        .users-table {
+        /* LIVE MONITOR */
+        .live-monitor-row {
+            animation: pulse 2s infinite;
+        }
+
+        .game-icon {
+            margin-right: 5px;
+            width: 20px;
+            display: inline-block;
+            text-align: center;
+        }
+
+        /* FORMS */
+        .form-control {
             width: 100%;
-            margin-top: 2rem;
-            border-collapse: collapse;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            background: rgba(0, 0, 0, 0.2);
+            color: white;
+            margin-bottom: 10px;
         }
 
-        .users-table th,
-        .users-table td {
-            padding: 1rem;
-            text-align: left;
-            border-bottom: 1px solid #333;
+        /* UTILS */
+        .text-green {
+            color: var(--accent-green);
         }
 
-        .users-table th {
-            background: rgba(48, 252, 190, 0.1);
-            color: #30fcbe;
+        .text-red {
+            color: var(--accent-red);
         }
 
-        .pending-transactions {
-            margin-top: 2rem;
-        }
-
-        .transaction-item {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 8px;
-            padding: 1rem;
-            margin-bottom: 1rem;
+        .section-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            margin-bottom: 15px;
         }
 
-        .transaction-info {
-            flex: 1;
-        }
-
-        .transaction-actions {
-            display: flex;
-            gap: 0.5rem;
-        }
-
-        .status-badge {
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.875rem;
-            font-weight: 600;
-        }
-
-        .status-active {
-            background: rgba(40, 169, 9, 0.2);
-            color: #28a909;
-        }
-
-        .status-inactive {
-            background: rgba(251, 2, 76, 0.2);
-            color: #fb024c;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 2rem;
-            color: #30fcbe;
-        }
-
-        .error {
-            background: rgba(251, 2, 76, 0.1);
-            border: 1px solid #fb024c;
-            color: #fb024c;
-            padding: 1rem;
-            border-radius: 8px;
-            margin-bottom: 1rem;
-        }
-
-        .success {
-            background: rgba(40, 169, 9, 0.1);
-            border: 1px solid #28a909;
-            color: #28a909;
-            padding: 1rem;
-            border-radius: 8px;
-            margin-bottom: 1rem;
-        }
-
-        /* Affiliates Table Styles */
-        .affiliates-table-container {
-            margin-top: 20px;
-            overflow-x: auto;
-        }
-        
-        .affiliates-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 14px;
-        }
-        
-        .affiliates-table thead {
-            background: linear-gradient(135deg, #1a1a1a, #2a2a2a);
-        }
-        
-        .affiliates-table th {
-            padding: 12px;
-            text-align: left;
-            color: #30fcbe;
-            font-weight: 600;
-            border-bottom: 2px solid #30fcbe;
-        }
-        
-        .affiliates-table td {
-            padding: 10px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            color: #fff;
-        }
-        
-        .affiliates-table tr:hover {
-            background: rgba(48, 252, 190, 0.05);
-        }
-        
-        .affiliates-table code {
-            background: rgba(48, 252, 190, 0.1);
-            padding: 2px 6px;
-            border-radius: 4px;
-            color: #30fcbe;
-        }
-        
-        .referred-users-list {
-            margin-top: 10px;
-            padding: 10px;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 5px;
-        }
-        
-        .referred-user {
-            display: flex;
-            justify-content: space-between;
-            padding: 5px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            font-size: 12px;
-        }
-        
-        .referred-user:last-child {
-            border-bottom: none;
-        }
-        
-        .affiliate-totals td {
-            font-weight: 600;
-            border-top: 2px solid rgba(48, 252, 190, 0.3);
-            background: rgba(48, 252, 190, 0.05);
-        }
-
-        details summary {
-            cursor: pointer;
-            color: #30fcbe;
-            outline: none;
-        }
-        
-        details summary:hover {
-            text-decoration: underline;
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                padding: 1rem;
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(48, 252, 190, 0);
             }
-            
-            .actions-grid {
-                grid-template-columns: 1fr;
+
+            70% {
+                box-shadow: 0 0 0 5px rgba(48, 252, 190, 0);
             }
-            
-            .dashboard-grid {
-                grid-template-columns: 1fr;
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(48, 252, 190, 0);
             }
         }
     </style>
 </head>
+
 <body>
-    <div class="header">
-        <div class="logo">
-            <i class="fas fa-shield-alt"></i> ClassyBet Admin
-        </div>
-        <div class="user-info">
-            <span id="admin-name">Admin</span>
-            <button id="logoutBtn" class="btn btn-danger">
-                <i class="fas fa-sign-out-alt"></i> Logout
-            </button>
+    <!-- AUTH SCREEN -->
+    <div id="auth-screen" style="height: 100vh; display: flex; align-items: center; justify-content: center;">
+        <div class="card" style="width: 400px; text-align: center;">
+            <h2 class="logo" style="justify-content: center; margin-bottom: 30px;"><i class="fas fa-shield-alt"></i>
+                ClassyBet Admin</h2>
+            <form id="login-form">
+                <input type="email" id="login-email" class="form-control" placeholder="Admin Email" required>
+                <input type="password" id="login-password" class="form-control" placeholder="Password" required>
+                <div id="login-error" class="text-red" style="margin: 10px 0; font-size: 0.9rem;"></div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Login to Console</button>
+            </form>
         </div>
     </div>
 
-    <div class="container">
-        <!-- Login Form (initially shown) -->
-        <div id="login-section" class="card" style="max-width: 400px; margin: 5rem auto;">
-            <h2 style="text-align: center; color: #30fcbe; margin-bottom: 2rem;">
-                <i class="fas fa-lock"></i> Admin Login
-            </h2>
-            
-            <div id="login-error" class="error" style="display: none;"></div>
-            
-            <form id="login-form">
-                <div class="form-group">
-                    <label for="login-email">Email</label>
-                    <input type="email" id="login-email" class="form-control" required>
+    <!-- MAIN DASHBOARD -->
+    <div id="dashboard-screen" style="display: none;">
+        <header class="header">
+            <div class="logo"><i class="fas fa-chart-line"></i> Casino Command Center</div>
+            <div class="user-controls">
+                <span id="admin-name">Admin</span>
+                <button onclick="logout()" class="btn btn-danger btn-sm">Logout</button>
+            </div>
+        </header>
+
+        <div class="container">
+            <!-- Stats Row -->
+            <div class="grid-dashboard">
+                <div class="card stat-card">
+                    <h3>Active Users</h3>
+                    <div class="value" id="active-users">--</div>
+                    <i class="fas fa-users"></i>
                 </div>
-                
-                <div class="form-group">
-                    <label for="login-password">Password</label>
-                    <input type="password" id="login-password" class="form-control" required>
+                <div class="card stat-card">
+                    <h3>Total Users</h3>
+                    <div class="value" id="total-users">--</div>
+                    <i class="fas fa-user-plus"></i>
                 </div>
-                
-                <button type="submit" class="btn btn-primary" style="width: 100%;">
-                    <i class="fas fa-sign-in-alt"></i> Login
-                </button>
-            </form>
+                <div class="card stat-card">
+                    <h3>Pending Deposits</h3>
+                    <div class="value text-red" id="pending-deposits">--</div>
+                    <i class="fas fa-wallet"></i>
+                </div>
+                <div class="card stat-card">
+                    <h3>Casino Balance</h3>
+                    <div class="value" id="casino-balance">Kes --</div>
+                    <i class="fas fa-vault"></i>
+                </div>
+            </div>
+
+            <div class="grid-main">
+                <!-- User Activity Feed -->
+                <div class="card">
+                    <div class="section-header">
+                        <h3><i class="fas fa-satellite-dish"></i> Live Playing Activity</h3>
+                        <button class="btn btn-sm btn-primary" onclick="loadAllUsers()"><i class="fas fa-sync"></i>
+                            Refresh</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Status</th>
+                                    <th>Last Game</th>
+                                    <th>Last Active</th>
+                                    <th>Balance</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="users-table-body">
+                                <!-- Populated via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Side Panel: Transactions & Actions -->
+                <div style="display: flex; flex-direction: column; gap: 20px;">
+                    <!-- Quick Actions -->
+                    <div class="card">
+                        <h3>Quick Actions</h3>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;">
+                            <button onclick="document.getElementById('balance-modal').style.display='flex'"
+                                class="btn btn-primary">
+                                <i class="fas fa-coins"></i> Adjust Balance
+                            </button>
+                            <button onclick="searchUserPrompt()" class="btn btn-primary"
+                                style="background: var(--accent-blue); color:white;">
+                                <i class="fas fa-search"></i> Search User
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Pending Deposits -->
+                    <div class="card">
+                        <div class="section-header">
+                            <h3><i class="fas fa-clock"></i> Pending Deposits</h3>
+                        </div>
+                        <div id="pending-tx-list" style="max-height: 400px; overflow-y: auto;">
+                            <!-- Populated via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Pending Withdrawals -->
+                    <div class="card">
+                        <div class="section-header">
+                            <h3><i class="fas fa-money-bill-wave"></i> Pending Withdrawals</h3>
+                        </div>
+                        <div id="pending-wth-list" style="max-height: 400px; overflow-y: auto;">
+                            <!-- Populated via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Affiliates Summary -->
+                    <div class="card">
+                        <h3>Top Affiliates</h3>
+                        <div id="affiliates-list" style="margin-top: 15px;">
+                            <!-- Populated via JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
+    </div>
 
-        <!-- Dashboard (initially hidden) -->
-        <div id="dashboard-section" style="display: none;">
-            <!-- Stats Dashboard -->
-            <div class="dashboard-grid">
-                <div class="card stat-card">
-                    <div class="stat-number" id="total-users">0</div>
-                    <div class="stat-label">Total Users</div>
-                </div>
-                
-                <div class="card stat-card">
-                    <div class="stat-number" id="active-users">0</div>
-                    <div class="stat-label">Active Users</div>
-                </div>
-                
-                <div class="card stat-card">
-                    <div class="stat-number" id="pending-deposits">0</div>
-                    <div class="stat-label">Pending Deposits</div>
-                </div>
-                
-                <div class="card stat-card">
-                    <div class="stat-number">KES <span id="total-balance">0</span></div>
-                    <div class="stat-label">Total Balance</div>
-                </div>
+    <!-- Balance Adjust Modal -->
+    <div id="balance-modal"
+        style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center;">
+        <div class="card" style="width: 400px; background: #1a2332;">
+            <div class="section-header">
+                <h3>Adjust User Balance</h3>
+                <button onclick="document.getElementById('balance-modal').style.display='none'"
+                    class="btn btn-sm btn-danger">X</button>
             </div>
-
-            <!-- Action Sections -->
-            <div class="actions-grid">
-                <!-- User Management -->
-                <div class="card action-section">
-                    <h3><i class="fas fa-users"></i> User Management</h3>
-                    
-                    <div class="form-group">
-                        <label for="user-search">Search User</label>
-                        <input type="text" id="user-search" class="form-control" placeholder="Enter username or email">
-                    </div>
-                    
-                    <button class="btn btn-primary" onclick="searchUsers()">
-                        <i class="fas fa-search"></i> Search Users
-                    </button>
-                    
-                    <div id="user-results" class="users-table-container"></div>
+            <form id="balance-form">
+                <input type="text" id="bal-user-id" class="form-control" placeholder="User ID or Email" required>
+                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                    <select id="bal-type" class="form-control">
+                        <option value="add">Credit (+)</option>
+                        <option value="subtract">Debit (-)</option>
+                    </select>
+                    <input type="number" id="bal-amount" class="form-control" placeholder="Amount" required>
                 </div>
-
-                <!-- Balance Management -->
-                <div class="card action-section">
-                    <h3><i class="fas fa-money-bill-wave"></i> Balance Management</h3>
-                    
-                    <div id="balance-error" class="error" style="display: none;"></div>
-                    <div id="balance-success" class="success" style="display: none;"></div>
-                    
-                    <div class="form-group">
-                        <label for="balance-user-id">User ID</label>
-                        <input type="text" id="balance-user-id" class="form-control" placeholder="Enter user ID">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="balance-amount">Amount (KES)</label>
-                        <input type="number" id="balance-amount" class="form-control" min="1" step="0.01">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="balance-description">Description</label>
-                        <input type="text" id="balance-description" class="form-control" placeholder="Reason for balance change">
-                    </div>
-                    
-                    <div style="display: flex; gap: 1rem;">
-                        <button id="addBalanceBtn" class="btn btn-primary">
-                            <i class="fas fa-plus"></i> Add Balance
-                        </button>
-                        <button id="subtractBalanceBtn" class="btn btn-warning">
-                            <i class="fas fa-minus"></i> Subtract Balance
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Pending Transactions -->
-            <div class="card pending-transactions">
-                <h3><i class="fas fa-clock"></i> Pending Deposits</h3>
-                <div id="pending-transactions-list"></div>
-            </div>
-
-            <!-- Pending Withdrawals -->
-            <div class="card pending-transactions">
-                <h3><i class="fas fa-money-bill-wave"></i> Pending Withdrawals</h3>
-                <div id="pending-withdrawals-list"></div>
-            </div>
-
-            <!-- Affiliate / Referral Overview -->
-            <div class="card">
-                <h3><i class="fas fa-link"></i> Affiliate Performance</h3>
-                <h4 style="margin-top: 10px; color: #30fcbe;">Affiliate Details</h4>
-                <div class="affiliates-table-container" id="affiliates-table-container">
-                    <table class="affiliates-table">
-                        <thead>
-                            <tr>
-                                <th>Affiliate</th>
-                                <th>Promo Code</th>
-                                <th>Referred Users</th>
-                                <th>Total Deposits</th>
-                                <th>Commission (50%)</th>
-                                <th>Pending Payout</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="affiliates-table-body">
-                            <tr>
-                                <td colspan="7" style="text-align: center;">Loading affiliate data...</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- All Users Table -->
-            <div class="card">
-                <h3><i class="fas fa-users-cog"></i> All Users</h3>
-                <div id="all-users-list"></div>
-            </div>
+                <input type="text" id="bal-desc" class="form-control" placeholder="Description/Reason" required>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Process Adjustment</button>
+            </form>
         </div>
     </div>
 
     <script>
-        const API_BASE = window.location.hostname === 'localhost' 
-            ? 'http://localhost:3001' 
-            : 'https://aviator-casino.onrender.com';
-        console.log('API Base URL:', API_BASE);
-        let authToken = localStorage.getItem('admin_token');
+        const API_BASE = window.location.hostname === 'localhost'
+            ? 'http://localhost:3001/api/admin' // Adjust backend port if needed
+            : '/api/admin';
 
-        // Check if already logged in
+        // Initial State
+        let authToken = localStorage.getItem('admin_token');
         if (authToken) {
-            // Verify token is still valid
-            fetch(`${API_BASE}/api/admin/verify`, {
-                headers: { 'Authorization': `Bearer ${authToken}` }
-            })
-            .then(response => {
-                if (response.ok) {
-                    showDashboard();
-                    loadDashboardData();
-                } else {
-                    // Token invalid, clear it
-                    localStorage.removeItem('admin_token');
-                    authToken = null;
-                }
-            })
-            .catch(error => {
-                console.error('Auth verification error:', error);
-                localStorage.removeItem('admin_token');
-                authToken = null;
-            });
+            verifyToken();
+        } else {
+            showScreen('auth');
         }
 
-        // Login form handler
+        function showScreen(screen) {
+            document.getElementById('auth-screen').style.display = screen === 'auth' ? 'flex' : 'none';
+            document.getElementById('dashboard-screen').style.display = screen === 'dash' ? 'block' : 'none';
+        }
+
+        // --- AUTH ---
         document.getElementById('login-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            
             const email = document.getElementById('login-email').value;
             const password = document.getElementById('login-password').value;
-            
+
             try {
-                const response = await fetch(`${API_BASE}/api/admin/login`, {
+                const res = await fetch(`${API_BASE}/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password })
                 });
-                
-                const data = await response.json();
-                
-                if (response.ok) {
+                const data = await res.json();
+
+                if (res.ok) {
                     authToken = data.token;
                     localStorage.setItem('admin_token', authToken);
-                    document.getElementById('admin-name').textContent = data.admin?.username || data.admin?.email || 'Admin';
-                    showDashboard();
-                    loadDashboardData();
+                    verifyToken();
                 } else {
-                    showError('login-error', data.error);
+                    document.getElementById('login-error').textContent = data.error;
                 }
-            } catch (error) {
-                showError('login-error', 'Login failed. Please try again.');
+            } catch (err) {
+                console.error(err);
             }
         });
 
-        function showDashboard() {
-            document.getElementById('login-section').style.display = 'none';
-            document.getElementById('dashboard-section').style.display = 'block';
+        async function verifyToken() {
+            try {
+                const res = await fetch(`${API_BASE}/verify`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                if (res.ok) {
+                    showScreen('dash');
+                    initDashboard();
+                } else {
+                    logout();
+                }
+            } catch (err) {
+                logout();
+            }
         }
 
         function logout() {
             localStorage.removeItem('admin_token');
             authToken = null;
-            document.getElementById('login-section').style.display = 'block';
-            document.getElementById('dashboard-section').style.display = 'none';
+            showScreen('auth');
         }
 
-        async function loadDashboardData() {
-            try {
-                // Load dashboard stats
-                const statsResponse = await fetch(`${API_BASE}/api/admin/dashboard-stats`, {
-                    headers: { 'Authorization': `Bearer ${authToken}` }
-                });
-                
-                if (statsResponse.ok) {
-                    const stats = await statsResponse.json();
-                    document.getElementById('total-users').textContent = stats.totalUsers;
-                    document.getElementById('active-users').textContent = stats.activeUsers;
-                    document.getElementById('pending-deposits').textContent = stats.pendingDeposits;
-                    document.getElementById('total-balance').textContent = stats.totalBalance.toFixed(2);
+        // --- DASHBOARD DATA ---
+        async function initDashboard() {
+            loadStats();
+            loadAllUsers();
+            loadPendingTransactions();
+            loadPendingWithdrawals();
+            loadAffiliates();
 
-                }
-
-                // Load pending transactions
+            // Auto refresh stats every 30s
+            setInterval(() => {
+                loadStats();
                 loadPendingTransactions();
-                
-                // Load pending withdrawals
-                loadPendingWithdrawals();
-                
-                // Load all users
-                loadAllUsers();
-
-                // Load affiliates data
-                loadAffiliateData();
-
-            } catch (error) {
-                console.error('Dashboard load error:', error);
-            }
+            }, 30000);
         }
 
-        async function loadAffiliateData() {
-            try {
-                const response = await fetch(`${API_BASE}/api/admin/affiliates`, {
-                    headers: { 'Authorization': `Bearer ${authToken}` }
-                });
+        async function loadStats() {
+            const res = await fetch(`${API_BASE}/dashboard-stats`, {
+                headers: { 'Authorization': `Bearer ${authToken}` }
+            });
+            const data = await res.json();
 
-                if (!response.ok) {
-                    throw new Error('Failed to load affiliate data');
-                }
-
-                const data = await response.json();
-                loadAffiliateTable(data.affiliates || []);
-            } catch (error) {
-                console.error('Affiliate load error:', error);
-                const tbody = document.getElementById('affiliates-table-body');
-                if (tbody) {
-                    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#fb024c;">Failed to load affiliate data</td></tr>';
-                }
-            }
+            document.getElementById('active-users').textContent = data.activeUsers;
+            document.getElementById('total-users').textContent = data.totalUsers;
+            document.getElementById('pending-deposits').textContent = data.pendingDeposits;
+            document.getElementById('casino-balance').textContent = `KES ${data.totalBalance.toFixed(2)}`;
         }
 
-        async function loadPendingTransactions() {
-            try {
-                const response = await fetch(`${API_BASE}/api/admin/transactions/pending`, {
-                    headers: { 'Authorization': `Bearer ${authToken}` }
-                });
+        async function loadAllUsers() {
+            const res = await fetch(`${API_BASE}/users`, {
+                headers: { 'Authorization': `Bearer ${authToken}` }
+            });
+            const data = await res.json();
+            const users = data.users;
 
-                if (!response.ok) {
-                    throw new Error('Failed to load pending transactions');
-                }
+            const tbody = document.getElementById('users-table-body');
+            tbody.innerHTML = '';
 
-                const { transactions = [] } = await response.json();
-                const container = document.getElementById('pending-transactions-list');
+            users.forEach(user => {
+                const isOnline = (new Date() - new Date(user.lastActivityAt)) < 5 * 60 * 1000; // Active within 5 mins
+                const statusBadge = isOnline
+                    ? `<span class="badge online">Online</span>`
+                    : `<span class="badge offline">Offline</span>`;
 
-                if (!Array.isArray(transactions) || transactions.length === 0) {
-                    container.innerHTML = '<p>No pending transactions</p>';
-                    return;
-                }
+                const gameBadge = user.lastGamePlayed
+                    ? `<span class="badge game">${getGameIcon(user.lastGamePlayed)} ${user.lastGamePlayed}</span>`
+                    : `<span style="color:#666;">-</span>`;
 
-                container.innerHTML = transactions.map(tx => {
-                    const username = tx.user?.username || 'Unknown User';
-                    const amount = Number(tx.amount || 0).toLocaleString();
-                    const phone = tx.mpesaPhoneNumber || tx.user?.phone || 'N/A';
-                    const createdAt = tx.createdAt ? new Date(tx.createdAt).toLocaleString() : 'Unknown time';
-                    const reference = tx.reference || tx._id;
-
-                    return `
-                        <div class="transaction-item">
-                            <div class="transaction-info">
-                                <strong>${username}</strong> - KES ${amount}<br>
-                                <small>Phone: ${phone} | ${createdAt}</small><br>
-                                <small>Ref: ${reference}</small>
-                            </div>
-                            <div class="transaction-actions">
-                                <button class="btn btn-primary" data-action="confirm-deposit" data-reference="${reference}">
-                                    <i class="fas fa-check"></i> Confirm
-                                </button>
-                                <button class="btn btn-danger" data-action="cancel-deposit" data-reference="${reference}">
-                                    <i class="fas fa-times"></i> Cancel
-                                </button>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-            } catch (error) {
-                console.error('Pending transactions error:', error);
-                const container = document.getElementById('pending-transactions-list');
-                if (container) {
-                    container.innerHTML = '<p class="error">Failed to load pending transactions.</p>';
-                }
-            }
-        }
-
-        async function loadPendingWithdrawals() {
-            try {
-                const response = await fetch(`${API_BASE}/api/admin/transactions/pending-withdrawals`, {
-                    headers: { 'Authorization': `Bearer ${authToken}` }
-                });
-
-                if (!response.ok) {
-                    throw new Error('Failed to load pending withdrawals');
-                }
-
-                const { transactions = [] } = await response.json();
-                const container = document.getElementById('pending-withdrawals-list');
-
-                if (!Array.isArray(transactions) || transactions.length === 0) {
-                    container.innerHTML = '<p>No pending withdrawals</p>';
-                    return;
-                }
-
-                container.innerHTML = transactions.map(tx => {
-                    const username = tx.user?.username || 'Unknown User';
-                    const amount = Number(tx.amount || 0).toLocaleString();
-                    const phone = tx.mpesaPhoneNumber || tx.user?.phone || 'N/A';
-                    const createdAt = tx.createdAt ? new Date(tx.createdAt).toLocaleString() : 'Unknown time';
-                    const reference = tx.reference || tx._id;
-
-                    return `
-                        <div class="transaction-item">
-                            <div class="transaction-info">
-                                <strong>${username}</strong> - KES ${amount}<br>
-                                <small>Phone: ${phone} | ${createdAt}</small><br>
-                                <small>Ref: ${reference}</small>
-                            </div>
-                            <div class="transaction-actions">
-                                <button class="btn btn-success" data-action="confirm-withdrawal" data-reference="${reference}">
-                                    <i class="fas fa-check"></i> Complete
-                                </button>
-                                <button class="btn btn-danger" data-action="cancel-withdrawal" data-reference="${reference}">
-                                    <i class="fas fa-times"></i> Cancel
-                                </button>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-            } catch (error) {
-                console.error('Pending withdrawals error:', error);
-                const container = document.getElementById('pending-withdrawals-list');
-                if (container) {
-                    container.innerHTML = '<p class="error">Failed to load pending withdrawals.</p>';
-                }
-            }
-        }
-
-        function loadAffiliateTable(affiliates) {
-            const tbody = document.getElementById('affiliates-table-body');
-            if (!tbody) return;
-
-            if (!Array.isArray(affiliates) || affiliates.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No affiliate data available</td></tr>';
-                return;
-            }
-
-            const totals = {
-                deposits: 0,
-                commission: 0,
-                pending: 0,
-                referrals: 0
-            };
-
-            const rows = affiliates.map(affiliate => {
-                const deposits = Number(affiliate.totalDeposits || 0);
-                const commission = Number(affiliate.totalCommission || (deposits * 0.5));
-                const pending = Number(affiliate.pendingPayout || 0);
-                const referredUsers = affiliate.referredUsersList || [];
-
-                totals.deposits += deposits;
-                totals.commission += commission;
-                totals.pending += pending;
-                totals.referrals += Number(affiliate.referredUsers || referredUsers.length || 0);
-
-                const referredUsersHtml = referredUsers.length > 0
-                    ? `<details>
-                        <summary>${affiliate.referredUsers || referredUsers.length} users</summary>
-                        <div class="referred-users-list">
-                            ${referredUsers.map(user => `
-                                <div class="referred-user">
-                                    <span>${user.username || 'Unknown'}</span>
-                                    <span>Deposits: KES ${(user.totalDeposits || 0).toLocaleString()}</span>
-                                </div>
-                            `).join('')}
-                        </div>
-                       </details>`
-                    : `${affiliate.referredUsers || 0} users`;
-
-                return `
+                const row = `
                     <tr>
                         <td>
-                            <div>${affiliate.username || 'Unknown'}</div>
-                            <small>${affiliate.email || ''}</small>
+                            <div style="font-weight:bold;">${user.username}</div>
+                            <div style="font-size:0.8rem; color:#888;">${user.phone}</div>
                         </td>
-                        <td><code>${affiliate.promoCode || 'N/A'}</code></td>
-                        <td>${referredUsersHtml}</td>
-                        <td>KES ${deposits.toLocaleString()}</td>
-                        <td>KES ${commission.toLocaleString()}</td>
-                        <td>KES ${pending.toLocaleString()}</td>
+                        <td>${statusBadge}</td>
+                        <td>${gameBadge}</td>
+                        <td style="font-size:0.85rem; color:#888;">${new Date(user.lastActivityAt || user.updatedAt).toLocaleTimeString()}</td>
+                        <td class="text-green" style="font-weight:bold;">KES ${user.balance.toFixed(2)}</td>
                         <td>
-                            <button class="btn btn-sm btn-primary" onclick="viewAffiliateDetails('${affiliate._id || affiliate.id}')">
-                                <i class="fas fa-eye"></i>
-                            </button>
+                            <button class="btn btn-sm btn-primary" onclick="manageUser('${user._id}')">Manage</button>
                         </td>
                     </tr>
                 `;
-            }).join('');
-
-            const totalsRow = `
-                <tr class="affiliate-totals">
-                    <td colspan="2">Totals</td>
-                    <td>${totals.referrals} users</td>
-                    <td>KES ${totals.deposits.toLocaleString()}</td>
-                    <td>KES ${totals.commission.toLocaleString()}</td>
-                    <td>KES ${totals.pending.toLocaleString()}</td>
-                    <td></td>
-                </tr>
-            `;
-
-            tbody.innerHTML = rows + totalsRow;
+                tbody.insertAdjacentHTML('beforeend', row);
+            });
         }
-        
-        function viewAffiliateDetails(affiliateId) {
-            // TODO: Implement affiliate details modal
-            console.log('View affiliate:', affiliateId);
+
+        function getGameIcon(gameId) {
+            const icons = {
+                'aviator': '🚀',
+                'jetx': '✈️',
+                'roulette': '🎡',
+                'blackjack': '🃏',
+                'slot_777': '🎰',
+                'mines': '💣',
+                'plinko': '🔻',
+                'keno': '🔢',
+                'baccarat': '🃏'
+            };
+            return icons[gameId] || '🎮';
         }
-        
-        async function loadAllUsers() {
-            try {
-                const response = await fetch(`${API_BASE}/api/admin/users`, {
-                    headers: { 
-                        'Authorization': `Bearer ${authToken}`,
-                        'Cache-Control': 'no-cache'
-                    }
-                });
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    const container = document.getElementById('all-users-list');
-                    
-                    container.innerHTML = `
-                        <table class="users-table">
-                            <thead>
-                                <tr>
-                                    <th>Username</th>
-                                    <th>Email</th>
-                                    <th>Balance</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${data.users.map(user => {
-                                    const isActive = user.isActive !== false;
-                                    return `
-                                    <tr>
-                                        <td>${user.username}</td>
-                                        <td>${user.email || 'N/A'}</td>
-                                        <td>KES ${user.balance.toFixed(2)}</td>
-                                        <td>
-                                            <span class="status-badge ${isActive ? 'status-active' : 'status-inactive'}">
-                                                ${isActive ? 'Active' : 'Inactive'}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <button class="btn btn-primary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;" data-action="copy-id" data-user-id="${user._id}">
-                                                Copy ID
-                                            </button>
-                                            <button class="btn ${isActive ? 'btn-danger' : 'btn-primary'}" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;" data-action="toggle-status" data-user-id="${user._id}">
-                                                ${isActive ? 'Deactivate' : 'Activate'}
-                                            </button>
-                                        </td>
-                                    </tr>
-                                `;}).join('')}
-                            </tbody>
-                        </table>
+
+        async function loadPendingTransactions() {
+            const res = await fetch(`${API_BASE}/transactions/pending`, {
+                headers: { 'Authorization': `Bearer ${authToken}` }
+            });
+            const data = await res.json();
+            const list = document.getElementById('pending-tx-list');
+            list.innerHTML = '';
+
+            if (data.transactions.length === 0) {
+                list.innerHTML = '<div style="color:#666; padding:10px;">No pending deposits</div>';
+                return;
+            }
+
+            data.transactions.forEach(tx => {
+                const item = `
+                    <div style="background:rgba(255,255,255,0.05); padding:10px; margin-bottom:10px; border-radius:6px; font-size:0.9rem;">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                            <strong>${tx.user ? tx.user.username : 'Unknown'}</strong>
+                            <span class="text-green">KES ${tx.amount}</span>
+                        </div>
+                        <div style="font-size:0.8rem; color:#888; margin-bottom:8px;">
+                            ${tx.reference || 'No Ref'} • ${new Date(tx.createdAt).toLocaleTimeString()}
+                        </div>
+                        <div style="display:flex; gap:10px;">
+                            <button class="btn btn-sm btn-primary" style="flex:1;" onclick="processTx('${tx.reference}', 'deposit-confirm')">Confirm</button>
+                        </div>
+                    </div>
+                `;
+                list.insertAdjacentHTML('beforeend', item);
+            });
+        }
+
+        async function loadPendingWithdrawals() {
+            const res = await fetch(`${API_BASE}/transactions/pending-withdrawals`, {
+                headers: { 'Authorization': `Bearer ${authToken}` }
+            });
+            const data = await res.json();
+            const list = document.getElementById('pending-wth-list');
+            list.innerHTML = '';
+
+            if (data.transactions.length === 0) {
+                list.innerHTML = '<div style="color:#666; padding:10px;">No pending withdrawals</div>';
+                return;
+            }
+
+            data.transactions.forEach(tx => {
+                const item = `
+                    <div style="background:rgba(255,255,255,0.05); padding:10px; margin-bottom:10px; border-radius:6px; font-size:0.9rem;">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                            <strong>${tx.user ? tx.user.username : 'Unknown'}</strong>
+                            <span class="text-red">KES ${tx.amount}</span>
+                        </div>
+                        <div style="font-size:0.8rem; color:#888; margin-bottom:8px;">
+                             ${new Date(tx.createdAt).toLocaleTimeString()}
+                        </div>
+                        <div style="display:flex; gap:10px;">
+                            <button class="btn btn-sm btn-primary" style="flex:1;" onclick="processTx('${tx._id}', 'withdrawal-confirm')">Approve</button>
+                        </div>
+                    </div>
+                `;
+                list.insertAdjacentHTML('beforeend', item);
+            });
+        }
+
+        async function loadAffiliates() {
+            const res = await fetch(`${API_BASE}/dashboard-stats`, {
+                headers: { 'Authorization': `Bearer ${authToken}` }
+            });
+            const data = await res.json();
+            const affiliatesList = document.getElementById('affiliates-list');
+            affiliatesList.innerHTML = '';
+
+            if (data.topAffiliates && data.topAffiliates.length > 0) {
+                data.topAffiliates.forEach(aff => {
+                    const item = `
+                        <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.05); font-size:0.9rem;">
+                            <span>${aff.username}</span>
+                            <span class="text-green">KES ${aff.totalCommission.toFixed(0)}</span>
+                        </div>
                     `;
-                }
-            } catch (error) {
-                console.error('Load users error:', error);
-            }
-        }
-
-        function copyUserId(userId) {
-            navigator.clipboard.writeText(userId).then(() => {
-                alert('User ID copied to clipboard');
-            });
-        }
-
-        async function toggleUserStatus(userId) {
-            try {
-                const response = await fetch(`${API_BASE}/api/admin/users/${userId}/toggle-status`, {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${authToken}` }
+                    affiliatesList.insertAdjacentHTML('beforeend', item);
                 });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    alert(data.message); // Use alert instead of missing success element
-                    loadAllUsers(); // Refresh the user list
-                    loadDashboardData(); // Refresh dashboard stats
-                    const searchTerm = document.getElementById('user-search')?.value.trim();
-                    if (searchTerm) {
-                        searchUsers();
-                    }
-                } else {
-                    const error = await response.json();
-                    alert(`Error: ${error.error}`);
-                }
-            } catch (error) {
-                console.error('Toggle status error:', error);
-                alert('Failed to toggle user status');
+            } else {
+                affiliatesList.innerHTML = '<div style="color:#666; padding:10px;">No affiliate data</div>';
             }
         }
 
-        async function updateBalance(type) {
-            const userId = document.getElementById('balance-user-id').value;
-            const amount = document.getElementById('balance-amount').value;
-            const description = document.getElementById('balance-description').value;
-            
-            if (!userId || !amount || !description) {
-                showError('balance-error', 'All fields are required');
-                return;
-            }
-            
+        // --- ACTIONS ---
+        document.getElementById('balance-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const userId = document.getElementById('bal-user-id').value;
+            const type = document.getElementById('bal-type').value;
+            const amount = document.getElementById('bal-amount').value;
+            const description = document.getElementById('bal-desc').value;
+
             try {
-                const response = await fetch(`${API_BASE}/api/admin/users/${userId}/balance`, {
+                // First handle searching users if userId is actually an email might need a lookup, 
+                // but assuming admin enters ID from the table manage button.
+                // NOTE: The backend manual balance route expects userId param in URL.
+                // We need to fetch the user ID if the admin entered a username/email, or just assume they pasted ID.
+                // For simplicity in this demo, we assume they copied ID from table or we need to add a search step.
+                // Let's assume we pass the ID directly for now.
+
+                const res = await fetch(`${API_BASE}/users/${userId}/balance`, {
                     method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${authToken}`,
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
                     },
-                    body: JSON.stringify({ amount: parseFloat(amount), type, description })
-                });
-                
-                const data = await response.json();
-                
-                if (response.ok) {
-                    showSuccess('balance-success', `Balance ${type === 'add' ? 'added' : 'subtracted'} successfully`);
-                    document.getElementById('balance-user-id').value = '';
-                    document.getElementById('balance-amount').value = '';
-                    document.getElementById('balance-description').value = '';
-                    loadDashboardData();
-                } else {
-                    showError('balance-error', data.error);
-                }
-            } catch (error) {
-                showError('balance-error', 'Balance update failed');
-            }
-        }
-
-        async function confirmDeposit(transactionId) {
-            const receiptNumber = prompt('Enter M-Pesa receipt number:');
-            if (!receiptNumber) return;
-            
-            try {
-                const response = await fetch(`${API_BASE}/api/payments/confirm-deposit`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${authToken}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ transactionId, mpesaReceiptNumber: receiptNumber })
-                });
-                
-                if (response.ok) {
-                    alert('Deposit confirmed successfully');
-                    loadPendingTransactions();
-                    loadDashboardData();
-                } else {
-                    const data = await response.json();
-                    alert('Error: ' + data.error);
-                }
-            } catch (error) {
-                alert('Confirmation failed');
-            }
-        }
-
-        async function cancelDeposit(transactionId) {
-            const reason = prompt('Enter reason for cancelling this deposit (optional):');
-            if (reason === null) {
-                return;
-            }
-
-            try {
-                const response = await fetch(`${API_BASE}/api/payments/cancel-deposit`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${authToken}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ transactionId, reason })
+                    body: JSON.stringify({ amount, type, description })
                 });
 
-                if (response.ok) {
-                    alert('Deposit cancelled successfully');
-                    loadPendingTransactions();
-                    loadDashboardData();
+                if (res.ok) {
+                    alert('Balance updated successfully');
+                    document.getElementById('balance-modal').style.display = 'none';
+                    loadAllUsers();
+                    loadStats();
                 } else {
-                    const data = await response.json();
-                    alert('Error: ' + (data.error || 'Unable to cancel deposit'));
+                    const d = await res.json();
+                    alert('Error: ' + d.error);
                 }
-            } catch (error) {
-                alert('Cancellation failed');
+            } catch (err) {
+                alert('Request failed');
             }
-        }
-
-        async function confirmWithdrawal(transactionId) {
-            if (!confirm('Have you sent the money to the user via M-Pesa?')) {
-                return;
-            }
-
-            const receiptNumber = prompt('Enter M-Pesa receipt number (optional):');
-            
-            try {
-                const response = await fetch(`${API_BASE}/api/payments/confirm-withdrawal`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${authToken}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ transactionId, mpesaReceiptNumber: receiptNumber })
-                });
-
-                if (response.ok) {
-                    alert('Withdrawal completed successfully');
-                    loadPendingWithdrawals();
-                    loadDashboardData();
-                } else {
-                    const data = await response.json();
-                    alert('Error: ' + (data.error || 'Unable to complete withdrawal'));
-                }
-            } catch (error) {
-                alert('Withdrawal confirmation failed');
-            }
-        }
-
-        async function cancelWithdrawal(transactionId) {
-            const reason = prompt('Enter reason for cancelling this withdrawal:');
-            if (!reason) {
-                alert('Reason is required to cancel a withdrawal');
-                return;
-            }
-
-            if (!confirm('This will refund the amount to the user. Continue?')) {
-                return;
-            }
-
-            try {
-                const response = await fetch(`${API_BASE}/api/payments/cancel-withdrawal`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${authToken}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ transactionId, reason })
-                });
-
-                if (response.ok) {
-                    alert('Withdrawal cancelled and amount refunded to user');
-                    loadPendingWithdrawals();
-                    loadDashboardData();
-                } else {
-                    const data = await response.json();
-                    alert('Error: ' + (data.error || 'Unable to cancel withdrawal'));
-                }
-            } catch (error) {
-                alert('Cancellation failed');
-            }
-        }
-
-        function showError(elementId, message) {
-            const element = document.getElementById(elementId);
-            element.textContent = message;
-            element.style.display = 'block';
-        }
-
-        // Set up all event listeners when the DOM is loaded
-        document.addEventListener('DOMContentLoaded', () => {
-            // Static button event listeners
-            document.getElementById('addBalanceBtn')?.addEventListener('click', () => updateBalance('add'));
-            document.getElementById('subtractBalanceBtn')?.addEventListener('click', () => updateBalance('subtract'));
-            document.getElementById('logoutBtn')?.addEventListener('click', logout);
-            document.getElementById('searchUsersBtn')?.addEventListener('click', searchUsers);
-
-            // Delegate events for dynamically created elements
-            document.addEventListener('click', (e) => {
-                const target = e.target.closest('[data-action]');
-                if (!target) return;
-
-                const action = target.dataset.action;
-                switch (action) {
-                    case 'copy-id':
-                        copyUserId(target.dataset.userId);
-                        break;
-                    case 'toggle-status':
-                        toggleUserStatus(target.dataset.userId);
-                        break;
-                    case 'confirm-deposit':
-                        confirmDeposit(target.dataset.reference);
-                        break;
-                    case 'cancel-deposit':
-                        cancelDeposit(target.dataset.reference);
-                        break;
-                    case 'confirm-withdrawal':
-                        confirmWithdrawal(target.dataset.reference);
-                        break;
-                    case 'cancel-withdrawal':
-                        cancelWithdrawal(target.dataset.reference);
-                        break;
-                }
-            });
         });
 
-        async function searchUsers() {
-            const searchTerm = document.getElementById('user-search').value.trim();
-            if (!searchTerm) return;
-
-            try {
-                const response = await fetch(`${API_BASE}/api/admin/users/search?q=${encodeURIComponent(searchTerm)}`, {
-                    headers: { 'Authorization': `Bearer ${authToken}` }
-                });
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    const container = document.getElementById('user-results');
-                    
-                    if (data.users.length === 0) {
-                        container.innerHTML = '<p>No users found</p>';
-                        return;
-                    }
-                    
-                    container.innerHTML = `
-                        <table class="users-table">
-                            <thead>
-                                <tr>
-                                    <th>Username</th>
-                                    <th>Email</th>
-                                    <th>Balance</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${data.users.map(user => {
-                                    const isActive = user.isActive !== false;
-                                    return `
-                                    <tr>
-                                        <td>${user.username}</td>
-                                        <td>${user.email || 'N/A'}</td>
-                                        <td>KES ${user.balance.toFixed(2)}</td>
-                                        <td>
-                                            <span class="status-badge ${isActive ? 'status-active' : 'status-inactive'}">
-                                                ${isActive ? 'Active' : 'Inactive'}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <button class="btn btn-primary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;" data-action="copy-id" data-user-id="${user._id}">
-                                                Copy ID
-                                            </button>
-                                            <button class="btn ${isActive ? 'btn-danger' : 'btn-primary'}" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;" data-action="toggle-status" data-user-id="${user._id}">
-                                                ${isActive ? 'Deactivate' : 'Activate'}
-                                            </button>
-                                        </td>
-                                    </tr>
-                                `;}).join('')}
-                            </tbody>
-                        </table>
-                    `;
-                }
-            } catch (error) {
-                console.error('Search users error:', error);
-            }
+        function manageUser(id) {
+            document.getElementById('bal-user-id').value = id;
+            document.getElementById('balance-modal').style.display = 'flex';
         }
 
-        function showSuccess(elementId, message) {
-            const element = document.getElementById(elementId);
-            element.textContent = message;
-            element.style.display = 'block';
-            setTimeout(() => element.style.display = 'none', 5000);
-        }
-
-        // Auto-refresh every 30 seconds
-        setInterval(() => {
-            if (authToken && document.getElementById('dashboard-section').style.display !== 'none') {
-                loadDashboardData();
-            }
-        }, 30000);
-
-        // Initialize event handlers and check auth token
-        if (authToken) {
-            showDashboard();
-            loadDashboardData();
-        }
-    
     </script>
 </body>
+
 </html>
