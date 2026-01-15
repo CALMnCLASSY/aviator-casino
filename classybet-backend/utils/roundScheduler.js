@@ -34,40 +34,40 @@ function computeRoundId(startTime) {
 function generateMultiplier(roundId, startTime) {
   const seed = `${ROUND_SALT}:${roundId}:${startTime.toISOString()}`;
   const hash = crypto.createHash('sha256').update(seed).digest('hex');
-  
+
   // Use first 8 chars for random value (0-1)
   const intVal = parseInt(hash.substring(0, 8), 16);
   const random = (intVal % 100000) / 100000; // 0.00000 - 0.99999
-  
+
   // Distribution: MOSTLY LOW MULTIPLIERS
-  // 80% -> 1.00x - 1.99x (very low)
-  // 12% -> 2.00x - 4.99x (low-medium)
-  // 6%  -> 5.00x - 9.99x (medium)
-  // 2%  -> 10.00x - 100.00x (high)
-  
+  // 45% -> 1.00x - 1.99x (very low)
+  // 35% -> 2.00x - 4.99x (low-medium)
+  // 16%  -> 5.00x - 9.99x (medium)
+  // 4%  -> 10.00x - 100.00x (high)
+
   let multiplier;
-  
-  if (random < 0.80) {
-    // 80% chance: 1.00x - 1.99x (VERY LOW)
+
+  if (random < 0.45) {
+    // 45% chance: 1.00x - 1.99x (VERY LOW)
     const range = 0.99; // 1.99 - 1.00
-    multiplier = 1.00 + (random / 0.80) * range;
+    multiplier = 1.00 + (random / 0.45) * range;
   } else if (random < 0.92) {
-    // 12% chance: 2.00x - 4.99x (LOW-MEDIUM)
+    // 35% chance: 2.00x - 4.99x (LOW-MEDIUM)
     const range = 2.99; // 4.99 - 2.00
-    const normalized = (random - 0.80) / 0.12;
+    const normalized = (random - 0.45) / 0.35;
     multiplier = 2.00 + normalized * range;
   } else if (random < 0.98) {
-    // 6% chance: 5.00x - 9.99x (MEDIUM)
+    // 16% chance: 5.00x - 9.99x (MEDIUM)
     const range = 4.99; // 9.99 - 5.00
-    const normalized = (random - 0.92) / 0.06;
+    const normalized = (random - 0.80) / 0.16;
     multiplier = 5.00 + normalized * range;
   } else {
-    // 2% chance: 10.00x - 100.00x (HIGH)
+    // 4% chance: 10.00x - 100.00x (HIGH)
     const range = 90.00; // 100.00 - 10.00
-    const normalized = (random - 0.98) / 0.02;
+    const normalized = (random - 0.96) / 0.04;
     multiplier = 10.00 + normalized * range;
   }
-  
+
   return Number(multiplier.toFixed(2));
 }
 
@@ -116,7 +116,7 @@ async function populateRoundSchedule() {
       console.log(`✅ Populated ${bulkOps.length} rounds (${result.upsertedCount} new, ${result.modifiedCount} updated)`);
       return bulkOps.length;
     }
-    
+
     return 0;
   } catch (error) {
     console.error('❌ Error populating rounds:', error.message);
@@ -145,9 +145,9 @@ async function getRoundState(limit = 10) {
   if (currentRound) {
     const elapsed = now.getTime() - new Date(currentRound.startTime).getTime();
     if (elapsed >= ROUND_DURATION_MS && currentRound.status !== 'complete') {
-      RoundSchedule.updateOne({ roundId: currentRound.roundId }, { status: 'complete' }).catch(() => {});
+      RoundSchedule.updateOne({ roundId: currentRound.roundId }, { status: 'complete' }).catch(() => { });
     } else if (elapsed < ROUND_DURATION_MS && currentRound.status !== 'running') {
-      RoundSchedule.updateOne({ roundId: currentRound.roundId }, { status: 'running' }).catch(() => {});
+      RoundSchedule.updateOne({ roundId: currentRound.roundId }, { status: 'running' }).catch(() => { });
     }
   }
 
