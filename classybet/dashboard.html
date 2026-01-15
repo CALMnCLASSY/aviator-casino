@@ -1,11 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ClassyBet Dashboard - Welcome</title>
     <link rel="icon" type="image/svg+xml" href="images/classybetaviator-logo.svg">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+        integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
+        crossorigin="anonymous" referrerpolicy="no-referrer">
+    <link rel="stylesheet" href="style.css">
     <style>
         * {
             margin: 0;
@@ -14,8 +19,8 @@
         }
 
         :root {
-            --primary-green: #30fcbe;
-            --primary-dark: #1e9e6b;
+            --primary-green: #fb024c;
+            --primary-dark: #b80031;
             --background-dark: #0b0f16;
             --card-background: rgba(14, 19, 27, 0.92);
             --border-color: rgba(255, 255, 255, 0.08);
@@ -28,10 +33,10 @@
 
         body {
             font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: radial-gradient(circle at 20% 20%, rgba(48, 252, 190, 0.08), transparent 55%),
-                        radial-gradient(circle at 80% 10%, rgba(255, 107, 107, 0.06), transparent 50%),
-                        radial-gradient(circle at 50% 80%, rgba(255, 176, 55, 0.05), transparent 45%),
-                        linear-gradient(140deg, #05080f 0%, #0e1724 45%, #05080f 100%);
+            background: radial-gradient(circle at 20% 20%, rgba(251, 2, 76, 0.08), transparent 55%),
+                radial-gradient(circle at 80% 10%, rgba(255, 107, 107, 0.06), transparent 50%),
+                radial-gradient(circle at 50% 80%, rgba(255, 176, 55, 0.05), transparent 45%),
+                linear-gradient(140deg, #05080f 0%, #0e1724 45%, #05080f 100%);
             min-height: 100vh;
             color: var(--text-light);
             position: relative;
@@ -43,8 +48,8 @@
             position: fixed;
             inset: 0;
             pointer-events: none;
-            background: linear-gradient(120deg, rgba(48, 252, 190, 0.12), transparent 60%),
-                        linear-gradient(300deg, rgba(255, 107, 107, 0.08), transparent 70%);
+            background: linear-gradient(120deg, rgba(251, 2, 76, 0.12), transparent 60%),
+                linear-gradient(300deg, rgba(255, 107, 107, 0.08), transparent 70%);
             mix-blend-mode: screen;
             opacity: 0.35;
         }
@@ -135,14 +140,14 @@
             color: var(--primary-green);
         }
 
-        /* Main Content */
+        /* Main Content - Full Width Grid */
         .dashboard-main {
             flex: 1;
             padding: 40px;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
+            display: flex;
+            /* Changed from grid to flex column for Hero + Grid */
+            flex-direction: column;
             gap: 40px;
-            align-items: start;
         }
 
         /* Welcome Section */
@@ -156,7 +161,7 @@
             border-radius: 20px;
             border: 1px solid var(--border-color);
             background: linear-gradient(155deg, rgba(48, 252, 190, 0.08), transparent 45%),
-                        rgba(13, 18, 27, 0.85);
+                rgba(13, 18, 27, 0.85);
             backdrop-filter: blur(22px);
             padding: 40px;
             box-shadow: 0 28px 45px rgba(0, 0, 0, 0.28);
@@ -244,7 +249,8 @@
             box-shadow: 0 18px 40px rgba(48, 252, 190, 0.35);
         }
 
-        .play-btn span, .play-btn i {
+        .play-btn span,
+        .play-btn i {
             position: relative;
             z-index: 2;
         }
@@ -374,16 +380,16 @@
                 align-items: center;
                 gap: 12px;
             }
-            
+
             .footer-nav-item {
                 width: 100%;
                 text-align: center;
             }
-            
+
             .social-links {
                 gap: 15px;
             }
-            
+
             .footer-logo-img {
                 max-width: 200px;
             }
@@ -528,6 +534,7 @@
                 opacity: 0;
                 transform: translateX(-10px);
             }
+
             to {
                 opacity: 1;
                 transform: translateX(0);
@@ -644,17 +651,22 @@
         }
     </style>
 </head>
+
 <body>
     <div class="dashboard-container">
         <!-- Header -->
         <header class="dashboard-header">
             <div class="header-logo">
-                <img src="images/classybetaviator-logo.svg" alt="ClassyBet Logo">
+                <img src="images/classybetcasino-logo.jpeg" alt="ClassyBet Logo">
             </div>
             <div class="header-user-info">
                 <div class="user-balance">
-                    <div class="balance-label">Your Balance</div>
+                    <div class="balance-label"><span id="userName" style="color: var(--primary-green);"></span></div>
                     <div class="balance-amount" id="headerBalance">KES 0.00</div>
+                    <button class="header-btn" onclick="showDepositModal()"
+                        style="background: var(--primary-green); color: #000; margin-left: 10px; font-weight: bold;">
+                        <i class="fas fa-wallet"></i> Deposit
+                    </button>
                 </div>
                 <div class="header-actions">
                     <button class="header-btn" onclick="goToProfile()">
@@ -671,24 +683,153 @@
 
         <!-- Main Content -->
         <main class="dashboard-main">
-            <!-- Welcome Section -->
-            <section class="welcome-section">
-                <div class="welcome-card">
-                    <h1 class="welcome-title">Welcome Back, <span id="userName">Player</span>!</h1>
-                    <p class="welcome-subtitle">Ready to take flight? Launch into the action and experience premium Aviator gaming with real-time multiplayer excitement, instant payouts, and exclusive rewards.</p>
-                    
-                    <div class="action-buttons">
-                        <button class="action-btn play-btn" onclick="playGame()">
-                            <img src="images/dashboardimg.webp" alt="Aviator Game" class="play-btn-image">
-                            <div class="play-btn-content">
-                                <i class="fas fa-play-circle"></i>
-                                <span>Play Game</span>
-                            </div>
+            <!-- Hero Section -->
+            <section class="hero-section">
+                <div class="hero-content">
+                    <div class="hero-text">
+                        <h1>Premium Casino Experience</h1>
+                        <p>Play the world's most popular crash games, slots, and live casino classics. Instant payouts,
+                            24/7 support, and huge multipliers waiting for you.</p>
+                        <button class="hero-cta" onclick="playGame()">
+                            <i class="fas fa-play"></i> Play Aviator Now
                         </button>
-                        <button class="action-btn profile-btn" onclick="goToProfile()">
-                            <i class="fas fa-user-circle"></i>
-                            View Profile
-                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Game Grid Section -->
+            <section class="games-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-gamepad"></i> Trending Games</h2>
+                    <div class="search-bar">
+                        <i class="fas fa-search"></i>
+                        <input type="text" placeholder="Search games...">
+                    </div>
+                </div>
+
+                <div class="games-grid">
+                    <!-- 1. Aviator (Premium/Featured) -->
+                    <div class="game-card featured" onclick="playGame()">
+                        <div class="game-badge">HOT</div>
+                        <img src="images/aviatorimage.webp" alt="Aviator" class="game-img">
+                        <div class="game-overlay">
+                            <button class="play-btn-small"><i class="fas fa-play"></i> Play</button>
+                        </div>
+                        <div class="game-info">
+                            <h3>Aviator</h3>
+                            <span>Spribe</span>
+                        </div>
+                    </div>
+
+                    <!-- 2. JetX -->
+                    <div class="game-card" onclick="window.location.href='jetx.html'">
+                        <div class="game-badge new">NEW</div>
+                        <img src="images/jetximg.jpeg" alt="JetX" class="game-img">
+                        <div class="game-overlay">
+                            <button class="play-btn-small"><i class="fas fa-play"></i> Play</button>
+                        </div>
+                        <div class="game-info">
+                            <h3>JetX</h3>
+                            <span>SmartSoft</span>
+                        </div>
+                    </div>
+
+                    <!-- 3. Ultimate Hot -->
+                    <div class="game-card" onclick="window.location.href='ultimate-hot.html'">
+                        <div class="game-badge popular">POPULAR</div>
+                        <img src="images/ultimatehotimg.jpeg" alt="Ultimate Hot" class="game-img">
+                        <div class="game-overlay">
+                            <button class="play-btn-small"><i class="fas fa-play"></i> Play</button>
+                        </div>
+                        <div class="game-info">
+                            <h3>Ultimate Hot</h3>
+                            <span>EGT</span>
+                        </div>
+                    </div>
+
+                    <!-- 4. Roulette -->
+                    <div class="game-card" onclick="window.location.href='roulette.html'">
+                        <img src="images/rouletteimg.jpeg" alt="Roulette" class="game-img">
+                        <div class="game-overlay">
+                            <button class="play-btn-small"><i class="fas fa-play"></i> Play</button>
+                        </div>
+                        <div class="game-info">
+                            <h3>European Roulette</h3>
+                            <span>Evolution</span>
+                        </div>
+                    </div>
+
+                    <!-- 5. Blackjack -->
+                    <div class="game-card" onclick="window.location.href='blackjack.html'">
+                        <img src="images/blackjackimg.jpeg" alt="Blackjack" class="game-img">
+                        <div class="game-overlay">
+                            <button class="play-btn-small"><i class="fas fa-play"></i> Play</button>
+                        </div>
+                        <div class="game-info">
+                            <h3>Classic Blackjack</h3>
+                            <span>Evolution</span>
+                        </div>
+                    </div>
+
+                    <!-- 6. Slot 777 -->
+                    <div class="game-card" onclick="window.location.href='slot-777.html'">
+                        <img src="images/slots777img.jpeg" alt="777" class="game-img">
+                        <div class="game-overlay">
+                            <button class="play-btn-small"><i class="fas fa-play"></i> Play</button>
+                        </div>
+                        <div class="game-info">
+                            <h3>Super 777</h3>
+                            <span>Pragmatic</span>
+                        </div>
+                    </div>
+
+                    <!-- 7. Mines -->
+                    <div class="game-card" onclick="window.location.href='mines.html'">
+                        <div class="game-badge new">NEW</div>
+                        <img src="images/minesimg.jpeg" alt="Mines" class="game-img">
+                        <div class="game-overlay">
+                            <button class="play-btn-small"><i class="fas fa-play"></i> Play</button>
+                        </div>
+                        <div class="game-info">
+                            <h3>Mines</h3>
+                            <span>Spribe</span>
+                        </div>
+                    </div>
+
+                    <!-- 8. Plinko -->
+                    <div class="game-card" onclick="window.location.href='plinko.html'">
+                        <img src="images/plinkoimg.jpeg" alt="Plinko" class="game-img">
+                        <div class="game-overlay">
+                            <button class="play-btn-small"><i class="fas fa-play"></i> Play</button>
+                        </div>
+                        <div class="game-info">
+                            <h3>Plinko</h3>
+                            <span>Spribe</span>
+                        </div>
+                    </div>
+
+                    <!-- 9. Keno -->
+                    <div class="game-card" onclick="window.location.href='keno.html'">
+                        <img src="images/kenoimg.jpeg" alt="Keno" class="game-img">
+                        <div class="game-overlay">
+                            <button class="play-btn-small"><i class="fas fa-play"></i> Play</button>
+                        </div>
+                        <div class="game-info">
+                            <h3>Keno</h3>
+                            <span>Turbo Games</span>
+                        </div>
+                    </div>
+
+                    <!-- 10. Baccarat -->
+                    <div class="game-card" onclick="window.location.href='baccarat.html'">
+                        <img src="images/baccaratimg.jpeg" alt="Baccarat" class="game-img">
+                        <div class="game-overlay">
+                            <button class="play-btn-small"><i class="fas fa-play"></i> Play</button>
+                        </div>
+                        <div class="game-info">
+                            <h3>Speed Baccarat</h3>
+                            <span>Evolution</span>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -703,7 +844,7 @@
                         </div>
                         <p class="winners-subtitle">Top players cashing out big this week</p>
                     </div>
-                    
+
                     <div class="winners-container" id="winnersContainer">
                         <!-- Winners will be populated here -->
                     </div>
@@ -711,81 +852,82 @@
             </section>
 
             <!-- Site Footer -->
-    <footer class="site-footer">
-        <div class="container py-4">
-            <div class="footer-content">
-                
-                <div class="footer-logo" style="display: inline-block; padding: 10px; border-radius: 5px;">
-                    <img src="images/classybetaviator-logo.svg" class="footer-logo-img" style="max-width: 250px; height: auto;" alt="ClassyBet Aviator Logo"/>
-                </div>
+            <footer class="site-footer">
+                <div class="container py-4">
+                    <div class="footer-content">
 
-                <ul class="footer-nav">
-                    <li class="footer-nav-item">
-                        <a href="#" class="footer-nav-link" onclick="return false;">
-                            Responsible Gambling
-                        </a>
-                    </li>
-                    <li class="footer-nav-item">
-                        <a href="#" class="footer-nav-link" onclick="return false;">
-                            Contact Us
-                        </a>
-                    </li>
-                    <li class="footer-nav-item">
-                        <a href="#" class="footer-nav-link" onclick="return false;">
-                            Terms & Conditions
-                        </a>
-                    </li>
-                    <li class="footer-nav-item">
-                        <a href="#" class="footer-nav-link" onclick="return false;">
-                            Privacy Policy
-                        </a>
-                    </li>
-                    <li class="footer-nav-item">
-                        <a href="#" class="footer-nav-link" onclick="return false;">
-                            Careers
-                        </a>
-                    </li>
-                    <li class="footer-nav-item">
-                        <a href="#" class="footer-nav-link" onclick="return false;">
-                            FAQs
-                        </a>
-                    </li>
-                    <li class="footer-nav-item">
-                        <a href="#" class="footer-nav-link" onclick="return false;">
-                            Disputes
-                        </a>
-                    </li>
-                    <li class="footer-nav-item">
-                        <a href="#" class="footer-nav-link" onclick="return false;">
-                            Refund Policy
-                        </a>
-                    </li>
-                </ul>
+                        <div class="footer-logo" style="display: inline-block; padding: 10px; border-radius: 5px;">
+                            <img src="images/classybetaviator-logo.svg" class="footer-logo-img"
+                                style="max-width: 250px; height: auto;" alt="ClassyBet Aviator Logo" />
+                        </div>
 
-                <div class="social-links">
-                    <a href="#" class="social-link">
-                        <i class="fab fa-facebook-f"></i>
-                    </a>
-                    <a href="#" class="social-link">
-                        <i class="fab fa-twitter"></i>
-                    </a>
-                    <a href="#" class="social-link">
-                        <i class="fab fa-instagram"></i>
-                    </a>
-                    <a href="#" class="social-link">
-                        <i class="fab fa-telegram"></i>
-                    </a>
-                </div>
+                        <ul class="footer-nav">
+                            <li class="footer-nav-item">
+                                <a href="#" class="footer-nav-link" onclick="return false;">
+                                    Responsible Gambling
+                                </a>
+                            </li>
+                            <li class="footer-nav-item">
+                                <a href="#" class="footer-nav-link" onclick="return false;">
+                                    Contact Us
+                                </a>
+                            </li>
+                            <li class="footer-nav-item">
+                                <a href="#" class="footer-nav-link" onclick="return false;">
+                                    Terms & Conditions
+                                </a>
+                            </li>
+                            <li class="footer-nav-item">
+                                <a href="#" class="footer-nav-link" onclick="return false;">
+                                    Privacy Policy
+                                </a>
+                            </li>
+                            <li class="footer-nav-item">
+                                <a href="#" class="footer-nav-link" onclick="return false;">
+                                    Careers
+                                </a>
+                            </li>
+                            <li class="footer-nav-item">
+                                <a href="#" class="footer-nav-link" onclick="return false;">
+                                    FAQs
+                                </a>
+                            </li>
+                            <li class="footer-nav-item">
+                                <a href="#" class="footer-nav-link" onclick="return false;">
+                                    Disputes
+                                </a>
+                            </li>
+                            <li class="footer-nav-item">
+                                <a href="#" class="footer-nav-link" onclick="return false;">
+                                    Refund Policy
+                                </a>
+                            </li>
+                        </ul>
 
-                <div class="footer-legal">
-                    <div class="age-restriction">
-                        <span>18+</span>
+                        <div class="social-links">
+                            <a href="#" class="social-link">
+                                <i class="fab fa-facebook-f"></i>
+                            </a>
+                            <a href="#" class="social-link">
+                                <i class="fab fa-twitter"></i>
+                            </a>
+                            <a href="#" class="social-link">
+                                <i class="fab fa-instagram"></i>
+                            </a>
+                            <a href="#" class="social-link">
+                                <i class="fab fa-telegram"></i>
+                            </a>
+                        </div>
+
+                        <div class="footer-legal">
+                            <div class="age-restriction">
+                                <span>18+</span>
+                            </div>
+                            <p class="copyright">Copyright © 2025 ClassyBet Aviator. All rights reserved.</p>
+                        </div>
                     </div>
-                    <p class="copyright">Copyright © 2025 ClassyBet Aviator. All rights reserved.</p>
                 </div>
-            </div>
-        </div>
-    </footer>
+            </footer>
         </main>
     </div>
 
@@ -822,16 +964,16 @@
                         'Authorization': `Bearer ${token}`
                     }
                 })
-                .then(response => {
-                    if (!response.ok) {
-                        localStorage.removeItem('user_token');
-                        localStorage.removeItem('userData');
-                        window.location.href = 'index.html';
-                    }
-                })
-                .catch(error => {
-                    console.error('Auth verification failed:', error);
-                });
+                    .then(response => {
+                        if (!response.ok) {
+                            localStorage.removeItem('user_token');
+                            localStorage.removeItem('userData');
+                            window.location.href = 'index.html';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Auth verification failed:', error);
+                    });
             }
 
             loadUserData() {
@@ -851,18 +993,20 @@
                 const winnersContainer = document.getElementById('winnersContainer');
                 winnersContainer.innerHTML = '';
 
+                const games = ['Aviator', 'JetX', 'Mines', 'Blackjack', 'Roulette', 'Slots'];
+
                 // Generate 8 random winners
                 const winners = [];
                 for (let i = 0; i < 8; i++) {
                     const randomDigits = Math.floor(Math.random() * 100).toString().padStart(2, '0');
                     const userName = `2**${randomDigits}`;
-                    const amount = (Math.random() * 730000 + 70000).toFixed(2);
-                    const multiplier = (Math.random() * 160 + 40).toFixed(2); // Now between 40x and 200x
+                    const amount = (Math.random() * 50000 + 1000).toFixed(0);
+                    const game = games[Math.floor(Math.random() * games.length)];
 
                     winners.push({
                         name: userName,
                         amount: parseFloat(amount),
-                        multiplier: parseFloat(multiplier)
+                        game: game
                     });
                 }
 
@@ -884,12 +1028,12 @@
                     </div>
                     <div class="winner-stats">
                         <div class="stat">
-                            <div class="stat-label">Cashed Out</div>
-                            <div class="stat-value">KES ${winner.amount.toLocaleString('en-US', {maximumFractionDigits: 0})}</div>
+                            <div class="stat-label">Game</div>
+                            <div class="stat-value" style="color: #fff;">${winner.game}</div>
                         </div>
                         <div class="stat">
-                            <div class="stat-label">Multiplier</div>
-                            <div class="stat-value">${winner.multiplier}x</div>
+                            <div class="stat-label">Won</div>
+                            <div class="stat-value">KES ${winner.amount.toLocaleString('en-US')}</div>
                         </div>
                     </div>
                 `;
@@ -927,8 +1071,212 @@
             }
         }
 
+        function showDepositModal() {
+            // Track deposit tab click
+            const token = localStorage.getItem('user_token');
+            const isLocalhost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+            const apiBase = isLocalhost ? 'http://localhost:3001' : 'https://aviator-casino.onrender.com';
+
+            if (token) {
+                fetch(`${apiBase}/api/payments/deposit-tab-click`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                }).catch(err => console.error('Failed to track deposit click:', err)); // Non-blocking
+            }
+
+            // Check if AuthManager is available (it should be loaded from auth.js)
+            if (window.AuthManager) {
+                const modal = document.getElementById('deposit-modal');
+                if (modal) {
+                    // Populate phone number if available
+                    const userData = localStorage.getItem('userData');
+                    if (userData) {
+                        try {
+                            const user = JSON.parse(userData);
+                            const phoneInput = document.getElementById('deposit-phone');
+                            if (phoneInput && user.phone) {
+                                phoneInput.value = user.phone;
+                            }
+                        } catch (e) { }
+                    }
+                    modal.style.display = 'flex';
+                } else {
+                    alert('Deposit feature unavailable.');
+                }
+            } else {
+                const modal = document.getElementById('deposit-modal');
+                if (modal) {
+                    // Populate phone number if available
+                    const userData = localStorage.getItem('userData');
+                    if (userData) {
+                        try {
+                            const user = JSON.parse(userData);
+                            const phoneInput = document.getElementById('deposit-phone');
+                            if (phoneInput && user.phone) {
+                                phoneInput.value = user.phone;
+                            }
+                        } catch (e) { }
+                    }
+                    modal.style.display = 'flex';
+                } else {
+                    alert('Deposit feature unavailable.');
+                }
+            }
+        }
+
         // Initialize dashboard
         const dashboard = new Dashboard();
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                    }, err => {
+                        console.log('ServiceWorker registration failed: ', err);
+                    });
+            });
+        }
+    </script>
+    <!-- Deposit Modal -->
+    <div id="deposit-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-plus-circle"></i> Deposit Funds</h3>
+                <span class="close" onclick="closeModal('deposit-modal')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="deposit-error" class="error-message" style="display: none;"></div>
+                <div id="deposit-success" class="success-message" style="display: none;"></div>
+
+                <form id="deposit-form" onsubmit="handleDeposit(event)">
+                    <div class="form-group">
+                        <label for="deposit-amount">Amount (KES)</label>
+                        <strong style="color: #a37556; display: block; margin-bottom: 10px;">Get KES 250 Free Bet on
+                            your First Deposit</strong>
+                        <input type="number" id="deposit-amount" class="form-control" min="200" max="150000" step="1"
+                            required>
+                        <small style="color: #888;">Minimum: KES 200, Maximum: KES 150,000</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="deposit-phone">M-Pesa Phone Number</label>
+                        <input type="tel" id="deposit-phone" class="form-control" placeholder="2547XXXXXXXX" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 15px;">
+                        <i class="fas fa-mobile-alt"></i> Deposit
+                    </button>
+                    <p style="text-align: center; margin-top: 10px; font-size: 0.9em; color: #888;">Deposit using M-Pesa
+                        STK Push</p>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game Likes Logic
+        document.addEventListener('DOMContentLoaded', () => {
+            initGameLikes();
+        });
+
+        function initGameLikes() {
+            const gameCards = document.querySelectorAll('.game-card');
+
+            gameCards.forEach(card => {
+                if (card.querySelector('.game-likes')) return;
+
+                const gameTitleEl = card.querySelector('h3');
+                const gameName = gameTitleEl ? gameTitleEl.innerText : '';
+
+                let likeCount;
+                if (gameName.includes('Aviator')) {
+                    // Aviator: 60k - 90k
+                    likeCount = Math.floor(Math.random() * (90000 - 60000 + 1)) + 60000;
+                } else {
+                    // Others: 10k - 30k
+                    likeCount = Math.floor(Math.random() * (30000 - 10000 + 1)) + 10000;
+                }
+
+                const formattedLikes = (likeCount / 1000).toFixed(1) + 'K';
+
+                const likesEl = document.createElement('div');
+                likesEl.className = 'game-likes';
+                likesEl.innerHTML = `<i class="fas fa-heart" style="color: #ff4d4d; margin-right: 4px;"></i> ${formattedLikes}`;
+                likesEl.style.cssText = `
+                    position: absolute;
+                    bottom: 15px;
+                    right: 15px;
+                    color: #fff;
+                    font-size: 0.85em;
+                    background: rgba(0, 0, 0, 0.6);
+                    padding: 4px 8px;
+                    border-radius: 12px;
+                    display: flex;
+                    align-items: center;
+                    z-index: 2;
+                `;
+
+                card.style.position = 'relative';
+                card.appendChild(likesEl);
+            });
+        }
+
+        // Deposit Handling
+        async function handleDeposit(e) {
+            e.preventDefault();
+            const btn = e.target.querySelector('button[type="submit"]');
+            const originalText = btn.innerHTML;
+
+            // Get form values
+            const amount = document.getElementById('deposit-amount').value;
+            const phone = document.getElementById('deposit-phone').value;
+
+            // Get auth info
+            const token = localStorage.getItem('user_token');
+            const isLocalhost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+            const apiBase = isLocalhost ? 'http://localhost:3001' : 'https://aviator-casino.onrender.com';
+
+            if (!token) {
+                alert('Please login to deposit.');
+                return;
+            }
+
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+            btn.disabled = true;
+
+            try {
+                const response = await fetch(`${apiBase}/api/payments/stk-push`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        amount: amount,
+                        phoneNumber: phone
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert('STK Push sent to your phone! Please complete the payment.');
+                    // Close modal
+                    const modal = document.getElementById('deposit-modal');
+                    if (modal) modal.style.display = 'none';
+                } else {
+                    alert(data.error || 'Failed to initiate deposit. Please try again.');
+                }
+            } catch (error) {
+                console.error('Deposit error:', error);
+                alert('Network error. Please try again.');
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
     </script>
 </body>
+
 </html>

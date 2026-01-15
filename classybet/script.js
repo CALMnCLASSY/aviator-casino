@@ -36,19 +36,19 @@ class AviatorGame {
         this.gameState = 'waiting'; // 'waiting', 'flying', 'crashed'
         this.roundNumber = 12345;
         this.lastUpdateTime = 0; // For controlling multiplier update frequency
-        
+
         // Bet history arrays
         this.betHistory = []; // Personal bet history
         this.globalBetHistory = []; // All players' bets
         this.roundHistory = []; // History of rounds
-        
+
         // Betting state - will be set by authentication system
         this.playerBalance = 0;
         this.bets = {
             bet1: { placed: false, pending: false, amount: 0, cashedOut: false, multiplier: 0, winnings: 0, apiId: null },
             bet2: { placed: false, pending: false, amount: 0, cashedOut: false, multiplier: 0, winnings: 0, apiId: null }
         };
-        
+
         // Auto-betting state
         this.autoBetState = {
             bet1: { active: false, count: 0, wins: 0, profit: 0 },
@@ -71,7 +71,7 @@ class AviatorGame {
         this.setupEventListeners();
         this.updateBalance();
         this.updateCounterDisplay();
-        
+
         // Auto-start game loop after initialization
         if (this.autoStartEnabled && typeof this.initializeGameLoop === 'function') {
             this.initializeGameLoop();
@@ -92,14 +92,14 @@ class AviatorGame {
         // Preserve user balance from localStorage on initialization
         this.initializeUserBalance();
     }
-    
+
     // Initialize user balance from session data
     async initializeUserBalance() {
         try {
             const userData = localStorage.getItem('userData');
             const isDemo = localStorage.getItem('isDemo') === 'true';
             const token = localStorage.getItem('user_token');
-            
+
             // Set initial balance from localStorage to prevent UI flicker
             if (userData) {
                 const user = JSON.parse(userData);
@@ -107,24 +107,24 @@ class AviatorGame {
                 this.playerBalance = user.balance || (isDemo ? 3000 : 0);
                 this.updateBalance(); // Update UI immediately
             }
-            
+
             // Then sync with server for real users
             if (!isDemo && token) {
                 const response = await fetch(`${API_BASE}/api/auth/profile`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
-                
+
                 if (response.ok) {
                     const data = await response.json();
                     this.playerBalance = data.balance;
-                    
+
                     // Update localStorage
                     if (userData) {
                         const user = JSON.parse(userData);
                         user.balance = data.balance;
                         localStorage.setItem('userData', JSON.stringify(user));
                     }
-                    
+
                     // Update UI with server balance
                     this.updateBalance();
                     console.log('Real user balance loaded:', this.playerBalance);
@@ -137,17 +137,17 @@ class AviatorGame {
             // Keep using localStorage balance if server sync fails
         }
     }
-    
+
     // Method to safely update player balance and sync with server
     async updatePlayerBalance(newBalance, reason = 'update') {
         const isDemo = localStorage.getItem('isDemo') === 'true';
-        
+
         // Ensure balance doesn't go below 0
         newBalance = Math.max(0, newBalance);
-        
+
         // Always update the local balance immediately
         this.playerBalance = newBalance;
-        
+
         // Update localStorage for all users
         const userData = localStorage.getItem('userData');
         if (userData) {
@@ -155,10 +155,10 @@ class AviatorGame {
             user.balance = newBalance;
             localStorage.setItem('userData', JSON.stringify(user));
         }
-        
+
         // Update UI
         this.updateBalance();
-        
+
         // For real users, sync with server
         if (!isDemo) {
             const token = localStorage.getItem('user_token');
@@ -173,17 +173,17 @@ class AviatorGame {
                         },
                         body: JSON.stringify({ balance: newBalance, reason })
                     });
-                    
+
                     if (!response.ok) {
                         console.error('Failed to sync balance with server');
                     }
-                    
+
                     // Create transaction record
-                    const transactionType = reason === 'deposit' ? 'deposit' : 
-                                          reason === 'bet' ? 'bet' :
-                                          reason === 'cashout' ? 'win' :
-                                          reason === 'bet_cancel' ? 'refund' : 'other';
-                                          
+                    const transactionType = reason === 'deposit' ? 'deposit' :
+                        reason === 'bet' ? 'bet' :
+                            reason === 'cashout' ? 'win' :
+                                reason === 'bet_cancel' ? 'refund' : 'other';
+
                     await fetch(`${API_BASE}/api/game/record-transaction`, {
                         method: 'POST',
                         headers: {
@@ -199,13 +199,13 @@ class AviatorGame {
                             userId: this.currentUser._id // Add user ID
                         })
                     });
-                    
+
                 } catch (error) {
                     console.error('Error syncing with server:', error);
                 }
             }
         }
-        
+
         console.log(`${isDemo ? 'Demo' : 'Real'} user balance updated to ${newBalance} (${reason})`);
     }
 
@@ -243,11 +243,11 @@ class AviatorGame {
     updateCounterGlow(counterElement, multiplier) {
         // Remove all existing glow classes from counter
         counterElement.classList.remove('blue-glow', 'purple-glow', 'pink-glow');
-        
+
         // Get game container for canvas-wide glow effects
         const gameContainer = document.querySelector('.game-container') || document.body;
         gameContainer.classList.remove('blue-glow', 'purple-glow', 'pink-glow');
-        
+
         // Apply color glow based on multiplier ranges
         if (multiplier >= 1.00 && multiplier < 2.00) {
             counterElement.classList.add('blue-glow');
@@ -266,7 +266,7 @@ class AviatorGame {
             const isMobile = window.innerWidth <= 768;
             const leftSidebar = document.getElementById('left-sidebar');
             const mobileBets = document.getElementById('mobile-bets-section');
-            
+
             if (isMobile) {
                 // Mobile: Show sidebar at bottom, hide mobile bets section
                 if (leftSidebar) leftSidebar.style.display = 'block';
@@ -277,10 +277,10 @@ class AviatorGame {
                 if (mobileBets) mobileBets.style.display = 'none';
             }
         };
-        
+
         // Initial call
         handleResize();
-        
+
         // Add resize listener with debouncing
         let resizeTimeout;
         window.addEventListener('resize', () => {
@@ -292,25 +292,25 @@ class AviatorGame {
     setupGameMenu() {
         const gameMenuBtn = document.getElementById('game-menu-btn');
         const gameMenu = document.getElementById('game-menu');
-        
+
         if (!gameMenuBtn || !gameMenu) {
             console.error('Game menu elements not found');
             return;
         }
-        
+
         // Ensure menu starts hidden
         gameMenu.style.display = 'none';
         gameMenu.classList.remove('show');
-        
+
         gameMenuBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             e.preventDefault();
-            
+
             console.log('Menu button clicked');
-            
+
             // Toggle the menu visibility
             const isVisible = gameMenu.classList.contains('show');
-            
+
             if (isVisible) {
                 gameMenu.classList.remove('show');
                 setTimeout(() => {
@@ -322,7 +322,7 @@ class AviatorGame {
                 gameMenu.offsetHeight;
                 gameMenu.classList.add('show');
             }
-            
+
             console.log('Menu visibility toggled, now showing:', !isVisible);
         });
 
@@ -344,15 +344,15 @@ class AviatorGame {
             if (menuItem) {
                 e.preventDefault();
                 e.stopPropagation();
-                
+
                 const action = menuItem.dataset.action;
-                
+
                 // Close menu immediately for better UX
                 gameMenu.classList.remove('show');
                 setTimeout(() => {
                     gameMenu.style.display = 'none';
                 }, 300);
-                
+
                 // Handle the action after a small delay to ensure menu is hidden
                 setTimeout(() => {
                     this.handleMenuAction(action);
@@ -397,11 +397,11 @@ class AviatorGame {
                 this.openModal('free-bets-modal');
                 break;
         }
-        
+
         // Close menu after action
         document.getElementById('game-menu').classList.remove('show');
     }
-    
+
     async handleDepositClick() {
         try {
             // Track deposit tab click
@@ -415,7 +415,7 @@ class AviatorGame {
                     }
                 }).catch(err => console.log('Deposit tab tracking failed:', err));
             }
-            
+
             // Show deposit modal
             const depositModal = document.getElementById('deposit-modal');
             if (depositModal) {
@@ -443,7 +443,7 @@ class AviatorGame {
         const modal = document.getElementById(modalId);
         if (modal) {
             modal.style.display = 'flex';
-            
+
             // Generate new seeds for provably fair modal
             if (modalId === 'provably-fair-modal') {
                 this.generateNewSeeds();
@@ -463,7 +463,7 @@ class AviatorGame {
         const randomSeed = this.generateRandomString(20);
         const manualSeed = this.generateRandomString(22) + '-0';
         const serverSeed = this.generateRandomHash();
-        
+
         document.getElementById('random-seed').textContent = randomSeed;
         document.getElementById('manual-seed').textContent = manualSeed;
         document.getElementById('server-seed').textContent = serverSeed;
@@ -549,7 +549,7 @@ class AviatorGame {
         const modal = document.getElementById('round-info-modal');
         const currentTime = new Date();
         const timeString = `${currentTime.getHours().toString().padStart(2, '0')}:${currentTime.getMinutes().toString().padStart(2, '0')}:${currentTime.getSeconds().toString().padStart(2, '0')}`;
-        
+
         // Generate random hash values (simulating provably fair hashes)
         const generateHash = (length) => {
             const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -559,7 +559,7 @@ class AviatorGame {
             }
             return result;
         };
-        
+
         // Update modal content
         document.getElementById('modal-round-number').textContent = roundNumber;
         document.getElementById('modal-multiplier').textContent = `${multiplier.toFixed(2)}x`;
@@ -568,24 +568,24 @@ class AviatorGame {
         document.getElementById('modal-hash2').textContent = generateHash(20);
         document.getElementById('modal-hash3').textContent = generateHash(20);
         document.getElementById('modal-hash4').textContent = generateHash(20);
-        
+
         // Show modal
         modal.style.display = 'block';
-        
+
         // Add event listeners for closing modal
         const closeBtn = modal.querySelector('.close-modal');
         const modalContent = modal.querySelector('.modal-content');
-        
+
         closeBtn.onclick = () => {
             modal.style.display = 'none';
         };
-        
+
         modal.onclick = (e) => {
             if (e.target === modal) {
                 modal.style.display = 'none';
             }
         };
-        
+
         // Add copy functionality to hash items
         modal.querySelectorAll('.hash-item').forEach(item => {
             item.onclick = () => {
@@ -627,13 +627,13 @@ class AviatorGame {
     setupShowMoreRounds() {
         const showMoreBtn = document.getElementById('show-more-rounds');
         const hiddenRounds = document.getElementById('hidden-rounds');
-        
+
         showMoreBtn.addEventListener('click', () => {
             hiddenRounds.classList.toggle('show');
             const icon = showMoreBtn.querySelector('i');
             icon.className = hiddenRounds.classList.contains('show') ? 'fas fa-times' : 'fas fa-ellipsis-h';
         });
-        
+
         // Setup show more bets functionality
         this.setupShowMoreBets();
     }
@@ -655,14 +655,14 @@ class AviatorGame {
             margin-top: 10px;
             transition: all 0.3s ease;
         `;
-        
+
         allBetsContainer.parentNode.appendChild(showMoreBetsBtn);
-        
+
         showMoreBetsBtn.addEventListener('click', () => {
             const isExpanded = allBetsContainer.classList.contains('expanded');
             allBetsContainer.classList.toggle('expanded');
-            showMoreBetsBtn.innerHTML = isExpanded ? 
-                '<i class="fas fa-chevron-up"></i> Show Less' : 
+            showMoreBetsBtn.innerHTML = isExpanded ?
+                '<i class="fas fa-chevron-up"></i> Show Less' :
                 '<i class="fas fa-chevron-down"></i> Show All Bets';
         });
     }
@@ -672,10 +672,10 @@ class AviatorGame {
         const playerName = this.generateRandomPlayerName();
         const avatar = this.pickRandomAvatar();
         const betAmount = (Math.random() * 200 + 10).toFixed(2);
-        
+
         // Randomly decide if this bet will cash out or crash
         const willCashOut = Math.random() > 0.3; // 70% chance to cash out
-        
+
         const bet = {
             player: playerName,
             avatar: avatar,
@@ -687,7 +687,7 @@ class AviatorGame {
             status: '',
             targetCashout: null // Store the target multiplier for this bet
         };
-        
+
         // Assign a target cashout multiplier for bets that will cash out
         // Only during waiting phase - they'll cash out when multiplier reaches target during flight
         if (willCashOut) {
@@ -711,7 +711,7 @@ class AviatorGame {
         this.allBetsData.unshift(bet);
         this.allBetsHistory.unshift(bet);
         this.betCount++;
-        
+
         // Keep a larger visible window for more realistic display
         // No longer limiting allBetsData array size - allow it to grow as needed
 
@@ -740,20 +740,20 @@ class AviatorGame {
         this.secondBetPanel = document.getElementById('second-bet-panel');
         this.allBetsContainer = document.getElementById('all-bets');
         this.mainContainer = document.getElementById('main-container');
-        
+
         // Mode toggles
         this.modeToggle1 = document.getElementById('mode-toggle-1');
         this.modeToggle2 = document.getElementById('mode-toggle-2');
         this.autoFeatures1 = document.getElementById('auto-features-1');
         this.autoFeatures2 = document.getElementById('auto-features-2');
-        
+
         // Load stored histories
         this.loadBetHistory();
         this.loadRoundHistory();
-        
+
         this.messageElement.textContent = 'Wait for the next round';
         this.updateBalance();
-        
+
         // Ensure buttons are in proper initial state
         this.resetButtonStates();
     }
@@ -766,7 +766,7 @@ class AviatorGame {
         if (this.betButton2) {
             this.betButton2.addEventListener('click', () => this.handleBet('bet2'));
         }
-        
+
         // Add/Remove bet buttons (inline)
         if (this.addBetButton) {
             this.addBetButton.addEventListener('click', () => this.showSecondBet());
@@ -774,7 +774,7 @@ class AviatorGame {
         if (this.removeBetButton) {
             this.removeBetButton.addEventListener('click', () => this.hideSecondBet());
         }
-        
+
         // Mode toggle listeners
         if (this.modeToggle1) {
             this.modeToggle1.addEventListener('change', () => this.toggleAutoFeatures(1));
@@ -782,7 +782,7 @@ class AviatorGame {
         if (this.modeToggle2) {
             this.modeToggle2.addEventListener('change', () => this.toggleAutoFeatures(2));
         }
-        
+
         // Quick amount buttons with enhanced functionality
         document.querySelectorAll('.quick-amount').forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -790,10 +790,10 @@ class AviatorGame {
                 const panel = e.target.closest('.bet-panel');
                 const input = panel.querySelector('input[type="number"]');
                 const currentValue = parseInt(input.value) || 0;
-                
+
                 // Add to current value instead of replacing
                 input.value = currentValue + amount;
-                
+
                 // Trigger change event for any listeners
                 input.dispatchEvent(new Event('input'));
             });
@@ -968,7 +968,7 @@ class AviatorGame {
         bet.cashedOut = true;
         bet.winnings = winnings;
         bet.multiplier = this.counter;
-        
+
         // Add to bet history
         this.addBetToHistory({
             amount: bet.amount,
@@ -977,7 +977,7 @@ class AviatorGame {
             win: winnings,
             status: 'win'
         });
-        
+
         // Save the updated bet history
         this.saveBetHistory();
 
@@ -991,14 +991,14 @@ class AviatorGame {
                     betId: bet.apiId,
                     multiplier: this.counter
                 });
-                
+
                 gameSocket.cashout(userId, bet.apiId, this.counter)
                     .then(result => {
                         console.log('[CASHOUT] Response received:', result);
                         if (result && result.success) {
                             if (result.newBalance !== undefined) {
                                 this.playerBalance = result.newBalance;
-                                
+
                                 // Update localStorage to persist the balance
                                 const userData = localStorage.getItem('userData');
                                 if (userData) {
@@ -1006,7 +1006,7 @@ class AviatorGame {
                                     user.balance = result.newBalance;
                                     localStorage.setItem('userData', JSON.stringify(user));
                                 }
-                                
+
                                 this.updateBalance();
                                 console.log('[CASHOUT] ✅ Balance updated from backend:', result.newBalance);
                             } else {
@@ -1065,8 +1065,8 @@ class AviatorGame {
                     // Get auto-cashout value if enabled
                     const autoToggle = document.getElementById(`auto-bet-toggle-${betType === 'bet1' ? '1' : '2'}`);
                     const autoCashoutInput = document.getElementById(`auto-cashout-value-${betType === 'bet1' ? '1' : '2'}`);
-                    const autoCashoutValue = (autoToggle && autoToggle.checked && autoCashoutInput) 
-                        ? parseFloat(autoCashoutInput.value) 
+                    const autoCashoutValue = (autoToggle && autoToggle.checked && autoCashoutInput)
+                        ? parseFloat(autoCashoutInput.value)
                         : null;
 
                     console.log(`[BET] Activating queued ${betType} via WebSocket:`, {
@@ -1092,7 +1092,7 @@ class AviatorGame {
                         // Update balance from backend response
                         if (result.newBalance !== undefined) {
                             this.playerBalance = result.newBalance;
-                            
+
                             // Update localStorage
                             const userData = localStorage.getItem('userData');
                             if (userData) {
@@ -1100,7 +1100,7 @@ class AviatorGame {
                                 user.balance = result.newBalance;
                                 localStorage.setItem('userData', JSON.stringify(user));
                             }
-                            
+
                             this.updateBalance();
                         }
 
@@ -1137,11 +1137,11 @@ class AviatorGame {
             }
 
             const token = localStorage.getItem('user_token');
-            const isLocal = window.location.hostname === 'localhost' || 
-                           window.location.hostname === '127.0.0.1' ||
-                           window.location.protocol === 'file:';
+            const isLocal = window.location.hostname === 'localhost' ||
+                window.location.hostname === '127.0.0.1' ||
+                window.location.protocol === 'file:';
             const apiBase = isLocal ? 'http://localhost:3001' : 'https://aviator-casino.onrender.com';
-            
+
             const response = await fetch(`${apiBase}/api/game/bet-history`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -1177,13 +1177,13 @@ class AviatorGame {
 
         // Store all bets for filtering
         this.allBets = bets;
-        
+
         const historyHTML = bets.map(bet => {
             const isWon = bet.status === 'cashed_out' || bet.winAmount > 0;
             const statusClass = isWon ? 'won' : 'lost';
             const date = new Date(bet.createdAt);
             const dateStr = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
-            
+
             return `
                 <div class="bet-history-item ${statusClass}" data-status="${statusClass}">
                     <div class="bet-info">
@@ -1199,7 +1199,7 @@ class AviatorGame {
         }).join('');
 
         container.innerHTML = historyHTML;
-        
+
         // Setup filter buttons
         this.setupBetHistoryFilters();
     }
@@ -1221,14 +1221,14 @@ class AviatorGame {
 
         // Store all bets for filtering
         this.allBets = this.betHistory;
-        
+
         const historyHTML = this.betHistory.slice(0, 50).map(bet => {
             const isWon = bet.cashedOut;
             const statusClass = isWon ? 'won' : 'lost';
             const date = bet.placedAt ? new Date(bet.placedAt) : new Date();
             const dateStr = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
             const winAmount = isWon && bet.multiplier ? bet.amount * bet.multiplier : 0;
-            
+
             return `
                 <div class="bet-history-item ${statusClass}" data-status="${statusClass}">
                     <div class="bet-info">
@@ -1244,7 +1244,7 @@ class AviatorGame {
         }).join('');
 
         container.innerHTML = historyHTML;
-        
+
         // Setup filter buttons
         this.setupBetHistoryFilters();
     }
@@ -1257,11 +1257,11 @@ class AviatorGame {
                 filterBtns.forEach(b => b.classList.remove('active'));
                 // Add active class to clicked button
                 btn.classList.add('active');
-                
+
                 // Filter bets
                 const filter = btn.dataset.filter;
                 const allItems = document.querySelectorAll('.bet-history-item');
-                
+
                 allItems.forEach(item => {
                     if (filter === 'all') {
                         item.style.display = 'flex';
@@ -1428,17 +1428,17 @@ class AviatorGame {
                 console.warn('saveBetHistory: betHistory is not defined');
                 return;
             }
-            
+
             const isDemo = localStorage.getItem('isDemo') === 'true';
             const storageKey = isDemo ? 'demo_bet_history' : 'bet_history';
-            
+
             // Ensure we're not saving too much data
             const maxHistoryItems = 100;
             const historyToSave = this.betHistory.slice(0, maxHistoryItems);
-            
+
             localStorage.setItem(storageKey, JSON.stringify(historyToSave));
             console.log('Bet history saved to localStorage:', historyToSave.length, 'items');
-            
+
             // If bet history modal is open, update the display
             const betHistoryModal = document.getElementById('bet-history-modal');
             if (betHistoryModal && betHistoryModal.style.display !== 'none') {
@@ -1454,11 +1454,11 @@ class AviatorGame {
             const isDemo = localStorage.getItem('isDemo') === 'true';
             const storageKey = isDemo ? 'demo_bet_history' : 'bet_history';
             const history = localStorage.getItem(storageKey);
-            
+
             if (history) {
                 this.betHistory = JSON.parse(history);
                 console.log('Loaded bet history from localStorage:', this.betHistory);
-                
+
                 // If bet history modal is open, update the display
                 const betHistoryModal = document.getElementById('bet-history-modal');
                 if (betHistoryModal && betHistoryModal.style.display !== 'none') {
@@ -1472,7 +1472,7 @@ class AviatorGame {
             console.error('Error loading bet history:', error);
             this.betHistory = [];
         }
-        
+
         return this.betHistory;
     }
 
@@ -1497,7 +1497,7 @@ class AviatorGame {
             this.counterDepo.pop();
         }
         localStorage.setItem('roundHistory', JSON.stringify(this.counterDepo));
-        
+
         this.saveRoundHistory();
     }
 
@@ -1753,17 +1753,17 @@ class AviatorGame {
                 hiddenRoundsContainer.innerHTML = `
                     <div class="hidden-rounds-grid">
                         ${hiddenMultipliers.map((i, index) => {
-                            let classNameForCounter = '';
-                            if (i < 2.00) {
-                                classNameForCounter = 'blueBorder';
-                            } else if (i >= 2 && i < 10) {
-                                classNameForCounter = 'purpleBorder';
-                            } else {
-                                classNameForCounter = 'burgundyBorder';
-                            }
-                            const roundNum = this.roundNumber - visibleCount - index;
-                            return `<p class="${classNameForCounter}" data-round="${roundNum}" data-multiplier="${i}" onclick="game.showRoundInfo(${roundNum}, ${i})">${i.toFixed(2)}</p>`;
-                        }).join('')}
+                    let classNameForCounter = '';
+                    if (i < 2.00) {
+                        classNameForCounter = 'blueBorder';
+                    } else if (i >= 2 && i < 10) {
+                        classNameForCounter = 'purpleBorder';
+                    } else {
+                        classNameForCounter = 'burgundyBorder';
+                    }
+                    const roundNum = this.roundNumber - visibleCount - index;
+                    return `<p class="${classNameForCounter}" data-round="${roundNum}" data-multiplier="${i}" onclick="game.showRoundInfo(${roundNum}, ${i})">${i.toFixed(2)}</p>`;
+                }).join('')}
                     </div>
                 `;
                 showMoreBtn.style.display = 'flex';
@@ -1775,101 +1775,101 @@ class AviatorGame {
     }
 
     resetButtonStates() {
-    [this.betButton1, this.betButton2].forEach((button, index) => {
-        if (!button) return;
+        [this.betButton1, this.betButton2].forEach((button, index) => {
+            if (!button) return;
 
-        const betType = index === 0 ? 'bet1' : 'bet2';
-        const bet = this.bets[betType];
+            const betType = index === 0 ? 'bet1' : 'bet2';
+            const bet = this.bets[betType];
 
-        button.textContent = 'BET';
-        button.className = 'bet-button';
-        button.disabled = false;
-        button.removeAttribute('data-disabled-until-reset');
+            button.textContent = 'BET';
+            button.className = 'bet-button';
+            button.disabled = false;
+            button.removeAttribute('data-disabled-until-reset');
 
-        bet.placed = false;
-        bet.cashedOut = false;
-        bet.pending = false;
-        bet.amount = 0;
-        bet.multiplier = 0;
-        bet.winnings = 0;
-    });
+            bet.placed = false;
+            bet.cashedOut = false;
+            bet.pending = false;
+            bet.amount = 0;
+            bet.multiplier = 0;
+            bet.winnings = 0;
+        });
     }
 
     toggleAutoFeatures(betNumber) {
-    const toggle = document.getElementById(`mode-toggle-${betNumber}`);
-    const autoFeatures = document.getElementById(`auto-features-${betNumber}`);
+        const toggle = document.getElementById(`mode-toggle-${betNumber}`);
+        const autoFeatures = document.getElementById(`auto-features-${betNumber}`);
 
-    if (!toggle || !autoFeatures) {
-        return;
-    }
+        if (!toggle || !autoFeatures) {
+            return;
+        }
 
-    if (toggle.checked) {
-        autoFeatures.style.display = 'block';
-    } else {
-        autoFeatures.style.display = 'none';
-        const autoBetToggle = document.getElementById(`auto-bet-toggle-${betNumber}`);
-        const autoCashoutToggle = document.getElementById(`auto-cashout-toggle-${betNumber}`);
-        if (autoBetToggle) autoBetToggle.checked = false;
-        if (autoCashoutToggle) autoCashoutToggle.checked = false;
-    }
+        if (toggle.checked) {
+            autoFeatures.style.display = 'block';
+        } else {
+            autoFeatures.style.display = 'none';
+            const autoBetToggle = document.getElementById(`auto-bet-toggle-${betNumber}`);
+            const autoCashoutToggle = document.getElementById(`auto-cashout-toggle-${betNumber}`);
+            if (autoBetToggle) autoBetToggle.checked = false;
+            if (autoCashoutToggle) autoCashoutToggle.checked = false;
+        }
     }
 
     updateCounterDisplay() {
-    const screenWidth = window.innerWidth;
-    let visibleCount;
+        const screenWidth = window.innerWidth;
+        let visibleCount;
 
-    if (screenWidth >= 1200) {
-        visibleCount = 16;
-    } else if (screenWidth >= 992) {
-        visibleCount = 12;
-    } else if (screenWidth >= 768) {
-        visibleCount = 10;
-    } else {
-        visibleCount = 8;
-    }
-
-    const visibleMultipliers = this.counterDepo.slice(0, visibleCount);
-    const hiddenMultipliers = this.counterDepo.slice(visibleCount);
-
-    this.lastCounters.innerHTML = visibleMultipliers.map((i, index) => {
-        let classNameForCounter = '';
-        if (i < 2.00) {
-            classNameForCounter = 'blueBorder';
-        } else if (i >= 2 && i < 10) {
-            classNameForCounter = 'purpleBorder';
+        if (screenWidth >= 1200) {
+            visibleCount = 16;
+        } else if (screenWidth >= 992) {
+            visibleCount = 12;
+        } else if (screenWidth >= 768) {
+            visibleCount = 10;
         } else {
-            classNameForCounter = 'burgundyBorder';
+            visibleCount = 8;
         }
-        return `<p class="${classNameForCounter}" data-round="${this.roundNumber - index}" data-multiplier="${i}" onclick="game.showRoundInfo(${this.roundNumber - index}, ${i})">${i.toFixed(2)}</p>`;
-    }).join('');
 
-    const hiddenRoundsContainer = document.getElementById('hidden-rounds');
-    const showMoreBtn = document.getElementById('show-more-rounds');
+        const visibleMultipliers = this.counterDepo.slice(0, visibleCount);
+        const hiddenMultipliers = this.counterDepo.slice(visibleCount);
 
-    if (hiddenRoundsContainer && showMoreBtn) {
-        if (hiddenMultipliers.length > 0) {
-            hiddenRoundsContainer.innerHTML = `
+        this.lastCounters.innerHTML = visibleMultipliers.map((i, index) => {
+            let classNameForCounter = '';
+            if (i < 2.00) {
+                classNameForCounter = 'blueBorder';
+            } else if (i >= 2 && i < 10) {
+                classNameForCounter = 'purpleBorder';
+            } else {
+                classNameForCounter = 'burgundyBorder';
+            }
+            return `<p class="${classNameForCounter}" data-round="${this.roundNumber - index}" data-multiplier="${i}" onclick="game.showRoundInfo(${this.roundNumber - index}, ${i})">${i.toFixed(2)}</p>`;
+        }).join('');
+
+        const hiddenRoundsContainer = document.getElementById('hidden-rounds');
+        const showMoreBtn = document.getElementById('show-more-rounds');
+
+        if (hiddenRoundsContainer && showMoreBtn) {
+            if (hiddenMultipliers.length > 0) {
+                hiddenRoundsContainer.innerHTML = `
                 <div class="hidden-rounds-grid">
                     ${hiddenMultipliers.map((i, index) => {
-                        let classNameForCounter = '';
-                        if (i < 2.00) {
-                            classNameForCounter = 'blueBorder';
-                        } else if (i >= 2 && i < 10) {
-                            classNameForCounter = 'purpleBorder';
-                        } else {
-                            classNameForCounter = 'burgundyBorder';
-                        }
-                        const roundNum = this.roundNumber - visibleCount - index;
-                        return `<p class="${classNameForCounter}" data-round="${roundNum}" data-multiplier="${i}" onclick="game.showRoundInfo(${roundNum}, ${i})">${i.toFixed(2)}</p>`;
-                    }).join('')}
+                    let classNameForCounter = '';
+                    if (i < 2.00) {
+                        classNameForCounter = 'blueBorder';
+                    } else if (i >= 2 && i < 10) {
+                        classNameForCounter = 'purpleBorder';
+                    } else {
+                        classNameForCounter = 'burgundyBorder';
+                    }
+                    const roundNum = this.roundNumber - visibleCount - index;
+                    return `<p class="${classNameForCounter}" data-round="${roundNum}" data-multiplier="${i}" onclick="game.showRoundInfo(${roundNum}, ${i})">${i.toFixed(2)}</p>`;
+                }).join('')}
                 </div>
             `;
-            showMoreBtn.style.display = 'flex';
-        } else {
-            hiddenRoundsContainer.innerHTML = '';
-            showMoreBtn.style.display = 'none';
+                showMoreBtn.style.display = 'flex';
+            } else {
+                hiddenRoundsContainer.innerHTML = '';
+                showMoreBtn.style.display = 'none';
+            }
         }
-    }
     }
 
     startGame() {
@@ -1918,11 +1918,11 @@ class AviatorGame {
             } else {
                 increment = 0.085 + (this.counter - 10.0) * 0.015;
             }
-            
+
             this.counter += increment;
             const counterElement = document.getElementById('counter');
             counterElement.textContent = this.counter.toFixed(2) + 'x';
-            
+
             this.updateCounterGlow(counterElement, this.counter);
         }
 
@@ -1931,7 +1931,7 @@ class AviatorGame {
 
         // Update bet buttons with potential cashout amounts
         this.updateBetButtons();
-        
+
         // Process cashouts for bets that reached their target multiplier
         // This will update display automatically when cashouts happen
         this.processCashouts();
@@ -1940,11 +1940,11 @@ class AviatorGame {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
         // Update position - plane flies from bottom left toward top right with realistic trajectory
-        
+
         if (this.counter < this.randomStop) {
             // Check if plane should be in hovering mode (after 60% of canvas width)
             const hoverPoint = this.canvas.width * 0.6;
-            
+
             if (this.x < hoverPoint) {
                 // Phase 1: Horizontal movement for first 5px (more visible horizontal phase)
                 if (this.x < 5) {
@@ -1955,15 +1955,15 @@ class AviatorGame {
                 } else {
                     // Phase 2: Curved upward trajectory moving toward hovering position
                     this.x += this.speedX;
-                    
+
                     // Calculate progress to hover point
-                    const totalDistance = hoverPoint - 5; 
+                    const totalDistance = hoverPoint - 5;
                     const horizontalProgress = Math.min(1, (this.x - 5) / totalDistance);
-                    
+
                     // Create a realistic takeoff curve - steep at start, then gradual
                     const curveHeight = this.startY - 100; // Total height to climb
                     const curveFactor = 1 - Math.pow(1 - horizontalProgress, 1.5); // Steep initial rise
-                    
+
                     this.y = this.startY - (curveHeight * curveFactor);
                     this.pathX = this.x;
                     this.pathY = this.y;
@@ -1980,17 +1980,17 @@ class AviatorGame {
                         this.dotPath.push({ x: this.planeHoverX, y: this.planeHoverY });
                     }
                 }
-                
+
                 // Don't continue extending path during hovering - make path and plane move together
                 // Calculate hover movement
                 this.hoverOffset += 0.05; // Reduced speed of hovering animation for smoother, slower bobbing
                 const hoverAmplitude = 30; // How far up/down to hover
                 const verticalOffset = Math.sin(this.hoverOffset) * hoverAmplitude;
-                
+
                 // Both plane and path endpoint move together in perfect sync
                 this.x = this.planeHoverX;
                 this.y = this.planeHoverY + verticalOffset;
-                
+
                 // Update the last path point to exactly match plane position
                 // Store baseline (no verticalOffset) to avoid double-offset when rendering
                 if (this.dotPath.length > 0) {
@@ -2020,9 +2020,9 @@ class AviatorGame {
         // Check all bets and cash out those that reached their target multiplier
         // Only works during flying phase - prevents premature cashouts
         if (this.gameState !== 'flying') return;
-        
+
         let cashedOutThisFrame = false;
-        
+
         this.allBetsData.forEach(bet => {
             // Only process bets that have a target, aren't cashed out yet, and have empty status
             if (bet.targetCashout && !bet.cashedOut && !bet.crashed && bet.status === '') {
@@ -2037,7 +2037,7 @@ class AviatorGame {
                 }
             }
         });
-        
+
         // Update display if any cashouts happened this frame
         if (cashedOutThisFrame) {
             this.updateAllBetsDisplay();
@@ -2107,22 +2107,22 @@ class AviatorGame {
     handleCrash() {
         this.gameState = 'crashed';
         cancelAnimationFrame(this.animationId);
-        
+
         // Stop background rotation when crashed
         const bgImage = document.getElementById('bg-image');
         if (bgImage) {
             bgImage.classList.remove('rotating');
         }
-        
+
         // Remove any canvas-wide glow classes on crash
         const gameContainer = document.querySelector('.game-container') || document.body;
         if (gameContainer) {
             gameContainer.classList.remove('blue-glow', 'purple-glow', 'pink-glow');
         }
-        
+
         // Start crash animation - plane disappears upwards quickly
         this.animateCrash();
-        
+
         // Store the crash multiplier
         const crashMultiplier = this.forcedCrashMultiplier || this.counter;
         const crashMultiplierStr = crashMultiplier.toFixed(2);
@@ -2130,7 +2130,7 @@ class AviatorGame {
         // Clear the active round BEFORE triggering async operations
         this.activeRoundMeta = null;
         this.forcedCrashMultiplier = null;
-        
+
         // End round on backend if authenticated and sync balance
         if (window.classyBetAPI && typeof classyBetAPI.endRound === 'function' && classyBetAPI.isAuthenticated()) {
             classyBetAPI.endRound(crashMultiplier)
@@ -2145,10 +2145,10 @@ class AviatorGame {
                     console.warn('Failed to sync balance after round:', error);
                 });
         }
-        
+
         // Add round to history
         this.addRoundToHistory(parseFloat(crashMultiplierStr));
-        
+
         // Update counter to show "FLEW AWAY" above the multiplier
         const counterElement = document.getElementById('counter');
         counterElement.innerHTML = `
@@ -2157,17 +2157,17 @@ class AviatorGame {
         `;
         // Add crashed class for sizing/animation
         counterElement.classList.add('crashed');
-        
+
         // Add red glow specifically to the multiplier
         const multiplierElement = counterElement.querySelector('.final-multiplier');
         if (multiplierElement) {
             multiplierElement.style.color = '#ff4444';
             multiplierElement.style.textShadow = '0 0 10px rgba(255, 68, 68, 0.7)';
         }
-        
+
         // Process all active bets and add to history
         const currentMultiplier = parseFloat(crashMultiplierStr);
-        
+
         // Process player's bets
         Object.keys(this.bets).forEach(betKey => {
             const bet = this.bets[betKey];
@@ -2180,7 +2180,7 @@ class AviatorGame {
                     win: 0,
                     status: 'loss'
                 });
-                
+
                 // Update the bet state
                 bet.crashed = true;
                 bet.status = 'loss';
@@ -2188,13 +2188,13 @@ class AviatorGame {
                 bet.winnings = 0;
             }
         });
-        
+
         // Update display to show final crashed state before countdown
         this.updateAllBetsDisplay();
-        
+
         // Save the updated bet history
         this.saveBetHistory();
-        
+
 
         // Clear canvas and redraw
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -2202,7 +2202,7 @@ class AviatorGame {
         this.updateCounterDisplay();
 
         this.messageElement.textContent = 'Round ended - Place your bet for the next round';
-        
+
         // Wait 2 seconds, then start countdown
         setTimeout(() => {
             this.startCountdown();
@@ -2211,16 +2211,16 @@ class AviatorGame {
 
     animateCrash() {
         const crashSpeed = 20; // pixels per frame - very fast upward movement
-        
+
         // Ensure no lingering path/shadow gets drawn during crash
         const animateCrashFrame = () => {
             // Move plane upwards rapidly
             this.y -= crashSpeed;
-            
+
             // Clear canvas and redraw
             this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
             this.drawCrashedFrame();
-            
+
             // Continue animation until plane is off-screen
             if (this.y > -50) { // Continue until well above canvas
                 requestAnimationFrame(animateCrashFrame);
@@ -2230,7 +2230,7 @@ class AviatorGame {
                 // Do not draw path or shadow after crash
             }
         };
-        
+
         animateCrashFrame();
     }
 
@@ -2244,9 +2244,9 @@ class AviatorGame {
             top: 10px;
             left: 50%;
             transform: translateX(-50%);
-            background: ${type === 'crash' ? 'rgba(251, 2, 76, 0.95)' : 
-                        type === 'success' ? 'rgba(48, 252, 190, 0.95)' : 
-                        'rgba(0, 0, 0, 0.95)'};
+            background: ${type === 'crash' ? 'rgba(251, 2, 76, 0.95)' :
+                type === 'success' ? 'rgba(48, 252, 190, 0.95)' :
+                    'rgba(0, 0, 0, 0.95)'};
             color: white;
             padding: 8px 16px;
             border-radius: 8px;
@@ -2257,7 +2257,7 @@ class AviatorGame {
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
             animation: slideDown 0.3s ease-out, fadeOut 0.3s ease-in 2.7s;
         `;
-        
+
         // Add CSS animation keyframes
         if (!document.querySelector('#game-message-animations')) {
             const style = document.createElement('style');
@@ -2274,9 +2274,9 @@ class AviatorGame {
             `;
             document.head.appendChild(style);
         }
-        
+
         gameArea.appendChild(messageDiv);
-        
+
         setTimeout(() => {
             if (messageDiv.parentNode) {
                 messageDiv.parentNode.removeChild(messageDiv);
@@ -2298,16 +2298,16 @@ class AviatorGame {
         // Reset and seed All Bets for the upcoming round during waiting only
         this.allBetsData = [];
         this.betCount = 0;
-        
+
         // Reset bet count display to 0 immediately
         this.updateBetCount();
         this.updateAllBetsDisplay();
-        
+
         // Generate bets gradually to simulate real-time betting
         const targetBetCount = 500 + Math.floor(Math.random() * 200); // 500-700 target bets
         const betsPerBatch = 25; // Generate 25 bets per batch
         const batchInterval = 100; // Every 100ms
-        
+
         let betsGenerated = 0;
         const generateBetsInterval = setInterval(() => {
             const batchSize = Math.min(betsPerBatch, targetBetCount - betsGenerated);
@@ -2315,27 +2315,27 @@ class AviatorGame {
                 this.generateRandomBet();
             }
             betsGenerated += batchSize;
-            
+
             // Update display to show growing bet list
             this.updateAllBetsDisplay();
             this.updateBetCount();
-            
+
             // Stop when we reach target or countdown ends
             if (betsGenerated >= targetBetCount) {
                 clearInterval(generateBetsInterval);
             }
         }, batchInterval);
-        
+
         // Store interval ID so we can clear it if needed
         this.betGenerationInterval = generateBetsInterval;
-        
+
         let countdown = 5; // Extended to 5 seconds
-        
+
         // Clear the main counter display
         const counterElement = document.getElementById('counter');
         counterElement.innerHTML = '';
         counterElement.className = 'waiting';
-        
+
         // Create simple overlay on the game area
         const gameArea = document.getElementById('counterWrapper');
         const overlay = document.createElement('div');
@@ -2349,7 +2349,7 @@ class AviatorGame {
             text-align: center;
             pointer-events: none;
         `;
-        
+
         overlay.innerHTML = `
             <!-- UFC Logo above loading bar -->
             <div style="
@@ -2388,9 +2388,9 @@ class AviatorGame {
                 <img src="spribe.svg" alt="Spribe" height="55" style="opacity: 0.8;">
             </div>
         `;
-        
+
         gameArea.appendChild(overlay);
-        
+
         // Enable betting immediately after crash
         Object.keys(this.bets).forEach(betType => {
             const bet = this.bets[betType];
@@ -2407,34 +2407,34 @@ class AviatorGame {
                 button.style.animation = '';
             }
         });
-        
+
         const countdownInterval = setInterval(() => {
             countdown--;
-            
+
             // Update loading bar progress
             const progressBar = overlay.querySelector('.countdown-progress');
             if (progressBar) {
                 const progress = ((5 - countdown) / 5) * 100;
                 progressBar.style.width = `${progress}%`;
             }
-            
+
             if (countdown <= 0) {
                 clearInterval(countdownInterval);
-                
+
                 // Clear bet generation interval if still running
                 if (this.betGenerationInterval) {
                     clearInterval(this.betGenerationInterval);
                     this.betGenerationInterval = null;
                 }
-                
+
                 // Remove overlay
                 if (overlay.parentNode) {
                     overlay.parentNode.removeChild(overlay);
                 }
-                
+
                 // Reset counter appearance
                 counterElement.className = '';
-                
+
                 // Update button states for placed bets when round starts
                 Object.keys(this.bets).forEach(betType => {
                     const bet = this.bets[betType];
@@ -2444,7 +2444,7 @@ class AviatorGame {
                         button.className = 'bet-button placed';
                     }
                 });
-                
+
                 // Add 1 second wait before starting the game
                 setTimeout(() => {
                     this.resetGame();
@@ -2471,15 +2471,15 @@ class AviatorGame {
         this.dotPath = [];
         this.isFlying = true;
         this.messageElement.textContent = '';
-        
+
         // Reset counter display
         const counterElement = document.getElementById('counter');
         counterElement.textContent = '1.00x';
         counterElement.className = '';
-        
+
         // Set initial counter glow for reset (starts at 1.00x - blue glow)
         this.updateCounterGlow(counterElement, 1.0);
-        
+
         // Reset ALL betting states for fresh round
         Object.keys(this.bets).forEach(betType => {
             const bet = this.bets[betType];
@@ -2548,7 +2548,7 @@ class AviatorGame {
                 }
             });
         }
-        
+
         // Desktop tabs
         const tabBtns = document.querySelectorAll('.tab-btn');
         tabBtns.forEach(btn => {
@@ -2597,7 +2597,7 @@ class AviatorGame {
 
         // Add active class to clicked tab and corresponding content
         document.querySelector(`[data-tab="${tabType}"]`).classList.add('active');
-        
+
         // Handle different tab types
         if (tabType.includes('all-bets')) {
             document.getElementById(tabType.replace('all-bets', 'all-bets-content')).classList.add('active');
@@ -2685,11 +2685,11 @@ class AviatorGame {
 
     pickRandomAvatar() {
         // Avatars are 1..72 according to list_dir; pick safely within range
-        const max = 72; 
+        const max = 72;
         const idx = 1 + Math.floor(Math.random() * max);
         return `images/avtar/av-${idx}.png`;
     }
-    
+
     getAvatarWithFallback(avatar) {
         // Create img element to test if avatar loads
         const img = new Image();
@@ -2704,10 +2704,10 @@ class AviatorGame {
     updateAllBetsDisplay() {
         const allBetsContainer = document.getElementById('all-bets');
         const mobileAllBetsContainer = document.getElementById('mobile-all-bets');
-        
+
         // Sort bets by amount in descending order (highest bets first)
         const sortedBets = [...this.allBetsData].sort((a, b) => b.amount - a.amount);
-        
+
         // Show top 50 bets in the visible list with proper formatting
         const betsHTML = sortedBets.slice(0, 50).map(bet => {
             const classes = ['bet-item'];
@@ -2732,7 +2732,7 @@ class AviatorGame {
 
         if (allBetsContainer) allBetsContainer.innerHTML = betsHTML;
         if (mobileAllBetsContainer) mobileAllBetsContainer.innerHTML = betsHTML;
-        
+
         // Update bet count to show total active bets
         this.updateBetCount();
     }
@@ -2766,13 +2766,13 @@ class AviatorGame {
     loadTopResults() {
         const topResultsContainer = document.getElementById('top-results');
         const mobileTopResultsContainer = document.getElementById('mobile-top-results');
-        
+
         // Decide current view
         const activeBtn = document.querySelector('#top-results-content .top-filter-btn.active');
         const view = activeBtn ? activeBtn.dataset.view : 'multipliers';
         const periodEl = document.getElementById('top-period');
         const period = periodEl ? periodEl.value : 'day';
-        
+
         // Create a randomized list according to the view
         let list = [...this.topResultsData];
         if (view === 'multipliers') {
@@ -2783,7 +2783,7 @@ class AviatorGame {
             // rounds: simulate by sorting by amount as a proxy
             list.sort((a, b) => b.amount - a.amount);
         }
-        
+
         // Optionally slice differently by period
         const sliceSize = period === 'day' ? 30 : period === 'month' ? 40 : 50;
         const betsHTML = list.slice(0, sliceSize).map(bet => {
@@ -2808,7 +2808,7 @@ class AviatorGame {
     updateBetCount() {
         const betCountElement = document.getElementById('bet-count');
         const mobileBetCountElement = document.getElementById('mobile-bet-count');
-        
+
         if (betCountElement) betCountElement.textContent = this.allBetsData.length;
         if (mobileBetCountElement) mobileBetCountElement.textContent = this.allBetsData.length;
     }
@@ -2816,18 +2816,18 @@ class AviatorGame {
     setupQuickAmountButtons() {
         // Enhanced quick amount functionality - adds to existing amount on repeated clicks
         this.lastClickedAmount = {};
-        
+
         document.querySelectorAll('.quick-amount').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const amount = parseFloat(e.target.dataset.amount);
                 const panel = e.target.closest('.bet-panel');
                 const input = panel.querySelector('input[type="number"]'); // Main bet input
                 const currentValue = parseFloat(input.value) || 0;
-                
+
                 // Check if this button was clicked recently (within 2 seconds)
                 const buttonKey = panel.id + '-' + e.target.textContent;
                 const now = Date.now();
-                
+
                 if (this.lastClickedAmount[buttonKey] && (now - this.lastClickedAmount[buttonKey] < 2000)) {
                     // Add to existing amount
                     input.value = (currentValue + amount).toFixed(2);
@@ -2835,9 +2835,9 @@ class AviatorGame {
                     // Set new amount
                     input.value = amount.toFixed(2);
                 }
-                
+
                 this.lastClickedAmount[buttonKey] = now;
-                
+
                 // Visual feedback
                 e.target.style.transform = 'scale(0.95)';
                 setTimeout(() => {
@@ -2913,7 +2913,7 @@ class AviatorGame {
                 button.classList.add('auto-active');
                 button.classList.add('auto-mode');
             }
-            
+
             // Place first auto bet if game is waiting
             if (this.gameState === 'waiting') {
                 this.placeAutoBet(betType);
@@ -2947,7 +2947,7 @@ class AviatorGame {
     updateAutoBetStats(betType) {
         const state = this.autoBetState[betType];
         const betNumber = betType === 'bet1' ? '1' : '2';
-        
+
         document.getElementById(`auto-bet-count-${betNumber}`).textContent = state.count;
         document.getElementById(`auto-win-count-${betNumber}`).textContent = state.wins;
         document.getElementById(`auto-profit-${betNumber}`).textContent = this.formatCurrency(state.profit);
@@ -2956,25 +2956,25 @@ class AviatorGame {
     handleAutoCashout() {
         // Check auto-cashout conditions during game
         if (this.gameState !== 'flying') return;
-        
+
         ['bet1', 'bet2'].forEach(betType => {
             const bet = this.bets[betType];
             if (!bet.placed || bet.cashedOut) return;
-            
+
             const betNumber = betType === 'bet1' ? '1' : '2';
-            
+
             // Check if auto-cashout is enabled for this bet
             const autoCashoutToggle = document.getElementById(`auto-cashout-toggle-${betNumber}`);
             if (!autoCashoutToggle || !autoCashoutToggle.checked) {
                 return; // Auto-cashout is not enabled for this bet
             }
-            
+
             const autoCashoutValue = parseFloat(document.getElementById(`auto-cashout-value-${betNumber}`).value);
-            
+
             // Only auto-cashout if the value is valid and the multiplier has reached it
             if (autoCashoutValue > 1.0 && this.counter >= autoCashoutValue) {
                 this.cashOut(betType);
-                
+
                 // Update auto-bet stats if auto-betting is active
                 const state = this.autoBetState[betType];
                 if (state && state.active) {
@@ -2990,15 +2990,15 @@ class AviatorGame {
     handleGameStateUpdate(state) {
         // Handle game state updates from WebSocket
         if (!state) return;
-        
+
         // ❌ REMOVED: Game state console log (security)
-        
+
         // When round starts flying, check if any bets should be activated
         if (state.state === 'flying') {
             Object.keys(this.bets).forEach(betType => {
                 const bet = this.bets[betType];
                 const button = betType === 'bet1' ? this.betButton1 : this.betButton2;
-                
+
                 // If bet is placed and has an apiId, make sure button shows "Cash Out"
                 if (bet.placed && bet.apiId && !bet.cashedOut && button) {
                     button.textContent = 'Cash Out';
@@ -3019,11 +3019,11 @@ class AviatorGame {
                 bet2: { active: false, count: 0, wins: 0, profit: 0 }
             };
         }
-        
+
         ['bet1', 'bet2'].forEach(betType => {
             const betNumber = betType === 'bet1' ? '1' : '2';
             const autoToggle = document.getElementById(`auto-bet-toggle-${betNumber}`);
-            
+
             // Only execute auto-bet if toggle is enabled and auto state active
             if (!autoToggle || !autoToggle.checked) {
                 return;
@@ -3060,22 +3060,22 @@ let game;
 
 // WebSocket Initialization
 async function initializeWebSocket() {
-    const API_BASE_URL = window.location.hostname === 'localhost' 
-        ? 'http://localhost:3001' 
+    const API_BASE_URL = window.location.hostname === 'localhost'
+        ? 'http://localhost:3001'
         : 'https://aviator-casino.onrender.com';
-    
+
     try {
         console.log('[WebSocket] Connecting to:', API_BASE_URL);
         await gameSocket.connect(API_BASE_URL);
         console.log('[WebSocket] ✅ Connected to game server');
-        
+
         // Listen for game state updates
         gameSocket.onStateUpdate = (state) => {
             if (game && game.handleGameStateUpdate) {
                 game.handleGameStateUpdate(state);
             }
         };
-        
+
     } catch (error) {
         console.error('[WebSocket] ❌ Connection failed:', error);
     }
@@ -3085,11 +3085,11 @@ async function initializeWebSocket() {
 function showPreloader() {
     const preloader = document.getElementById('spribe-custom-preloader');
     const mainContainer = document.getElementById('main-container');
-    
+
     if (preloader && mainContainer) {
         preloader.style.display = 'flex';
         mainContainer.style.display = 'none';
-        
+
         // Show connecting text after 1 second
         setTimeout(() => {
             const connectingText = document.querySelector('.spribe-connecting-text');
@@ -3109,21 +3109,21 @@ function showPreloader() {
 function hidePreloader() {
     const preloader = document.getElementById('spribe-custom-preloader');
     const mainContainer = document.getElementById('main-container');
-    
+
     if (preloader) {
         preloader.style.opacity = '0';
-        
+
         setTimeout(() => {
             preloader.style.display = 'none';
         }, 300);
     }
-    
+
     if (mainContainer) {
         setTimeout(() => {
             mainContainer.style.display = 'grid';
         }, 300);
     }
-    
+
     console.log('Preloader hidden, main container shown');
 }
 
@@ -3133,17 +3133,17 @@ async function checkAuthenticationOnLoad() {
     const authToken = localStorage.getItem('user_token');
     const userData = localStorage.getItem('userData');
     const isDemo = localStorage.getItem('isDemo') === 'true';
-    
+
     if (authToken && userData) {
         try {
             const user = JSON.parse(userData);
-            
+
             // Verify token is still valid (only for real users, not demo)
             if (!isDemo) {
                 try {
-                    const isLocal = window.location.hostname === 'localhost' || 
-                                   window.location.hostname === '127.0.0.1' ||
-                                   window.location.protocol === 'file:';
+                    const isLocal = window.location.hostname === 'localhost' ||
+                        window.location.hostname === '127.0.0.1' ||
+                        window.location.protocol === 'file:';
                     const apiBase = isLocal ? 'http://localhost:3001' : 'https://aviator-casino.onrender.com';
                     console.log('Profile API Base URL:', apiBase);
                     const response = await fetch(`${apiBase}/api/auth/profile`, {
@@ -3151,11 +3151,11 @@ async function checkAuthenticationOnLoad() {
                             'Authorization': `Bearer ${authToken}`
                         }
                     });
-                    
+
                     if (!response.ok) {
                         throw new Error('Token invalid');
                     }
-                    
+
                     // Update user data from server (this will have the real balance)
                     const profileData = await response.json();
                     localStorage.setItem('userData', JSON.stringify(profileData));
@@ -3181,9 +3181,9 @@ async function checkAuthenticationOnLoad() {
                 showDemoIndicator();
                 console.log('Demo user balance preserved/initialized:', user.balance);
             }
-            
+
             console.log('User session restored:', user.username || user.userId);
-            
+
         } catch (error) {
             console.log('Session validation failed:', error);
             clearAuthSession();
@@ -3227,45 +3227,45 @@ function redirectToLogin() {
 document.addEventListener('DOMContentLoaded', () => {
     // Show preloader immediately
     showPreloader();
-    
+
     // Safety timeout to ensure preloader is hidden even if something goes wrong
     setTimeout(() => {
         hidePreloader();
         console.log('Preloader hidden by safety timeout');
     }, 5000);
-    
+
     // Initialize game after preloader duration (3-4 seconds)
     setTimeout(() => {
         try {
             game = new AviatorGame();
-            
+
             // Make switchTab globally accessible
-            window.switchTab = function(tabType) {
+            window.switchTab = function (tabType) {
                 if (game && game.switchTab) {
                     game.switchTab(tabType);
                 }
             };
-            
+
             // Add authentication tab switching function
-            window.switchAuthTab = function(tabType) {
+            window.switchAuthTab = function (tabType) {
                 // Remove active class from all tabs and contents
                 document.querySelectorAll('.auth-tabs .tab-btn').forEach(btn => btn.classList.remove('active'));
                 document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-                
+
                 // Add active class to clicked tab and corresponding content
                 document.querySelector(`[onclick="switchAuthTab('${tabType}')"]`).classList.add('active');
                 document.getElementById(`${tabType}-tab`).classList.add('active');
             };
-            
+
             // Initialize authentication system
             window.classyBetAPI = new ClassyBetAPI();
             setupAuthEventListeners();
-            
+
             // Initialize WebSocket connection
             initializeWebSocket();
 
             console.log('Game initialized successfully');
-            
+
             // Hide preloader after game is initialized
             setTimeout(() => {
                 hidePreloader();
@@ -3278,7 +3278,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }, 500);
         }
     }, 3000);
-    
+
     // Check for existing authentication on page load
     checkAuthenticationOnLoad();
 });
@@ -3311,51 +3311,51 @@ function showDemoIndicator() {
     if (demoBar) {
         demoBar.style.display = 'block';
     }
-    
+
     // Hide left sidebar for demo users
     const leftSidebar = document.getElementById('left-sidebar');
     if (leftSidebar) {
         leftSidebar.style.display = 'none';
     }
-    
+
     // Hide sidebar toggle button for demo users
     const sidebarToggle = document.getElementById('sidebar-toggle');
     if (sidebarToggle) {
         sidebarToggle.style.display = 'none';
     }
-    
+
     // Expand main content to full width
     const mainContent = document.querySelector('.main-content');
     if (mainContent) {
         mainContent.style.marginLeft = '0';
         mainContent.style.width = '100%';
     }
-    
+
     // Add demo mode class to body for styling
     document.body.classList.add('demo-mode');
-    
+
     // Update page title to indicate demo mode
     document.title = 'ClassyBet Aviator - Demo Mode';
-    
+
     // Replace user navigation with demo navigation
     const userNav = document.getElementById('user-nav');
     const guestNav = document.getElementById('guest-nav');
-    
+
     if (userNav) {
         userNav.style.display = 'none';
     }
-    
+
     if (guestNav) {
         guestNav.style.display = 'flex';
         // Update guest nav for demo mode
         const loginBtn = document.getElementById('login-btn');
         const registerBtn = document.getElementById('register-btn');
-        
+
         if (loginBtn) {
             loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Exit Demo';
             loginBtn.onclick = () => exitDemoSession('index.html', 'Exit demo mode and go to login?');
         }
-        
+
         if (registerBtn) {
             registerBtn.innerHTML = '<i class="fas fa-user-plus"></i> Sign Up';
             registerBtn.onclick = () => exitDemoSession('index.html#register', 'Exit demo mode and register?');
@@ -3371,22 +3371,22 @@ function hideDemoIndicator() {
     if (demoBar) {
         demoBar.style.display = 'none';
     }
-    
+
     // Show left sidebar for real users
     const leftSidebar = document.getElementById('left-sidebar');
     if (leftSidebar) {
         leftSidebar.style.display = 'block';
     }
-    
+
     // Show sidebar toggle button for real users
     const sidebarToggle = document.getElementById('sidebar-toggle');
     if (sidebarToggle) {
         sidebarToggle.style.display = 'block';
     }
-    
+
     // Remove demo mode class from body
     document.body.classList.remove('demo-mode');
-    
+
     // Reset page title
     document.title = 'ClassyBet Aviator - Premium Gaming';
 }
@@ -3396,10 +3396,10 @@ function showUserView(user) {
     const guestNav = document.getElementById('guest-nav');
     const userNav = document.getElementById('user-nav');
     const adminBtn = document.getElementById('admin-btn');
-    
+
     if (guestNav) guestNav.style.display = 'none';
     if (userNav) userNav.style.display = 'flex';
-    
+
     // Show/hide admin button based on user role
     if (adminBtn) {
         if (user && user.isAdmin) {
@@ -3408,12 +3408,12 @@ function showUserView(user) {
             adminBtn.style.display = 'none';
         }
     }
-    
+
     // Show betting controls
     document.querySelectorAll('.bet-controls').forEach(el => {
         el.style.display = 'block';
     });
-    
+
     // Handle demo vs real user display and initialize balance
     if (user && user.isDemo) {
         // Demo user - ensure 3000 balance and show demo indicator
@@ -3425,7 +3425,7 @@ function showUserView(user) {
         hideDemoIndicator();
         initializeGameBalance(user);
     }
-    
+
     // Update game instance with user data if available
     if (window.game && user) {
         window.game.currentUser = user;
@@ -3439,7 +3439,7 @@ function showGuestView() {
     document.getElementById('guest-nav').style.display = 'flex';
     document.getElementById('user-nav').style.display = 'none';
     document.getElementById('admin-btn').style.display = 'none';
-    
+
     // Hide betting controls
     document.querySelectorAll('.bet-controls').forEach(el => {
         el.style.display = 'none';
@@ -3452,17 +3452,17 @@ function updateUserDisplay(user) {
     if (navUsername) {
         navUsername.textContent = user.username || user.userId || 'Player';
     }
-    
+
     // Update User ID display if element exists
     const userIdDisplay = document.getElementById('nav-userid');
     if (userIdDisplay && user.userId) {
         userIdDisplay.textContent = `ID: ${user.userId}`;
     }
-    
+
     // Update balance display
     const isDemo = localStorage.getItem('isDemo') === 'true';
     updateBalanceDisplay(isDemo ? 3000 : (user.balance || 0));
-    
+
     // Update demo status if applicable
     if (user.isDemo) {
         const balanceElement = document.getElementById('nav-balance');
@@ -3471,7 +3471,7 @@ function updateUserDisplay(user) {
             balanceElement.title = 'Demo Balance - Virtual Money';
         }
     }
-    
+
     // Update game balance
     if (window.game) {
         const isDemo = localStorage.getItem('isDemo') === 'true';
@@ -3487,13 +3487,13 @@ function updateBalanceDisplay(balance) {
     if (navBalance) {
         navBalance.textContent = `KES ${balance.toFixed(2)}`;
     }
-    
+
     // Update game header balance
     const gameHeaderBalance = document.getElementById('balance-amount');
     if (gameHeaderBalance) {
         gameHeaderBalance.textContent = `KES ${balance.toFixed(2)}`;
     }
-    
+
     // Update game instance balance
     if (window.game) {
         window.game.playerBalance = balance;
@@ -3504,12 +3504,12 @@ function updateBalanceDisplay(balance) {
 function initializeGameBalance(user) {
     if (user) {
         const balance = user.balance || (user.isDemo ? 3000 : 0);
-        
+
         // Update game instance if available
         if (window.game) {
             window.game.playerBalance = balance;
         }
-        
+
         // Update all balance displays using the centralized function
         updateBalanceDisplay(balance);
         console.log('Game balance initialized:', balance);
@@ -3528,11 +3528,11 @@ function updateBetDisplay(data) {
 function logout() {
     // Clear all authentication data
     clearAuthSession();
-    
+
     // Remove demo indicator if present
     const demoIndicator = document.getElementById('demo-indicator');
     if (demoIndicator) demoIndicator.remove();
-    
+
     // Show confirmation message
     const confirmed = confirm('Are you sure you want to logout?');
     if (confirmed) {
@@ -3557,142 +3557,142 @@ function isDemo() {
 
 // Authentication is now handled through the index page
 
-    // Deposit form
-    document.getElementById('deposit-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const amount = parseFloat(document.getElementById('deposit-amount').value);
-        let phoneNumber = document.getElementById('deposit-phone').value;
-        const instructionsSection = document.querySelector('#deposit-modal .deposit-instructions');
+// Deposit form
+document.getElementById('deposit-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
 
-        // Validate amount
-        if (isNaN(amount) || amount < 100 || amount > 150000) {
-            showError('deposit-error', 'Amount must be between KES 100 and KES 150,000');
-            return;
-        }
-        
-        // Format and validate phone number
-        phoneNumber = phoneNumber.replace(/\D/g, ''); // Remove non-digits
-        if (phoneNumber.startsWith('0')) {
-            phoneNumber = '254' + phoneNumber.substring(1);
-        } else if (phoneNumber.startsWith('+')) {
-            phoneNumber = phoneNumber.substring(1);
-        }
+    const amount = parseFloat(document.getElementById('deposit-amount').value);
+    let phoneNumber = document.getElementById('deposit-phone').value;
+    const instructionsSection = document.querySelector('#deposit-modal .deposit-instructions');
 
-        // Validate phone number format
-        if (!/^254[0-9]{9}$/.test(phoneNumber)) {
-            showError('deposit-error', 'Invalid phone number format. Use format: 254XXXXXXXXX or 07XXXXXXXX');
-            return;
-        }
-        
-        if (instructionsSection) {
-            instructionsSection.style.display = 'block';
-        }
+    // Validate amount
+    if (isNaN(amount) || amount < 100 || amount > 150000) {
+        showError('deposit-error', 'Amount must be between KES 100 and KES 150,000');
+        return;
+    }
 
-        const result = await classyBetAPI.depositSTK(amount, phoneNumber);
+    // Format and validate phone number
+    phoneNumber = phoneNumber.replace(/\D/g, ''); // Remove non-digits
+    if (phoneNumber.startsWith('0')) {
+        phoneNumber = '254' + phoneNumber.substring(1);
+    } else if (phoneNumber.startsWith('+')) {
+        phoneNumber = phoneNumber.substring(1);
+    }
 
-        // Keep local API instance in sync with latest user data after deposit attempt
-        const latestUserData = localStorage.getItem('userData');
-        if (latestUserData) {
+    // Validate phone number format
+    if (!/^254[0-9]{9}$/.test(phoneNumber)) {
+        showError('deposit-error', 'Invalid phone number format. Use format: 254XXXXXXXXX or 07XXXXXXXX');
+        return;
+    }
+
+    if (instructionsSection) {
+        instructionsSection.style.display = 'block';
+    }
+
+    const result = await classyBetAPI.depositSTK(amount, phoneNumber);
+
+    // Keep local API instance in sync with latest user data after deposit attempt
+    const latestUserData = localStorage.getItem('userData');
+    if (latestUserData) {
+        try {
+            classyBetAPI.user = JSON.parse(latestUserData);
+        } catch (error) {
+            console.error('Failed to parse user data after deposit attempt:', error);
+        }
+    }
+
+    if (result.success) {
+        showSuccess('deposit-success', `STK Push sent! Transaction ID: ${result.transactionId}`);
+        document.getElementById('deposit-form').reset();
+    } else {
+        showError('deposit-error', result.error);
+    }
+});
+
+// Navigation button events (with null checks since navigation was removed)
+const loginBtn = document.getElementById('login-btn');
+if (loginBtn) {
+    loginBtn.addEventListener('click', () => window.location.href = '/');
+}
+
+const registerBtn = document.getElementById('register-btn');
+if (registerBtn) {
+    registerBtn.addEventListener('click', () => window.location.href = '/');
+}
+
+const depositBtn = document.getElementById('deposit-btn');
+if (depositBtn) {
+    depositBtn.addEventListener('click', async () => {
+        // Check if user is authenticated via localStorage
+        const token = localStorage.getItem('user_token');
+        const userData = localStorage.getItem('userData');
+
+        if (token && userData) {
             try {
-                classyBetAPI.user = JSON.parse(latestUserData);
+                const user = JSON.parse(userData);
+
+                // Track deposit tab click
+                await fetch(`${API_BASE}/api/payments/deposit-tab-click`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                }).catch(err => console.log('Deposit tab tracking failed:', err));
+
+                showModal('deposit-modal');
+                // Pre-fill phone number
+                if (user.phone) {
+                    const phoneInput = document.getElementById('deposit-phone');
+                    if (phoneInput) {
+                        phoneInput.value = user.phone;
+                    }
+                }
             } catch (error) {
-                console.error('Failed to parse user data after deposit attempt:', error);
+                console.error('Error opening deposit modal:', error);
+                showModal('deposit-modal');
             }
-        }
-        
-        if (result.success) {
-            showSuccess('deposit-success', `STK Push sent! Transaction ID: ${result.transactionId}`);
-            document.getElementById('deposit-form').reset();
         } else {
-            showError('deposit-error', result.error);
+            // Not authenticated, redirect to login
+            window.location.href = '/';
         }
     });
+}
 
-    // Navigation button events (with null checks since navigation was removed)
-    const loginBtn = document.getElementById('login-btn');
-    if (loginBtn) {
-        loginBtn.addEventListener('click', () => window.location.href = '/');
-    }
-    
-    const registerBtn = document.getElementById('register-btn');
-    if (registerBtn) {
-        registerBtn.addEventListener('click', () => window.location.href = '/');
-    }
-    
-    const depositBtn = document.getElementById('deposit-btn');
-    if (depositBtn) {
-        depositBtn.addEventListener('click', async () => {
-            // Check if user is authenticated via localStorage
-            const token = localStorage.getItem('user_token');
-            const userData = localStorage.getItem('userData');
-            
-            if (token && userData) {
-                try {
-                    const user = JSON.parse(userData);
-                    
-                    // Track deposit tab click
-                    await fetch(`${API_BASE}/api/payments/deposit-tab-click`, {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                            'Content-Type': 'application/json'
-                        }
-                    }).catch(err => console.log('Deposit tab tracking failed:', err));
-                    
-                    showModal('deposit-modal');
-                    // Pre-fill phone number
-                    if (user.phone) {
-                        const phoneInput = document.getElementById('deposit-phone');
-                        if (phoneInput) {
-                            phoneInput.value = user.phone;
-                        }
-                    }
-                } catch (error) {
-                    console.error('Error opening deposit modal:', error);
-                    showModal('deposit-modal');
-                }
-            } else {
-                // Not authenticated, redirect to login
-                window.location.href = '/';
-            }
-        });
-    }
-    
-    const profileBtn = document.getElementById('profile-btn');
-    if (profileBtn) {
-        profileBtn.addEventListener('click', () => {
-            if (!classyBetAPI.isAuthenticated()) {
-                window.location.href = '/';
-                return;
-            }
-            
-            // For localhost, use the full backend URL
-            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-                window.location.href = 'http://localhost:3001/profile';
-                return;
-            }
+const profileBtn = document.getElementById('profile-btn');
+if (profileBtn) {
+    profileBtn.addEventListener('click', () => {
+        if (!classyBetAPI.isAuthenticated()) {
+            window.location.href = '/';
+            return;
+        }
 
-            window.location.href = `${window.location.origin}/profile.html`;
-        });
-    }
-    
-    const adminBtn = document.getElementById('admin-btn');
-    if (adminBtn) {
-        adminBtn.addEventListener('click', () => {
-            const isLocal = window.location.hostname === 'localhost' || 
-                           window.location.hostname === '127.0.0.1' ||
-                           window.location.protocol === 'file:';
-            const adminUrl = isLocal ? 'http://localhost:3001/admin' : 'https://aviator-casino.onrender.com/admin';
-            console.log('Admin URL:', adminUrl);
-            window.open(adminUrl, '_blank');
-        });
-    }
-    
-    const logoutBtn = document.getElementById('logout-btn');
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', () => logout());
-    }
+        // For localhost, use the full backend URL
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            window.location.href = 'http://localhost:3001/profile';
+            return;
+        }
+
+        window.location.href = `${window.location.origin}/profile.html`;
+    });
+}
+
+const adminBtn = document.getElementById('admin-btn');
+if (adminBtn) {
+    adminBtn.addEventListener('click', () => {
+        const isLocal = window.location.hostname === 'localhost' ||
+            window.location.hostname === '127.0.0.1' ||
+            window.location.protocol === 'file:';
+        const adminUrl = isLocal ? 'http://localhost:3001/admin' : 'https://aviator-casino.onrender.com/admin';
+        console.log('Admin URL:', adminUrl);
+        window.open(adminUrl, '_blank');
+    });
+}
+
+const logoutBtn = document.getElementById('logout-btn');
+if (logoutBtn) {
+    logoutBtn.addEventListener('click', () => logout());
+}
 
 // Modal utility functions
 function showModal(modalId) {
@@ -3748,12 +3748,12 @@ let integrateGameRetries = 0;
 // This prevents duplicate balance deductions and ensures backend is source of truth
 
 // Initialize game loop with backend round synchronization
-AviatorGame.prototype.initializeGameLoop = async function() {
+AviatorGame.prototype.initializeGameLoop = async function () {
     console.log('Initializing backend-controlled game loop...');
-    
+
     // Fetch initial round schedule
     await this.fetchRoundSchedule();
-    
+
     // Start the countdown for first round
     this.startCountdown();
 };
@@ -3761,7 +3761,7 @@ AviatorGame.prototype.initializeGameLoop = async function() {
 // Initialize everything when page loads
 document.addEventListener('DOMContentLoaded', () => {
     checkAuthenticationOnLoad();
-    
+
     // Old integration removed - now using syncBetWithBackend
 });
 

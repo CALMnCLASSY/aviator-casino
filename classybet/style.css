@@ -5,7 +5,8 @@
     box-sizing: border-box;
 }
 
-html, body {
+html,
+body {
     min-height: 100vh;
     height: auto;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -87,7 +88,7 @@ input[type=number] {
 .spribe-bounce-3 {
     width: 12px;
     height: 12px;
-    background: #30fcbe;
+    background: #fb024c;
     border-radius: 50%;
     animation: spribe-bounce 1.4s ease-in-out infinite both;
 }
@@ -105,10 +106,14 @@ input[type=number] {
 }
 
 @keyframes spribe-bounce {
-    0%, 80%, 100% {
+
+    0%,
+    80%,
+    100% {
         transform: scale(0.6);
         opacity: 0.5;
     }
+
     40% {
         transform: scale(1);
         opacity: 1;
@@ -154,12 +159,13 @@ input[type=number] {
     gap: 10px;
     font-size: 24px;
     font-weight: bold;
-    color: #30fcbe;
+    color: #fb024c;
 }
 
 .site-logo i {
     font-size: 28px;
     transform: rotate(-45deg);
+    color: #fb024c;
 }
 
 .nav-links {
@@ -176,9 +182,10 @@ input[type=number] {
     font-weight: 500;
 }
 
-.nav-link:hover, .nav-link.active {
-    background: #30fcbe;
-    color: #1e2a3a;
+.nav-link:hover,
+.nav-link.active {
+    background: rgba(251, 2, 76, 0.15);
+    color: #fb024c;
 }
 
 .nav-right {
@@ -252,7 +259,8 @@ input[type=number] {
     flex-direction: column;
     /* Allow the container to size to its contents so the footer follows directly after */
     min-height: auto;
-    max-height: none; /* Allow content to expand */
+    max-height: none;
+    /* Allow content to expand */
     background: #000000;
     padding: 0;
     gap: 0;
@@ -292,8 +300,10 @@ input[type=number] {
     justify-content: space-between;
     align-items: center;
     background: #1a1a1a;
-    padding: 8px 20px; /* Reduced padding from 15px to 8px */
-    border-bottom: 2px solid #333; /* Grey separator line */
+    padding: 8px 20px;
+    /* Reduced padding from 15px to 8px */
+    border-bottom: 2px solid #333;
+    /* Grey separator line */
     min-height: 60px;
     z-index: 100;
 }
@@ -310,7 +320,8 @@ input[type=number] {
     display: flex;
     gap: 0;
     flex: 1;
-    min-height: 0; /* Allow flex items to shrink */
+    min-height: 0;
+    /* Allow flex items to shrink */
     overflow: hidden;
 }
 
@@ -324,7 +335,8 @@ input[type=number] {
     display: flex;
     flex-direction: column;
     height: 100%;
-    flex-shrink: 0; /* Prevent sidebar from shrinking */
+    flex-shrink: 0;
+    /* Prevent sidebar from shrinking */
 }
 
 @media (min-width: 769px) {
@@ -338,7 +350,8 @@ input[type=number] {
     flex: 1;
     display: flex;
     flex-direction: column;
-    min-width: 0; /* Allow it to shrink */
+    min-width: 0;
+    /* Allow it to shrink */
     overflow: hidden;
 }
 
@@ -379,7 +392,7 @@ input[type=number] {
 }
 
 .footer-item i {
-    color: #30fcbe;
+    color: #fb024c;
     font-size: 10px;
 }
 
@@ -426,13 +439,13 @@ input[type=number] {
 }
 
 .tab-btn:hover {
-    color: #30fcbe;
-    background: rgba(48, 252, 190, 0.1);
+    color: #fb024c;
+    background: rgba(251, 2, 76, 0.1);
 }
 
 .tab-btn.active {
-    color: #30fcbe;
-    background: rgba(48, 252, 190, 0.2);
+    color: #fb024c;
+    background: rgba(251, 2, 76, 0.15);
 }
 
 .tab-btn i {
@@ -472,7 +485,8 @@ input[type=number] {
     overflow-y: auto;
     overflow-x: hidden;
     flex: 1;
-    max-height: calc(100vh - 400px); /* Ensure scrolling works */
+    max-height: calc(100vh - 400px);
+    /* Ensure scrolling works */
     padding-right: 5px;
 }
 
@@ -500,7 +514,7 @@ input[type=number] {
 }
 
 .sidebar-section h3 {
-    color: #30fcbe;
+    color: #fb024c;
     margin-bottom: 10px;
     font-size: 16px;
     text-transform: uppercase;
@@ -511,12 +525,15 @@ input[type=number] {
 }
 
 /* All Bets Area */
-#all-bets { /* allow to fill sidebar area fully */
+#all-bets {
+    /* allow to fill sidebar area fully */
     overflow-y: auto;
     overflow-x: hidden;
     flex: 1;
-    max-height: calc(100vh - 400px); /* Ensure there's a height constraint for scrolling */
-    padding-right: 5px; /* Space for scrollbar */
+    max-height: calc(100vh - 400px);
+    /* Ensure there's a height constraint for scrolling */
+    padding-right: 5px;
+    /* Space for scrollbar */
 }
 
 /* Custom scrollbar for all-bets */
@@ -566,7 +583,8 @@ input[type=number] {
 
 .bet-list-header {
     display: grid;
-    grid-template-columns: 1.5fr 1fr 0.6fr 1fr; /* a touch wider for better fit */
+    grid-template-columns: 1.5fr 1fr 0.6fr 1fr;
+    /* a touch wider for better fit */
     gap: 10px;
     padding: 8px 12px;
     background: rgba(255, 255, 255, 0.1);
@@ -637,6 +655,7 @@ input[type=number] {
         transform: translateX(-100%);
         opacity: 0;
     }
+
     to {
         transform: translateX(0);
         opacity: 1;
@@ -665,7 +684,8 @@ input[type=number] {
 }
 
 .game-logo .aviator-logo-image {
-    height: 28px; /* Reduced from 35px */
+    height: 28px;
+    /* Reduced from 35px */
     filter: brightness(1.2);
 }
 
@@ -674,25 +694,26 @@ input[type=number] {
     .game-logo .aviator-logo-image {
         height: 20px;
     }
-    
+
     .site-logo img {
         height: 28px !important;
     }
-    
+
     /* Make game canvas images more visible */
     .aviator-logo-text {
         font-size: 20px !important;
     }
-    
+
     /* Improve navigation fit on mobile */
-    .nav-left, .nav-right {
+    .nav-left,
+    .nav-right {
         gap: 0.3rem;
     }
-    
+
     .guest-controls {
         gap: 0.3rem;
     }
-    
+
     .user-info {
         gap: 0.3rem;
     }
@@ -702,7 +723,7 @@ input[type=number] {
     .game-logo .aviator-logo-image {
         height: 18px;
     }
-    
+
     .site-logo img {
         height: 20px !important;
     }
@@ -810,7 +831,8 @@ input[type=number] {
     margin: 0;
     flex-shrink: 0;
     height: 60px;
-    position: relative; /* Add position relative for dropdown positioning */
+    position: relative;
+    /* Add position relative for dropdown positioning */
 }
 
 #last-counters {
@@ -822,7 +844,8 @@ input[type=number] {
     flex-wrap: nowrap;
     gap: 8px;
     flex: 1;
-    max-width: calc(100% - 60px); /* Leave space for dropdown button */
+    max-width: calc(100% - 60px);
+    /* Leave space for dropdown button */
     justify-content: flex-start;
     position: relative;
 }
@@ -868,7 +891,7 @@ input[type=number] {
         font-size: 11px;
         min-width: 40px;
     }
-    
+
     #last-counters {
         gap: 6px;
     }
@@ -880,11 +903,11 @@ input[type=number] {
         font-size: 10px;
         min-width: 35px;
     }
-    
+
     #last-counters {
         gap: 4px;
     }
-    
+
     #previous-rounds-container {
         padding: 10px;
     }
@@ -943,6 +966,7 @@ input[type=number] {
         opacity: 0;
         transform: translateY(-10px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -1019,7 +1043,7 @@ input[type=number] {
     min-width: 250px;
     box-shadow: none;
     max-height: 400px;
-    
+
     /* Default hidden state */
     display: none;
     opacity: 0;
@@ -1073,7 +1097,7 @@ input[type=number] {
     right: 5px;
     width: 8px;
     height: 8px;
-    background-color: #ff4d4f;
+    background-color: #fb024c;
     border-radius: 50%;
     border: 2px solid #1f1f1f;
     animation: pulse 2s infinite;
@@ -1084,10 +1108,12 @@ input[type=number] {
         transform: scale(0.95);
         box-shadow: 0 0 0 0 rgba(255, 77, 79, 0.7);
     }
+
     70% {
         transform: scale(1.1);
         box-shadow: 0 0 0 4px rgba(255, 77, 79, 0);
     }
+
     100% {
         transform: scale(0.95);
         box-shadow: 0 0 0 0 rgba(255, 77, 79, 0);
@@ -1099,7 +1125,7 @@ input[type=number] {
 }
 
 .menu-item i {
-    color: #30fcbe;
+    color: #fb024c;
     width: 18px;
     text-align: center;
 }
@@ -1121,7 +1147,7 @@ input[type=number] {
 
 .loading-text {
     text-align: center;
-    color: #30fcbe;
+    color: #fb024c;
     margin-bottom: 10px;
     font-size: 14px;
     font-weight: bold;
@@ -1139,7 +1165,7 @@ input[type=number] {
 
 .loading-progress {
     height: 100%;
-    background: linear-gradient(90deg, #30fcbe, #1de9b6);
+    background: linear-gradient(90deg, #fb024c, #ff4081);
     width: 0%;
     transition: width 0.1s ease;
     border-radius: 3px;
@@ -1158,8 +1184,13 @@ input[type=number] {
 }
 
 @keyframes shine {
-    0% { transform: translateX(-20px); }
-    100% { transform: translateX(20px); }
+    0% {
+        transform: translateX(-20px);
+    }
+
+    100% {
+        transform: translateX(20px);
+    }
 }
 
 /* Round Info Modal Styles */
@@ -1193,6 +1224,7 @@ input[type=number] {
         opacity: 0;
         transform: translateY(-50px) scale(0.9);
     }
+
     to {
         opacity: 1;
         transform: translateY(0) scale(1);
@@ -1211,7 +1243,7 @@ input[type=number] {
 
 .modal-header h2 {
     margin: 0;
-    color: #30fcbe;
+    color: #fb024c;
     font-size: 22px;
     font-weight: bold;
     text-shadow: 0 0 10px rgba(48, 252, 190, 0.5);
@@ -1254,7 +1286,7 @@ input[type=number] {
 }
 
 .detail-label {
-    color: #30fcbe;
+    color: #fb024c;
     font-weight: bold;
     font-size: 14px;
     min-width: 80px;
@@ -1314,7 +1346,7 @@ input[type=number] {
     color: #ff6b35;
     text-transform: uppercase;
     letter-spacing: 1px;
-    text-shadow: 
+    text-shadow:
         0 0 5px rgba(255, 107, 53, 0.5),
         2px 2px 0 #d45a2a,
         3px 3px 0 #b84822;
@@ -1334,9 +1366,15 @@ input[type=number] {
 }
 
 @keyframes logoGlow {
-    0% { opacity: 0.5; }
-    100% { opacity: 1; }
+    0% {
+        opacity: 0.5;
+    }
+
+    100% {
+        opacity: 1;
+    }
 }
+
 .toggle-switch {
     position: relative;
     width: 50px;
@@ -1373,11 +1411,11 @@ input[type=number] {
     transition: 0.3s;
 }
 
-.toggle-switch input:checked + label {
+.toggle-switch input:checked+label {
     background-color: #30fcbe;
 }
 
-.toggle-switch input:checked + label:before {
+.toggle-switch input:checked+label:before {
     transform: translateX(25px);
 }
 
@@ -1387,14 +1425,17 @@ input[type=number] {
         opacity: 0;
         transform: translate(-50%, -50%) scale(0.8);
     }
+
     20% {
         opacity: 1;
         transform: translate(-50%, -50%) scale(1);
     }
+
     80% {
         opacity: 1;
         transform: translate(-50%, -50%) scale(1);
     }
+
     100% {
         opacity: 0;
         transform: translate(-50%, -50%) scale(0.8);
@@ -1444,8 +1485,13 @@ input[type=number] {
 }
 
 @keyframes backgroundRotation {
-    from { transform: translate(-50%, -50%) rotate(0deg); }
-    to { transform: translate(-50%, -50%) rotate(360deg); }
+    from {
+        transform: translate(-50%, -50%) rotate(0deg);
+    }
+
+    to {
+        transform: translate(-50%, -50%) rotate(360deg);
+    }
 }
 
 #bg-image::before {
@@ -1477,7 +1523,8 @@ input[type=number] {
     color: #ffffff;
     z-index: 10;
     transition: all 0.3s ease;
-    text-shadow: none; /* Remove any default text shadow */
+    text-shadow: none;
+    /* Remove any default text shadow */
 }
 
 #counter.crashed {
@@ -1493,9 +1540,12 @@ input[type=number] {
 }
 
 @keyframes redGlowPulse {
-    0%, 100% {
+
+    0%,
+    100% {
         text-shadow: 0 0 10px rgba(255, 68, 68, 0.7);
     }
+
     50% {
         text-shadow: 0 0 20px rgba(255, 68, 68, 0.9);
     }
@@ -1504,7 +1554,7 @@ input[type=number] {
 #counter.waiting {
     color: #ffa500;
     background: transparent;
-    text-shadow: 
+    text-shadow:
         0 0 20px rgba(255, 165, 0, 0.8),
         0 0 40px rgba(255, 165, 0, 0.6);
 }
@@ -1512,7 +1562,7 @@ input[type=number] {
 /* Multiplier Color Glow System - Enhanced Canvas Lighting */
 #counter.blue-glow {
     color: #ffffff;
-    text-shadow: 
+    text-shadow:
         0 0 20px rgba(79, 172, 254, 1.0),
         0 0 40px rgba(79, 172, 254, 0.8),
         0 0 60px rgba(79, 172, 254, 0.6),
@@ -1523,7 +1573,7 @@ input[type=number] {
 
 #counter.purple-glow {
     color: #ffffff;
-    text-shadow: 
+    text-shadow:
         0 0 20px rgba(192, 132, 252, 1.0),
         0 0 40px rgba(192, 132, 252, 0.8),
         0 0 60px rgba(192, 132, 252, 0.6),
@@ -1534,7 +1584,7 @@ input[type=number] {
 
 #counter.pink-glow {
     color: #ffffff;
-    text-shadow: 
+    text-shadow:
         0 0 20px rgba(240, 96, 216, 1.0),
         0 0 40px rgba(240, 96, 216, 0.8),
         0 0 60px rgba(240, 96, 216, 0.6),
@@ -1546,7 +1596,7 @@ input[type=number] {
 /* Canvas-wide glow effects that light up the entire area */
 .game-container.blue-glow {
     /* faint canvas-wide colored glow (no dark shadow) */
-    box-shadow: 
+    box-shadow:
         0 0 60px rgba(79, 172, 254, 0.18),
         0 0 140px rgba(79, 172, 254, 0.12);
     background: radial-gradient(circle at center, rgba(79, 172, 254, 0.1) 0%, transparent 70%);
@@ -1554,7 +1604,7 @@ input[type=number] {
 
 .game-container.purple-glow {
     /* faint canvas-wide colored glow (no dark shadow) */
-    box-shadow: 
+    box-shadow:
         0 0 60px rgba(192, 132, 252, 0.18),
         0 0 140px rgba(192, 132, 252, 0.12);
     background: radial-gradient(circle at center, rgba(192, 132, 252, 0.1) 0%, transparent 70%);
@@ -1562,15 +1612,22 @@ input[type=number] {
 
 .game-container.pink-glow {
     /* faint canvas-wide colored glow (no dark shadow) */
-    box-shadow: 
+    box-shadow:
         0 0 60px rgba(240, 96, 216, 0.18),
         0 0 140px rgba(240, 96, 216, 0.12);
     background: radial-gradient(circle at center, rgba(240, 96, 216, 0.1) 0%, transparent 70%);
 }
 
 @keyframes crashPulse {
-    0%, 100% { transform: translate(-50%, -50%) scale(1); }
-    50% { transform: translate(-50%, -50%) scale(1.1); }
+
+    0%,
+    100% {
+        transform: translate(-50%, -50%) scale(1);
+    }
+
+    50% {
+        transform: translate(-50%, -50%) scale(1.1);
+    }
 }
 
 .loading-bar-container {
@@ -1595,8 +1652,13 @@ input[type=number] {
 }
 
 @keyframes loadingProgress {
-    0% { width: 0%; }
-    100% { width: 100%; }
+    0% {
+        width: 0%;
+    }
+
+    100% {
+        width: 100%;
+    }
 }
 
 #game-info {
@@ -1639,7 +1701,8 @@ input[type=number] {
 
 /* Second bet panel styling */
 #second-bet-panel {
-    display: none; /* Hidden by default, toggled with + button */
+    display: none;
+    /* Hidden by default, toggled with + button */
     margin-left: 15px;
     border-left: 2px solid #333;
     padding-left: 20px;
@@ -1729,13 +1792,16 @@ input[type=number] {
     transition: all 0.2s;
     min-width: 0;
 }
+
 .mode-toggle-label.small-toggle:hover {
     background: rgba(0, 0, 0, 0.7);
     border-color: rgba(255, 255, 255, 0.2);
 }
+
 .mode-toggle-checkbox {
     display: none;
 }
+
 .mode-toggle-switch.small-switch {
     position: relative;
     width: 28px;
@@ -1745,6 +1811,7 @@ input[type=number] {
     margin-right: 6px;
     transition: all 0.2s;
 }
+
 .mode-toggle-switch.small-switch::before {
     content: '';
     position: absolute;
@@ -1757,12 +1824,15 @@ input[type=number] {
     transition: all 0.2s;
     box-shadow: none;
 }
-.mode-toggle-checkbox:checked + .mode-toggle-switch.small-switch {
+
+.mode-toggle-checkbox:checked+.mode-toggle-switch.small-switch {
     background: #ff4444;
 }
-.mode-toggle-checkbox:checked + .mode-toggle-switch.small-switch::before {
+
+.mode-toggle-checkbox:checked+.mode-toggle-switch.small-switch::before {
     transform: translateX(14px);
 }
+
 .mode-text.small-text {
     display: flex;
     align-items: center;
@@ -1771,16 +1841,19 @@ input[type=number] {
     font-size: 12px;
     min-width: 0;
 }
+
 .bet-text,
 .auto-text {
     margin: 0 2px;
     font-size: 12px;
     transition: opacity 0.2s;
 }
-.mode-toggle-checkbox:not(:checked) ~ .mode-text .auto-text {
+
+.mode-toggle-checkbox:not(:checked)~.mode-text .auto-text {
     opacity: 0.5;
 }
-.mode-toggle-checkbox:checked ~ .mode-text .bet-text {
+
+.mode-toggle-checkbox:checked~.mode-text .bet-text {
     opacity: 0.5;
 }
 
@@ -1876,11 +1949,11 @@ input[type=number] {
     box-shadow: none;
 }
 
-.auto-option-checkbox:checked + .auto-option-switch {
+.auto-option-checkbox:checked+.auto-option-switch {
     background: #28a909;
 }
 
-.auto-option-checkbox:checked + .auto-option-switch::before {
+.auto-option-checkbox:checked+.auto-option-switch::before {
     transform: translateX(20px);
 }
 
@@ -1960,11 +2033,11 @@ input[type=number] {
     transition: all 0.3s ease;
 }
 
-.auto-toggle-checkbox:checked + .toggle-switch {
+.auto-toggle-checkbox:checked+.toggle-switch {
     background: #28a909;
 }
 
-.auto-toggle-checkbox:checked + .toggle-switch::after {
+.auto-toggle-checkbox:checked+.toggle-switch::after {
     transform: translateX(23px);
 }
 
@@ -2026,7 +2099,7 @@ input[type=number] {
 }
 
 .quick-amount:hover {
-    background: #30fcbe;
+    background: #36cb12;
     color: #1e2a3a;
 }
 
@@ -2043,7 +2116,7 @@ input[type=number] {
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     letter-spacing: 0.5px;
-    box-shadow: 
+    box-shadow:
         0 4px 12px rgba(48, 252, 190, 0.3),
         inset 0 1px 0 rgba(255, 255, 255, 0.2);
     backdrop-filter: blur(10px);
@@ -2051,17 +2124,17 @@ input[type=number] {
 
 .bet-button:hover {
     transform: translateY(-1px);
-    box-shadow: 
-        0 6px 20px rgba(48, 252, 190, 0.4),
+    box-shadow:
+        0 6px 20px rgba(54, 203, 18, 0.4),
         inset 0 1px 0 rgba(255, 255, 255, 0.3);
-    background: linear-gradient(135deg, #28d1a0 0%, #30fcbe 100%);
+    background: linear-gradient(135deg, #34d211 0%, #36cb12 100%);
 }
 
 .bet-button.cashout {
     background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
     border-color: #ffd700;
     color: #0a0f1a;
-    box-shadow: 
+    box-shadow:
         0 4px 12px rgba(255, 215, 0, 0.3),
         inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
@@ -2108,9 +2181,17 @@ input[type=number] {
 }
 
 @keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-    100% { transform: scale(1); }
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.05);
+    }
+
+    100% {
+        transform: scale(1);
+    }
 }
 
 .add-bet-btn {
@@ -2142,7 +2223,7 @@ input[type=number] {
     backdrop-filter: blur(20px);
     border-radius: 12px;
     border: 1px solid rgba(48, 252, 190, 0.3);
-    box-shadow: 
+    box-shadow:
         0 10px 30px rgba(0, 0, 0, 0.5),
         inset 0 1px 0 rgba(255, 255, 255, 0.1);
     padding: 20px 30px;
@@ -2160,14 +2241,14 @@ input[type=number] {
 
 #message-area.success {
     border-color: #30fcbe;
-    box-shadow: 
+    box-shadow:
         0 10px 30px rgba(48, 252, 190, 0.3),
         inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 #message-area.error {
     border-color: #fb024c;
-    box-shadow: 
+    box-shadow:
         0 10px 30px rgba(251, 2, 76, 0.3),
         inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
@@ -2227,7 +2308,7 @@ input[type=number] {
     position: absolute;
     top: 0;
     right: 0;
-    background: linear-gradient(135deg, #30fcbe, #4facfe);
+    background: linear-gradient(135deg, #fb024c, #ff4081);
     color: #1e2a3a;
     padding: 15px 20px;
     border-radius: 15px 0 0 15px;
@@ -2259,14 +2340,14 @@ input[type=number] {
 
 .chat-header {
     padding: 15px;
-    border-bottom: 1px solid rgba(48, 252, 190, 0.2);
+    border-bottom: 1px solid rgba(251, 2, 76, 0.2);
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
 .chat-header h3 {
-    color: #30fcbe;
+    color: #fb024c;
     font-size: 18px;
 }
 
@@ -2284,14 +2365,16 @@ input[type=number] {
 
 .chat-messages {
     flex: 1;
-    overflow: hidden; /* Hide overflow to create upward flow effect */
+    overflow: hidden;
+    /* Hide overflow to create upward flow effect */
     padding: 20px;
     display: flex;
     flex-direction: column;
     gap: 10px;
     position: relative;
     height: 100%;
-    justify-content: flex-end; /* Messages start from bottom */
+    justify-content: flex-end;
+    /* Messages start from bottom */
 }
 
 .chat-message {
@@ -2321,6 +2404,7 @@ input[type=number] {
         opacity: 0;
         transform: translateY(30px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -2328,8 +2412,8 @@ input[type=number] {
 }
 
 .chat-message.system {
-    background: rgba(48, 252, 190, 0.1);
-    border-left: 3px solid #30fcbe;
+    background: rgba(251, 2, 76, 0.1);
+    border-left: 3px solid #fb024c;
 }
 
 .chat-user {
@@ -2344,7 +2428,7 @@ input[type=number] {
 
 .chat-input-container {
     padding: 20px;
-    border-top: 1px solid rgba(48, 252, 190, 0.2);
+    border-top: 1px solid rgba(251, 2, 76, 0.2);
     display: flex;
     gap: 10px;
 }
@@ -2353,7 +2437,7 @@ input[type=number] {
     flex: 1;
     padding: 10px 15px;
     background: rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(48, 252, 190, 0.3);
+    border: 1px solid rgba(251, 2, 76, 0.3);
     border-radius: 25px;
     color: white;
     font-size: 14px;
@@ -2361,13 +2445,13 @@ input[type=number] {
 
 #chat-input:focus {
     outline: none;
-    border-color: #30fcbe;
+    border-color: #fb024c;
 }
 
 .send-btn {
     width: 40px;
     height: 40px;
-    background: linear-gradient(135deg, #30fcbe, #4facfe);
+    background: linear-gradient(135deg, #fb024c, #ff4081);
     border: none;
     border-radius: 50%;
     color: #1e2a3a;
@@ -2391,7 +2475,7 @@ input[type=number] {
     .main-content-wrapper {
         min-height: auto;
     }
-    
+
     /* Show Mobile Toggle Buttons */
     .mobile-toggle-btn {
         display: flex;
@@ -2407,12 +2491,12 @@ input[type=number] {
         transition: all 0.3s ease;
         font-size: 16px;
     }
-    
+
     .mobile-toggle-btn:hover {
         background: rgba(48, 252, 190, 0.2);
         transform: scale(1.05);
     }
-    
+
     #main-container {
         flex-direction: column;
         height: auto;
@@ -2421,22 +2505,24 @@ input[type=number] {
 }
 
 @media (max-width: 768px) {
+
     /* Mobile Layout - Single Column Flow */
     body {
         font-size: 14px;
-        padding-top: 0; /* No need for padding since navigation is sticky */
+        padding-top: 0;
+        /* No need for padding since navigation is sticky */
         height: auto;
         overflow-x: hidden;
         overflow-y: auto;
     }
-    
+
     .main-content-wrapper {
         height: auto;
         min-height: auto;
         display: flex;
         flex-direction: column;
     }
-    
+
     #navigation {
         position: sticky;
         top: 0;
@@ -2447,7 +2533,7 @@ input[type=number] {
         width: 100%;
         box-sizing: border-box;
     }
-    
+
     #main-container {
         flex: 1;
         display: flex;
@@ -2456,7 +2542,7 @@ input[type=number] {
         height: auto;
         overflow: visible;
     }
-    
+
     #game-container {
         width: 100vw;
         height: auto;
@@ -2467,7 +2553,7 @@ input[type=number] {
         flex-direction: column;
         overflow-y: visible;
     }
-    
+
     /* Mobile game content - vertical stack */
     #game-content {
         display: flex;
@@ -2477,11 +2563,12 @@ input[type=number] {
         position: relative;
         z-index: 1;
     }
-    
+
     #game-main {
         order: 1;
         width: 100%;
-        min-height: 300px; /* Reduced from 400px for better mobile flow */
+        min-height: 300px;
+        /* Reduced from 400px for better mobile flow */
         height: auto;
         flex: 0 0 auto;
         display: flex;
@@ -2491,7 +2578,7 @@ input[type=number] {
         position: relative;
         z-index: 2;
     }
-    
+
     #betting-controls {
         order: 2;
         flex-shrink: 0;
@@ -2506,7 +2593,7 @@ input[type=number] {
         height: auto;
         transition: all 0.3s ease;
     }
-    
+
     /* Left sidebar appears under betting controls on mobile */
     #left-sidebar {
         order: 3;
@@ -2526,12 +2613,12 @@ input[type=number] {
         clear: both;
         z-index: 1;
     }
-    
+
     /* Hide mobile bets section when sidebar is shown */
     #mobile-bets-section {
         display: none !important;
     }
-    
+
     /* Chat covers entire screen on mobile */
     #right-sidebar {
         position: fixed;
@@ -2545,7 +2632,7 @@ input[type=number] {
         box-shadow: none;
         display: none;
     }
-    
+
     #right-sidebar.chat-open {
         display: flex;
     }
@@ -2553,11 +2640,12 @@ input[type=number] {
 
 /* Desktop Layout - Proper sidebar and mobile section handling */
 @media (min-width: 769px) {
+
     /* Hide mobile bets section on desktop */
     #mobile-bets-section {
         display: none !important;
     }
-    
+
     /* Ensure left sidebar is visible on desktop */
     #left-sidebar {
         display: flex !important;
@@ -2568,7 +2656,7 @@ input[type=number] {
         background: #1a1a1a;
         backdrop-filter: none;
     }
-    
+
     /* Enhanced chat positioning and design */
     #right-sidebar {
         position: fixed;
@@ -2584,13 +2672,13 @@ input[type=number] {
         border-left: 1px solid rgba(48, 252, 190, 0.3);
         box-shadow: -5px 0 25px rgba(0, 0, 0, 0.3);
     }
-    
+
     #right-sidebar.chat-open {
         transform: translateX(0);
         width: 320px;
         max-width: 85vw;
     }
-    
+
     /* Enhanced chat toggle button */
     .chat-toggle {
         position: fixed;
@@ -2598,8 +2686,8 @@ input[type=number] {
         right: 10px;
         transform: translateY(-50%);
         z-index: 101;
-        background: linear-gradient(135deg, rgba(48, 252, 190, 0.2), rgba(75, 172, 254, 0.2));
-        border: 1px solid rgba(48, 252, 190, 0.5);
+        background: linear-gradient(135deg, rgba(251, 2, 76, 0.2), rgba(255, 64, 129, 0.2));
+        border: 1px solid rgba(251, 2, 76, 0.5);
         border-radius: 50%;
         width: 55px;
         height: 55px;
@@ -2609,37 +2697,37 @@ input[type=number] {
         cursor: pointer;
         transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
         backdrop-filter: blur(10px);
-        box-shadow: 
-            0 4px 15px rgba(48, 252, 190, 0.2),
+        box-shadow:
+            0 4px 15px rgba(251, 2, 76, 0.2),
             inset 0 1px 0 rgba(255, 255, 255, 0.1);
     }
-    
+
     .chat-toggle:hover {
         transform: translateY(-50%) scale(1.1);
-        background: linear-gradient(135deg, rgba(48, 252, 190, 0.3), rgba(75, 172, 254, 0.3));
-        border-color: rgba(48, 252, 190, 0.7);
-        box-shadow: 
-            0 6px 20px rgba(48, 252, 190, 0.3),
+        background: linear-gradient(135deg, rgba(251, 2, 76, 0.3), rgba(255, 64, 129, 0.3));
+        border-color: rgba(251, 2, 76, 0.7);
+        box-shadow:
+            0 6px 20px rgba(251, 2, 76, 0.3),
             inset 0 1px 0 rgba(255, 255, 255, 0.2);
     }
-    
+
     .chat-toggle.active {
-        background: linear-gradient(135deg, #30fcbe, #4facfe);
-        border-color: #30fcbe;
+        background: linear-gradient(135deg, #fb024c, #ff4081);
+        border-color: #fb024c;
         color: #1e2a3a;
         transform: translateY(-50%) scale(0.95);
     }
-    
+
     .chat-toggle span {
         display: none;
     }
-    
+
     .chat-toggle i {
         font-size: 18px;
-        color: #30fcbe;
+        color: #fb024c;
         transition: all 0.3s ease;
     }
-    
+
     .chat-toggle.active i {
         color: #1e2a3a;
         transform: rotate(180deg);
@@ -2649,7 +2737,8 @@ input[type=number] {
 /* Bet Items Styling */
 .bet-item {
     display: grid;
-    grid-template-columns: 1.5fr 1fr 0.6fr 1fr; /* keep in sync with header */
+    grid-template-columns: 1.5fr 1fr 0.6fr 1fr;
+    /* keep in sync with header */
     align-items: center;
     gap: 10px;
     padding: 8px 12px;
@@ -2662,7 +2751,7 @@ input[type=number] {
 
 .bet-item:hover {
     background: rgba(255, 255, 255, 0.1);
-    border-left-color: #30fcbe;
+    border-left-color: #fb024c;
 }
 
 .bet-player {
@@ -2680,28 +2769,28 @@ input[type=number] {
     border-radius: 50%;
     object-fit: cover;
     flex-shrink: 0;
-    border: 2px solid rgba(48, 252, 190, 0.3);
-    background: rgba(48, 252, 190, 0.1);
+    border: 2px solid rgba(251, 2, 76, 0.3);
+    background: rgba(251, 2, 76, 0.1);
     transition: all 0.3s ease;
     display: inline-block;
     vertical-align: middle;
 }
 
 .bet-player .avatar:hover {
-    border-color: rgba(48, 252, 190, 0.6);
-    box-shadow: 0 0 10px rgba(48, 252, 190, 0.2);
+    border-color: rgba(251, 2, 76, 0.6);
+    box-shadow: 0 0 10px rgba(251, 2, 76, 0.2);
     transform: scale(1.1);
 }
 
 .bet-player .avatar[src*="data:image"] {
-    background: linear-gradient(135deg, #30fcbe, #4facfe);
-    border-color: #30fcbe;
+    background: linear-gradient(135deg, #fb024c, #ff4081);
+    border-color: #fb024c;
 }
 
-.bet-amount { 
+.bet-amount {
     text-align: left;
     font-size: 12px;
-    color: #30fcbe;
+    color: #36cb12;
     font-weight: 600;
 }
 
@@ -2732,9 +2821,17 @@ input[type=number] {
 }
 
 @keyframes cashedGlow {
-    0% { box-shadow: 0 0 0 rgba(48,252,190,0); }
-    40% { box-shadow: 0 0 16px rgba(48,252,190,0.55); }
-    100% { box-shadow: 0 0 0 rgba(48,252,190,0); }
+    0% {
+        box-shadow: 0 0 0 rgba(48, 252, 190, 0);
+    }
+
+    40% {
+        box-shadow: 0 0 16px rgba(48, 252, 190, 0.55);
+    }
+
+    100% {
+        box-shadow: 0 0 0 rgba(48, 252, 190, 0);
+    }
 }
 
 /* Mobile Bet List */
@@ -2771,8 +2868,9 @@ input[type=number] {
 /* Site Footer Styles */
 .site-footer {
     background: linear-gradient(135deg, #1e2a3a 0%, #2d3a4a 100%);
-    border-top: 2px solid #30fcbe;
-    margin-top: 20px; /* Add margin to separate from content */
+    border-top: 2px solid #fb024c;
+    margin-top: 20px;
+    /* Add margin to separate from content */
     width: 100%;
     color: #ffffff;
     position: relative;
@@ -2935,34 +3033,34 @@ input[type=number] {
         gap: 20px;
         padding: 30px 0;
     }
-    
+
     .footer-nav {
         gap: 15px;
     }
-    
+
     .footer-nav-link {
         font-size: 13px;
         padding: 6px 10px;
     }
-    
+
     .payment-methods {
         gap: 15px;
     }
-    
+
     .payment-icon {
         padding: 8px;
     }
-    
+
     .social-links {
         gap: 12px;
     }
-    
+
     .social-link {
         width: 40px;
         height: 40px;
         font-size: 16px;
     }
-    
+
     .footer-legal {
         gap: 12px;
         padding-top: 20px;
@@ -2974,15 +3072,15 @@ input[type=number] {
         flex-direction: column;
         gap: 10px;
     }
-    
+
     .payment-methods {
         gap: 10px;
     }
-    
+
     .payment-icon img {
         max-width: 50px !important;
     }
-    
+
     .footer-logo-img {
         max-width: 200px !important;
     }
@@ -3269,27 +3367,27 @@ input[type=number] {
         width: 95%;
         margin: 20px;
     }
-    
+
     .profile-info {
         flex-direction: column;
         text-align: center;
         gap: 15px;
     }
-    
+
     .profile-tabs {
         flex-wrap: wrap;
     }
-    
+
     .tab-btn {
         min-width: 50%;
         padding: 12px;
         font-size: 13px;
     }
-    
+
     .modal-header {
         padding: 15px;
     }
-    
+
     .tab-content {
         padding: 15px;
     }
@@ -3323,7 +3421,9 @@ input[type=number] {
     background: linear-gradient(135deg, #4facfe, #00c9ff);
 }
 
-.profile-btn, .admin-btn, .logout-btn {
+.profile-btn,
+.admin-btn,
+.logout-btn {
     background: rgba(255, 255, 255, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.2);
     padding: 0.75rem 1rem;
@@ -3335,7 +3435,9 @@ input[type=number] {
     font-size: 0.9rem;
 }
 
-.profile-btn:hover, .admin-btn:hover, .logout-btn:hover {
+.profile-btn:hover,
+.admin-btn:hover,
+.logout-btn:hover {
     background: rgba(255, 255, 255, 0.2);
 }
 
@@ -3385,6 +3487,7 @@ input[type=number] {
         opacity: 0;
         transform: translateY(-50px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -3554,52 +3657,55 @@ input[type=number] {
         flex-direction: column;
         gap: 0.5rem;
     }
-    
+
     .auth-btn {
         padding: 0.4rem 0.8rem;
         font-size: 0.75rem;
         min-width: 60px;
     }
-    
-    .profile-btn, .admin-btn, .logout-btn {
+
+    .profile-btn,
+    .admin-btn,
+    .logout-btn {
         padding: 0.4rem 0.6rem;
         font-size: 0.75rem;
         min-width: 50px;
     }
-    
+
     .deposit-btn {
         padding: 0.4rem 0.8rem;
         font-size: 0.75rem;
         min-width: 60px;
     }
-    
+
     .user-details {
         font-size: 0.7rem;
     }
-    
+
     .user-details .username {
         font-size: 0.75rem;
     }
-    
+
     .user-details .user-id {
         font-size: 0.6rem !important;
     }
-    
+
     .user-details .user-balance {
         font-size: 0.7rem;
     }
-    
+
     .paybill-info {
         grid-template-columns: 1fr;
         gap: 0.5rem;
     }
-    
+
     .modal-content {
         width: 95%;
         margin: 10% auto;
     }
-    
-    .modal-header, .modal-body {
+
+    .modal-header,
+    .modal-body {
         padding: 1rem;
     }
 }
@@ -3644,10 +3750,13 @@ input[type=number] {
 }
 
 @keyframes pulse-demo {
-    0%, 100% {
+
+    0%,
+    100% {
         opacity: 1;
         transform: scale(1);
     }
+
     50% {
         opacity: 0.7;
         transform: scale(1.1);
@@ -3690,47 +3799,49 @@ input[type=number] {
     margin: 0 auto !important;
 }
 
-    /* Demo mode mobile improvements */
-    @media (max-width: 768px) {
-        .demo-mode .betting-controls {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        
-        .demo-mode .bet-panel {
-            width: 100%;
-            margin-bottom: 10px;
-        }
-        
-        .demo-mode #betting-controls {
-            padding: 15px;
-            min-height: auto;
-        }
-        
-        .demo-mode .main-content-wrapper {
-            height: 100vh;
-            overflow-y: auto;
-        }
-        
-        .demo-mode .main-content {
-            margin-left: 0 !important;
-            width: 100% !important;
-        }
-    }/* Mobile responsive improvements */
+/* Demo mode mobile improvements */
+@media (max-width: 768px) {
+    .demo-mode .betting-controls {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .demo-mode .bet-panel {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+
+    .demo-mode #betting-controls {
+        padding: 15px;
+        min-height: auto;
+    }
+
+    .demo-mode .main-content-wrapper {
+        height: 100vh;
+        overflow-y: auto;
+    }
+
+    .demo-mode .main-content {
+        margin-left: 0 !important;
+        width: 100% !important;
+    }
+}
+
+/* Mobile responsive improvements */
 @media (max-width: 768px) {
     .demo-content {
         gap: 5px;
     }
-    
+
     .demo-content span {
         font-size: 12px;
     }
-    
+
     .demo-content small {
         font-size: 10px;
     }
-    
+
     /* Stack betting controls vertically on mobile */
     #betting-controls {
         display: flex;
@@ -3740,12 +3851,12 @@ input[type=number] {
         min-height: auto;
         height: auto;
     }
-    
+
     .bet-panel {
         width: 100%;
         margin-bottom: 0;
     }
-    
+
     /* Adjust main content wrapper for mobile */
     .main-content-wrapper {
         height: auto;
@@ -3753,25 +3864,25 @@ input[type=number] {
         display: flex;
         flex-direction: column;
     }
-    
+
     .main-content {
         flex: 1;
         display: flex;
         flex-direction: column;
         overflow: visible;
     }
-    
+
     #game-main {
         flex: 1;
         display: flex;
         flex-direction: column;
     }
-    
+
     #counterWrapper {
         flex: 1;
         min-height: 200px;
     }
-    
+
     /* Ensure betting controls are always visible at bottom */
     #betting-controls {
         flex-shrink: 0;
@@ -3780,12 +3891,12 @@ input[type=number] {
         border-top: 1px solid #333;
         z-index: 300 !important;
     }
-    
+
     /* Hide sidebar on mobile for demo */
     body.demo-mode #left-sidebar {
         display: none !important;
     }
-    
+
     body.demo-mode .main-content {
         margin-left: 0 !important;
         width: 100% !important;
@@ -3794,6 +3905,7 @@ input[type=number] {
 
 /* Additional Mobile Betting Controls Optimizations */
 @media (max-width: 768px) {
+
     /* Ensure betting controls stack properly - both panels always visible */
     #betting-controls {
         flex-direction: column;
@@ -3813,7 +3925,7 @@ input[type=number] {
         margin-bottom: 15px;
         box-sizing: border-box;
     }
-    
+
     #second-bet-panel {
         /* display: block !important; - REMOVED: Let toggle functionality work */
         margin-left: 0 !important;
@@ -3824,7 +3936,7 @@ input[type=number] {
         margin-top: 15px !important;
         margin-bottom: 20px !important;
     }
-    
+
     /* Ensure left sidebar has proper spacing from betting controls */
     #left-sidebar {
         margin-top: 0 !important;
@@ -3832,70 +3944,71 @@ input[type=number] {
         position: relative !important;
         z-index: 1 !important;
     }
-    
+
     /* Force proper stacking order on mobile */
     .main-content {
         position: relative;
         z-index: auto;
     }
-    
+
     /* Ensure betting panels are positioned properly */
     .bet-panel {
         position: relative;
         z-index: 10;
     }
-    
+
     #second-bet-panel {
         position: relative !important;
         z-index: 11 !important;
     }
-    
+
     /* Mobile button sizing */
     .bet-button-container {
         gap: 10px;
     }
-    
+
     .bet-button {
         padding: 12px 16px;
         font-size: 13px;
     }
-    
+
     /* Adjust input sizes for mobile */
     .input-wrapper input {
         padding: 12px 35px 12px 12px;
         font-size: 14px;
     }
-    
+
     /* Quick amounts on mobile */
     .quick-amounts {
         display: flex;
         flex-wrap: wrap;
         gap: 6px;
     }
-    
+
     .quick-amount {
         flex: 1;
         min-width: calc(50% - 3px);
         padding: 5px 8px;
         font-size: 11px;
     }
-    
+
     /* Adjust sidebar content padding on mobile */
     #left-sidebar .sidebar-section {
         padding: 15px;
     }
-    
+
     /* Bet list adjustments for mobile */
     .bet-list {
         max-height: 250px;
     }
-    
-    .all-bet-item, .bet-item {
+
+    .all-bet-item,
+    .bet-item {
         padding: 6px 10px;
         font-size: 11px;
         margin-bottom: 3px;
     }
-    
+
     .bet-player img.avatar {
         width: 20px;
         height: 20px;
@@ -3949,7 +4062,7 @@ input[type=number] {
 }
 
 .modal-header span {
-    color: #30fcbe;
+    color: #fb024c;
     font-size: 18px;
     font-weight: 600;
 }
@@ -3981,7 +4094,7 @@ input[type=number] {
 
 /* Game Rules Modal Specific */
 .rules-list-title {
-    color: #30fcbe;
+    color: #fb024c;
     font-weight: 600;
     margin-bottom: 10px;
     font-size: 16px;
@@ -4037,7 +4150,7 @@ input[type=number] {
 }
 
 .step h3 {
-    background: #30fcbe;
+    background: #fb024c;
     color: #000;
     width: 50px;
     height: 50px;
@@ -4067,9 +4180,9 @@ input[type=number] {
     justify-content: space-between;
     align-items: center;
     padding: 15px;
-    background: rgba(48, 252, 190, 0.1);
+    background: rgba(251, 2, 76, 0.1);
     border-radius: 10px;
-    border-left: 4px solid #30fcbe;
+    border-left: 4px solid #fb024c;
 }
 
 .limit-label {
@@ -4078,13 +4191,14 @@ input[type=number] {
 }
 
 .limit-value {
-    color: #30fcbe;
+    color: #fb024c;
     font-weight: 600;
     font-size: 18px;
 }
 
 /* Provably Fair Modal */
-.client-seed, .server-seed {
+.client-seed,
+.server-seed {
     margin: 20px 0;
 }
 
@@ -4092,7 +4206,7 @@ input[type=number] {
     display: flex;
     align-items: center;
     gap: 10px;
-    color: #30fcbe;
+    color: #fb024c;
     font-weight: 600;
     margin-bottom: 5px;
 }
@@ -4112,8 +4226,8 @@ input[type=number] {
 }
 
 .client-seed-type.active {
-    border-color: #30fcbe;
-    background: rgba(48, 252, 190, 0.1);
+    border-color: #fb024c;
+    background: rgba(251, 2, 76, 0.1);
 }
 
 .key-container {
@@ -4133,11 +4247,11 @@ input[type=number] {
 }
 
 .current {
-    color: #30fcbe;
+    color: #fb024c;
 }
 
 .btn-change {
-    background: #30fcbe;
+    background: #fb024c;
     color: #000;
     border: none;
     padding: 8px 15px;
@@ -4152,14 +4266,14 @@ input[type=number] {
 }
 
 .cash-block {
-    background: rgba(48, 252, 190, 0.1);
-    border: 1px solid #30fcbe;
+    background: rgba(251, 2, 76, 0.1);
+    border: 1px solid #fb024c;
     padding: 15px;
     border-radius: 8px;
 }
 
 .cash-block.selected {
-    background: rgba(48, 252, 190, 0.2);
+    background: rgba(251, 2, 76, 0.2);
 }
 
 .main-row {
@@ -4171,7 +4285,7 @@ input[type=number] {
 .radio {
     width: 20px;
     height: 20px;
-    border: 2px solid #30fcbe;
+    border: 2px solid #fb024c;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -4181,7 +4295,7 @@ input[type=number] {
 .dot {
     width: 10px;
     height: 10px;
-    background: #30fcbe;
+    background: #fb024c;
     border-radius: 50%;
 }
 
@@ -4200,7 +4314,7 @@ input[type=number] {
     justify-content: space-between;
     align-items: center;
     margin: 20px 0;
-    color: #30fcbe;
+    color: #fb024c;
     font-weight: 600;
 }
 
@@ -4229,16 +4343,16 @@ input[type=number] {
         margin: 10px;
         max-height: 95vh;
     }
-    
+
     .modal-dialog.modal-lg,
     .modal-dialog.modal-xl {
         max-width: 100%;
     }
-    
+
     .steps-container {
         flex-direction: column;
     }
-    
+
     .limit-item {
         flex-direction: column;
         gap: 10px;
@@ -4269,9 +4383,9 @@ input[type=number] {
 .bet-history-table th {
     padding: 12px 8px;
     text-align: left;
-    color: #30fcbe;
+    color: #fb024c;
     font-weight: 600;
-    border-bottom: 2px solid #30fcbe;
+    border-bottom: 2px solid #fb024c;
 }
 
 .bet-history-table td {
@@ -4294,8 +4408,8 @@ input[type=number] {
 
 .status-badge.won,
 .status-badge.active {
-    background: rgba(48, 252, 190, 0.2);
-    color: #30fcbe;
+    background: rgba(54, 203, 18, 0.2);
+    color: #36cb12;
 }
 
 .status-badge.lost {
@@ -4306,4 +4420,261 @@ input[type=number] {
 .status-badge.pending {
     background: rgba(255, 193, 7, 0.2);
     color: #ffc107;
+}
+
+/* =========================================
+   New Dashboard Hero & Grid Styles
+   ========================================= */
+
+/* Hero Section */
+.hero-section {
+    background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('../images/dashboardimg.webp');
+    background-size: cover;
+    background-position: center;
+    border-radius: 20px;
+    padding: 60px 40px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    min-height: 400px;
+    display: flex;
+    align-items: center;
+}
+
+.hero-content {
+    position: relative;
+    z-index: 2;
+    max-width: 600px;
+}
+
+.hero-text h1 {
+    font-size: 48px;
+    font-weight: 800;
+    margin-bottom: 20px;
+    background: linear-gradient(135deg, #fb024c 0%, #ff4081 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 4px 20px rgba(251, 2, 76, 0.3);
+}
+
+.hero-text p {
+    font-size: 18px;
+    color: #e0e0e0;
+    margin-bottom: 30px;
+    line-height: 1.6;
+}
+
+.hero-cta {
+    padding: 16px 32px;
+    background: #fb024c;
+    color: white;
+    border: none;
+    border-radius: 50px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 10px 20px rgba(251, 2, 76, 0.3);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.hero-cta:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 15px 30px rgba(251, 2, 76, 0.4);
+    background: #ff1f5a;
+}
+
+/* Games Section */
+.games-section {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.section-header h2 {
+    font-size: 24px;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.section-header h2 i {
+    color: #fb024c;
+}
+
+.search-bar {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50px;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.search-bar input {
+    background: transparent;
+    border: none;
+    color: white;
+    outline: none;
+    font-size: 14px;
+    width: 200px;
+}
+
+.search-bar i {
+    color: #888;
+}
+
+/* Games Grid */
+.games-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 25px;
+}
+
+.game-card {
+    background: #1a1a1a;
+    border-radius: 16px;
+    overflow: hidden;
+    position: relative;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    aspect-ratio: 3/4;
+    display: flex;
+    flex-direction: column;
+}
+
+.game-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    border-color: rgba(251, 2, 76, 0.5);
+}
+
+.game-card.featured {
+    grid-column: auto;
+    aspect-ratio: 3/4;
+}
+
+.game-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.game-card:hover .game-img {
+    transform: scale(1.1);
+}
+
+.game-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 2;
+}
+
+.game-card:hover .game-overlay {
+    opacity: 1;
+}
+
+.play-btn-small {
+    background: #fb024c;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 50px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transform: translateY(20px);
+    transition: all 0.3s ease;
+}
+
+.game-card:hover .play-btn-small {
+    transform: translateY(0);
+}
+
+.game-info {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 20px;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
+    z-index: 3;
+}
+
+.game-info h3 {
+    color: white;
+    font-size: 18px;
+    margin-bottom: 4px;
+}
+
+.game-info span {
+    color: #888;
+    font-size: 12px;
+}
+
+.game-badge {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: bold;
+    z-index: 5;
+    color: white;
+}
+
+.game-badge.new {
+    background: #00c853;
+}
+
+.game-badge.popular {
+    background: #ff6d00;
+}
+
+.game-badge {
+    background: #fb024c;
+    /* Default HOT style */
+}
+
+@media (max-width: 768px) {
+    .games-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+    }
+
+    .game-card.featured {
+        grid-column: span 2;
+    }
+
+    .hero-text h1 {
+        font-size: 32px;
+    }
+
+    .hero-section {
+        min-height: 300px;
+        padding: 30px 20px;
+    }
 }

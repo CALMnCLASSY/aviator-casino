@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JetX - ClassyBet Casino</title>
+    <link rel="icon" type="image/svg+xml" href="images/classybetaviator-logo.svg">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* JetX Specific Styles */
+        .game-frame {
+            background: url('https://placehold.co/1200x800/1a1a1a/2a2a2a?text=JetX+Game+Simulation') center/cover;
+            height: 500px;
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #333;
+        }
+
+        .game-controls-area {
+            background: #000;
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 20px;
+            border: 1px solid #333;
+        }
+
+        .bet-input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .bet-input {
+            flex: 1;
+            padding: 15px;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            color: white;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .play-button-large {
+            width: 100%;
+            padding: 20px;
+            background: #ffc107;
+            /* JetX Yellow */
+            color: #000;
+            font-weight: 800;
+            font-size: 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+        }
+
+        .play-button-large:hover {
+            background: #ffdb4d;
+            transform: translateY(-2px);
+        }
+
+        .play-button-large:disabled {
+            background: #555;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .game-result-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 10;
+        }
+
+        .game-result-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .result-content {
+            text-align: center;
+            transform: scale(0.8);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .game-result-overlay.active .result-content {
+            transform: scale(1);
+        }
+
+        .result-content h2 {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .game-result-overlay.win h2 {
+            color: #36cb12;
+        }
+
+        .game-result-overlay.loss h2 {
+            color: #ff4444;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="dashboard-container">
+        <!-- Header (Identical to Dashboard) -->
+        <header class="dashboard-header">
+            <div class="header-logo">
+                <a href="dashboard.html"
+                    style="text-decoration:none; color:inherit; display:flex; gap:10px; align-items:center;">
+                    <img src="images/classybetcasino-logo.jpeg" alt="ClassyBet Logo">
+                    <span>JetX</span>
+                </a>
+            </div>
+            <div class="header-user-info">
+                <div class="user-balance">
+                    <div class="balance-label">Balance</div>
+                    <div class="balance-amount" id="headerBalance">Loading...</div>
+                </div>
+                <!-- <div class="header-actions">
+                    <button class="header-btn" id="logoutBtn">Logout</button>
+                </div> -->
+                <button class="btn btn-outline-light" onclick="window.location.href='dashboard.html'">
+                    <i class="fas fa-arrow-left"></i> Back to Lobby
+                </button>
+            </div>
+        </header>
+
+        <main class="dashboard-main" style="display: block;">
+            <div class="container" style="max-width: 1000px; margin: 0 auto;">
+
+                <!-- Game Display -->
+                <div class="game-frame" id="gameFrame">
+                    <div class="game-display-text" style="text-align:center;">
+                        <h1 style="font-size:64px; margin-bottom:20px;">🚀</h1>
+                        <h2 style="color:#ffc107;">JetX Simulation</h2>
+                        <p style="color:#888;">Simple RNG Version</p>
+                    </div>
+
+                    <!-- Result Overlay -->
+                    <div id="resultOverlay" class="game-result-overlay">
+                        <div class="result-content">
+                            <!-- Injected via JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="game-controls-area">
+                    <div class="bet-input-group">
+                        <button class="quick-amount btn btn-secondary" data-amount="50">50</button>
+                        <button class="quick-amount btn btn-secondary" data-amount="100">100</button>
+                        <button class="quick-amount btn btn-secondary" data-amount="500">500</button>
+                        <button class="quick-amount btn btn-secondary" data-amount="1000">1K</button>
+                        <input type="number" id="betAmount" class="bet-input" value="100" min="10">
+                    </div>
+                    <button id="playBtn" class="play-button-large">
+                        Place Bet
+                    </button>
+                </div>
+
+                <!-- Footer Info -->
+                <div style="margin-top: 30px; text-align: center; color: #666;">
+                    <p>Provably Fair • SmartSoft Gaming • RTP 97%</p>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Logic -->
+    <script src="js/casino-game.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            new CasinoGame('jetx', 'JetX');
+        });
+    </script>
+</body>
+
+</html>

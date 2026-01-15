@@ -4,7 +4,7 @@ class AuthManager {
         // Backend URL configuration
         const isLocalhost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
         this.apiBase = isLocalhost ? 'http://localhost:3001' : 'https://aviator-casino.onrender.com';
-        
+
         console.log('API Base URL:', this.apiBase);
         console.log('Frontend URL:', window.location.origin);
         this.init();
@@ -22,7 +22,7 @@ class AuthManager {
     checkReferralCode() {
         const urlParams = new URLSearchParams(window.location.search);
         const refCode = urlParams.get('ref');
-        
+
         if (refCode) {
             const promoInput = document.getElementById('promoCode');
             if (promoInput) {
@@ -32,7 +32,7 @@ class AuthManager {
                 promoInput.style.background = 'rgba(48, 252, 190, 0.1)';
                 promoInput.style.fontWeight = '600';
             }
-            
+
             // Switch to register tab if not already there
             const registerTab = document.getElementById('registerTab');
             const loginTab = document.getElementById('loginTab');
@@ -171,18 +171,18 @@ class AuthManager {
                     'Authorization': `Bearer ${token}`
                 }
             })
-            .then(response => {
-                if (response.ok) {
-                    // Token is valid, redirect to game
-                    window.location.href = 'base.html';
-                } else {
-                    // Token expired, remove it
-                    localStorage.removeItem('user_token');
-                }
-            })
-            .catch(error => {
-                console.error('Auth check failed:', error);
-            });
+                .then(response => {
+                    if (response.ok) {
+                        // Token is valid, redirect to game
+                        window.location.href = 'base.html';
+                    } else {
+                        // Token expired, remove it
+                        localStorage.removeItem('user_token');
+                    }
+                })
+                .catch(error => {
+                    console.error('Auth check failed:', error);
+                });
         }
     }
 
@@ -197,18 +197,18 @@ class AuthManager {
 
     // Generate random User ID
     generateUserId() {
-        return Math.random().toString(36).substr(2, 4).toUpperCase() + 
-               Math.random().toString(36).substr(2, 4).toUpperCase();
+        return Math.random().toString(36).substr(2, 4).toUpperCase() +
+            Math.random().toString(36).substr(2, 4).toUpperCase();
     }
 
     // Handle login
     async handleLogin(e) {
         e.preventDefault();
-        
+
         const loginBtn = document.getElementById('loginBtn');
         const errorElement = document.getElementById('loginError');
         const successElement = document.getElementById('loginSuccess');
-        
+
         const formData = {
             login: document.getElementById('loginIdentifier').value.trim(),
             password: document.getElementById('loginPassword').value
@@ -220,7 +220,7 @@ class AuthManager {
             this.hideMessage(successElement);
 
             console.log('Attempting login with:', formData.login);
-            
+
             const response = await fetch(`${this.apiBase}/api/auth/login`, {
                 method: 'POST',
                 headers: {
@@ -230,7 +230,7 @@ class AuthManager {
             });
 
             console.log('Login response status:', response.status);
-            
+
             let data;
             try {
                 data = await response.json();
@@ -246,14 +246,14 @@ class AuthManager {
                 localStorage.setItem('userData', JSON.stringify(data.user));
                 // Clear demo flag for real users
                 localStorage.removeItem('isDemo');
-                
+
                 this.showMessage(successElement, 'Login successful! Redirecting...');
-                
+
                 // Redirect after short delay
                 setTimeout(() => {
                     window.location.href = 'dashboard.html';
                 }, 1000);
-                
+
             } else {
                 this.showMessage(errorElement, data.error || 'Login failed');
             }
@@ -273,16 +273,16 @@ class AuthManager {
     // Handle registration
     async handleRegister(e) {
         e.preventDefault();
-        
+
         const registerBtn = document.getElementById('registerBtn');
         const errorElement = document.getElementById('registerError');
         const successElement = document.getElementById('registerSuccess');
         const userIdInfo = document.getElementById('userIdInfo');
-        
+
         // Validate passwords match
         const password = document.getElementById('registerPassword').value;
         const confirmPassword = document.getElementById('confirmPassword').value;
-        
+
         if (password !== confirmPassword) {
             this.showMessage(errorElement, 'Passwords do not match');
             return;
@@ -296,15 +296,15 @@ class AuthManager {
 
         // Clean up phone number first
         const phone = document.getElementById('phone').value.trim().replace(/\D/g, '');
-        
+
         // Format email properly
         let email = document.getElementById('email').value.trim();
         email = email ? email.toLowerCase() : null;
-        
+
         // Get promo code if provided
         const promoCodeInput = document.getElementById('promoCode');
         const promoCode = promoCodeInput ? promoCodeInput.value.trim() : '';
-        
+
         const formData = {
             username: document.getElementById('username').value.trim(),
             email: email,
@@ -312,12 +312,12 @@ class AuthManager {
             phone: phone,
             countryCode: document.getElementById('countryCode').value
         };
-        
+
         // Add promo code if provided
         if (promoCode) {
             formData.promoCode = promoCode;
         }
-        
+
         console.log('Sending registration data:', {
             ...formData,
             password: '[REDACTED]',
@@ -346,21 +346,21 @@ class AuthManager {
                 localStorage.setItem('userData', JSON.stringify(data.user));
                 // Clear demo flag for real users
                 localStorage.removeItem('isDemo');
-                
+
                 // Show User ID
                 document.getElementById('generatedUserId').textContent = data.user.userId;
                 userIdInfo.style.display = 'block';
-                
+
                 this.showMessage(successElement, 'Registration successful! Redirecting...');
-                
+
                 // Redirect after delay to show User ID
                 setTimeout(() => {
                     window.location.href = 'dashboard.html';
                 }, 3000);
-                
+
             } else {
                 let errorMessage = 'Registration failed. Please try again.';
-                
+
                 // Handle validation errors
                 if (data.details && Array.isArray(data.details)) {
                     errorMessage = data.details.map(detail => detail.msg).join('\n');
@@ -378,7 +378,7 @@ class AuthManager {
                     errorMessage = data.message;
                     console.error('Registration error:', data.message);
                 }
-                
+
                 this.showMessage(errorElement, errorMessage);
             }
 
@@ -393,7 +393,7 @@ class AuthManager {
     // Handle demo login
     async handleDemo() {
         const demoBtn = document.getElementById('demoBtn');
-        
+
         try {
             this.setLoading(demoBtn, true);
 
@@ -411,9 +411,9 @@ class AuthManager {
                 localStorage.setItem('user_token', data.token);
                 localStorage.setItem('userData', JSON.stringify(data.user));
                 localStorage.setItem('isDemo', 'true');
-                
+
                 console.log('Demo session created via backend');
-                
+
                 // Redirect to dashboard
                 window.location.href = 'dashboard.html';
             } else {
@@ -450,7 +450,7 @@ class AuthManager {
         // Replace newlines with HTML line breaks
         element.innerHTML = message.replace(/\n/g, '<br>');
         element.style.display = 'block';
-        
+
         // Auto-hide after 8 seconds for validation errors
         setTimeout(() => {
             this.hideMessage(element);
@@ -468,15 +468,15 @@ function switchTab(tabName) {
     document.querySelectorAll('.tab-content').forEach(tab => {
         tab.classList.remove('active');
     });
-    
+
     // Remove active class from all tab buttons
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.classList.remove('active');
     });
-    
+
     // Show selected tab
     document.getElementById(tabName + 'Tab').classList.add('active');
-    
+
     // Add active class to clicked button
     event.target.classList.add('active');
 }
@@ -485,7 +485,7 @@ function switchTab(tabName) {
 function togglePassword(inputId) {
     const input = document.getElementById(inputId);
     const icon = input.nextElementSibling.querySelector('i');
-    
+
     if (input.type === 'password') {
         input.type = 'text';
         icon.className = 'fas fa-eye-slash';
@@ -536,20 +536,20 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Global tab switching function for authentication tabs
-window.switchAuthTab = function(tabType) {
+window.switchAuthTab = function (tabType) {
     console.log('Switching to tab:', tabType);
-    
+
     // Remove active class from all tabs and contents
     document.querySelectorAll('.auth-tabs .tab-btn').forEach(btn => btn.classList.remove('active'));
     document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-    
+
     // Add active class to clicked tab and corresponding content
     const clickedButton = document.querySelector(`[onclick="switchAuthTab('${tabType}')"]`);
     if (clickedButton) {
         clickedButton.classList.add('active');
         console.log('Button activated:', clickedButton);
     }
-    
+
     // Fix the ID format - HTML uses 'loginTab' and 'registerTab', not 'login-tab'
     const tabContent = document.getElementById(`${tabType}Tab`);
     if (tabContent) {

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Baccarat - ClassyBet Casino</title>
+    <link rel="icon" type="image/svg+xml" href="images/classybetcasino-logo.jpeg">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .game-frame {
+            background: url('https://placehold.co/1200x800/d32f2f/ffffff?text=Baccarat') center/cover;
+            height: 500px;
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #d32f2f;
+        }
+
+        .game-controls-area {
+            background: #000;
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 20px;
+            border: 1px solid #333;
+        }
+
+        .bet-input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .bet-input {
+            flex: 1;
+            padding: 15px;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            color: white;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .play-button-large {
+            width: 100%;
+            padding: 20px;
+            background: #d32f2f;
+            color: white;
+            font-weight: 800;
+            font-size: 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+        }
+
+        .play-button-large:hover {
+            filter: brightness(1.1);
+        }
+
+        .game-result-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 10;
+        }
+
+        .game-result-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .result-content {
+            text-align: center;
+        }
+
+        .result-content h2 {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .game-result-overlay.win h2 {
+            color: #36cb12;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="dashboard-container">
+        <header class="dashboard-header">
+            <div class="header-logo"><a href="dashboard.html"
+                    style="text-decoration:none; color:inherit; display:flex; gap:10px; align-items:center;"><img
+                        src="images/classybetaviator-logo.svg" alt="ClassyBet Logo"><span>Baccarat</span></a></div>
+            <div class="header-user-info">
+                <div class="user-balance">
+                    <div class="balance-label">Balance</div>
+                    <div class="balance-amount" id="headerBalance">Loading...</div>
+                </div>
+                <button class="btn btn-outline-light" onclick="window.location.href='dashboard.html'"><i
+                        class="fas fa-arrow-left"></i> Lobby</button>
+            </div>
+        </header>
+
+        <main class="dashboard-main" style="display: block;">
+            <div class="container" style="max-width: 1000px; margin: 0 auto;">
+                <div class="game-frame" id="gameFrame">
+                    <div style="text-align:center;">
+                        <h1 style="font-size:64px; margin-bottom:20px;">🃏</h1>
+                        <h2 style="color:#d32f2f;">Speed Baccarat</h2>
+                    </div>
+                    <div id="resultOverlay" class="game-result-overlay">
+                        <div class="result-content"></div>
+                    </div>
+                </div>
+
+                <div class="game-controls-area">
+                    <div class="bet-input-group">
+                        <input type="number" id="betAmount" class="bet-input" value="100" min="10">
+                    </div>
+                    <button id="playBtn" class="play-button-large">DEAL PLAYER</button>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="js/casino-game.js"></script>
+    <script>document.addEventListener('DOMContentLoaded', () => { new CasinoGame('baccarat', 'Baccarat'); });</script>
+</body>
+
+</html>

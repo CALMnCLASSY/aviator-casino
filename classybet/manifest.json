@@ -1,0 +1,21 @@
+{
+  "name": "Aviator Game",
+  "short_name": "Aviator",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#E4002B",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "images/classybetaviator-logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "images/classybetaviator-logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
