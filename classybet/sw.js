@@ -9,7 +9,7 @@ const urlsToCache = [
   '/script.js',
   '/auth.js',
   '/images/logo.svg',
-  '/images/classybetaviator-logo.png',
+  '/images/classybetcasino-logo.jpeg',
   '/cbpoweredby.png',
   '/poweredbyspribe.png'
 ];

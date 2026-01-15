@@ -1,6 +1,6 @@
 {
-  "name": "Aviator Game",
-  "short_name": "Aviator",
+  "name": "ClassyBet Casino",
+  "short_name": "ClassyBet",
   "start_url": "index.html",
   "display": "standalone",
   "background_color": "#000000",
@@ -8,12 +8,12 @@
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "images/classybetaviator-logo.png",
+      "src": "images/classybetcasino-logo.jpeg",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "images/classybetaviator-logo.png",
+      "src": "images/classybetcasino-logo.jpeg",
       "sizes": "512x512",
       "type": "image/png"
     }
