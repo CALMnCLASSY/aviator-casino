@@ -28,21 +28,59 @@ class CasinoGame {
         this.updateAuthUI();
         this.fetchBalance();
         this.setupEventListeners();
+        this.checkFirstTimeUser();
+    }
+
+    checkFirstTimeUser() {
+        const storageKey = `${this.gameId}_howToPlayShown`;
+        const hasSeenModal = localStorage.getItem(storageKey);
+
+        if (!hasSeenModal) {
+            // Wait a moment for the page to load, then show modal
+            setTimeout(() => {
+                this.showHowToPlayModal();
+            }, 500);
+        }
+    }
+
+    showHowToPlayModal() {
+        const modal = document.getElementById('howToPlayModal');
+        if (modal) {
+            modal.classList.add('active');
+
+            // Setup close button
+            const closeBtn = modal.querySelector('.close-modal');
+            const startBtn = modal.querySelector('.btn-start-playing');
+            const dontShowCheckbox = modal.querySelector('#dontShowAgain');
+
+            const closeModal = () => {
+                modal.classList.remove('active');
+
+                // Save preference if checkbox is checked
+                if (dontShowCheckbox && dontShowCheckbox.checked) {
+                    localStorage.setItem(`${this.gameId}_howToPlayShown`, 'true');
+                }
+            };
+
+            if (closeBtn) closeBtn.addEventListener('click', closeModal);
+            if (startBtn) startBtn.addEventListener('click', closeModal);
+        }
     }
 
     async fetchBalance() {
         try {
-            const response = await fetch(`${this.apiBase}/api/auth/me`, {
+            const response = await fetch(`${this.apiBase}/api/auth/profile`, {
                 headers: { 'Authorization': `Bearer ${this.token}` }
             });
             const data = await response.json();
-            if (data.user) {
-                this.updateBalanceUI(data.user.balance);
+            if (data.balance !== undefined) {
+                this.updateBalanceUI(data.balance);
             }
         } catch (error) {
             console.error('Failed to fetch balance:', error);
         }
     }
+
 
     updateBalanceUI(amount) {
         const balanceEl = document.getElementById('headerBalance');
@@ -88,6 +126,11 @@ class CasinoGame {
 
             this.updateBalanceUI(data.balance);
             this.handleResult(data);
+
+            // Refresh balance after a short delay to ensure backend has processed
+            setTimeout(() => {
+                this.fetchBalance();
+            }, 1000);
 
         } catch (error) {
             alert(error.message);
