@@ -5,69 +5,284 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mines - ClassyBet Casino</title>
-    <link rel="icon" type="image/svg+xml" href="images/classybetaviator-logo.svg">
+    <link rel="icon" type="image/svg+xml" href="images/classybetcasino-logo.jpeg">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <style>
+        .game-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .game-layout {
+            display: grid;
+            grid-template-columns: 1fr 280px;
+            gap: 20px;
+        }
+
+        .game-main {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
         .game-frame {
-            background: url('https://placehold.co/1200x800/0d47a1/ffffff?text=Mines') center/cover;
-            height: 500px;
+            background: linear-gradient(135deg, #0d3d5c 0%, #051e2e 100%);
+            min-height: 600px;
             position: relative;
-            border-radius: 12px;
+            border-radius: 16px;
             overflow: hidden;
+            border: 3px solid #1976d2;
+            padding: 30px;
+        }
+
+        .mines-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+            margin: 20px 0;
+        }
+
+        .mine-tile {
+            aspect-ratio: 1;
+            background: linear-gradient(135deg, #1a4d6d, #0d3d5c);
+            border: 3px solid #2196f3;
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            border: 2px solid #2196f3;
+            font-size: 48px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            user-select: none;
         }
 
-        .game-controls-area {
-            background: #000;
-            padding: 20px;
-            border-radius: 12px;
-            margin-top: 20px;
-            border: 1px solid #333;
+        .mine-tile:hover:not(.revealed):not(.disabled) {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(33, 150, 243, 0.5);
+            border-color: #64b5f6;
         }
 
-        .bet-input-group {
-            display: flex;
-            gap: 10px;
+        .mine-tile.revealed {
+            cursor: default;
+            animation: revealTile 0.4s ease-out;
+        }
+
+        @keyframes revealTile {
+            0% {
+                transform: rotateY(0deg);
+            }
+
+            50% {
+                transform: rotateY(90deg);
+            }
+
+            100% {
+                transform: rotateY(0deg);
+            }
+        }
+
+        .mine-tile.revealed.gem {
+            background: linear-gradient(135deg, #36cb12, #2d9a2d);
+            border-color: #4caf50;
+        }
+
+        .mine-tile.revealed.mine {
+            background: linear-gradient(135deg, #d32f2f, #8b0000);
+            border-color: #f44336;
+            animation: explode 0.5s ease-out;
+        }
+
+        @keyframes explode {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            25% {
+                transform: scale(1.2);
+            }
+
+            50% {
+                transform: scale(0.9);
+            }
+
+            75% {
+                transform: scale(1.15);
+            }
+        }
+
+        .mine-tile.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .game-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
             margin-bottom: 20px;
         }
 
-        .bet-input {
-            flex: 1;
+        .stat-box {
+            text-align: center;
             padding: 15px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 10px;
+            border: 2px solid rgba(33, 150, 243, 0.3);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            opacity: 0.7;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #2196f3;
+        }
+
+        .stat-value.multiplier {
+            color: #ffd700;
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .control-panel {
             background: #1a1a1a;
-            border: 1px solid #333;
+            padding: 25px;
+            border-radius: 12px;
+            border: 2px solid #333;
+        }
+
+        .control-group {
+            margin-bottom: 20px;
+        }
+
+        .control-group label {
+            display: block;
+            font-size: 14px;
+            opacity: 0.8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .control-input {
+            width: 100%;
+            padding: 15px;
+            background: #0d0d0d;
+            border: 2px solid #333;
             color: white;
             border-radius: 8px;
             font-size: 18px;
             font-weight: bold;
+            text-align: center;
         }
 
-        .play-button-large {
+        .control-input:focus {
+            outline: none;
+            border-color: #2196f3;
+        }
+
+        .mines-selector {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .mines-option {
+            padding: 12px;
+            background: #2d2d2d;
+            border: 2px solid #444;
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .mines-option:hover {
+            background: #3d3d3d;
+            border-color: #2196f3;
+        }
+
+        .mines-option.selected {
+            background: linear-gradient(135deg, #2196f3, #1976d2);
+            border-color: #64b5f6;
+        }
+
+        .action-button {
             width: 100%;
-            padding: 20px;
-            background: #2196f3;
+            padding: 18px;
+            background: linear-gradient(135deg, #2196f3, #1976d2);
             color: white;
             font-weight: 800;
-            font-size: 24px;
+            font-size: 20px;
             border: none;
-            border-radius: 8px;
+            border-radius: 10px;
             cursor: pointer;
             text-transform: uppercase;
             transition: all 0.3s ease;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
         }
 
-        .play-button-large:hover {
-            filter: brightness(1.1);
+        .action-button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(33, 150, 243, 0.5);
+        }
+
+        .action-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .action-button.cashout {
+            background: linear-gradient(135deg, #36cb12, #2d9a2d);
+        }
+
+        .action-button.cashout:hover:not(:disabled) {
+            box-shadow: 0 8px 25px rgba(54, 203, 18, 0.5);
+        }
+
+        .multiplier-display {
+            text-align: center;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+
+        .multiplier-display .label {
+            font-size: 14px;
+            opacity: 0.7;
+            margin-bottom: 10px;
+        }
+
+        .multiplier-display .value {
+            font-size: 48px;
+            font-weight: bold;
+            color: #ffd700;
+            text-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
         }
 
         .game-result-overlay {
             position: absolute;
             inset: 0;
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0, 0, 0, 0.95);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -84,15 +299,54 @@
 
         .result-content {
             text-align: center;
+            animation: resultPop 0.5s ease-out;
+        }
+
+        @keyframes resultPop {
+            0% {
+                transform: scale(0.5);
+                opacity: 0;
+            }
+
+            50% {
+                transform: scale(1.1);
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
         }
 
         .result-content h2 {
-            font-size: 48px;
-            margin-bottom: 10px;
+            font-size: 64px;
+            margin-bottom: 20px;
         }
 
         .game-result-overlay.win h2 {
             color: #36cb12;
+            text-shadow: 0 0 20px rgba(54, 203, 18, 0.8);
+        }
+
+        .game-result-overlay.loss h2 {
+            color: #d32f2f;
+            text-shadow: 0 0 20px rgba(211, 47, 47, 0.8);
+        }
+
+        @media (max-width: 1024px) {
+            .game-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .mines-grid {
+                gap: 8px;
+            }
+
+            .mine-tile {
+                font-size: 32px;
+            }
         }
     </style>
 </head>
@@ -100,42 +354,95 @@
 <body>
     <div class="dashboard-container">
         <header class="dashboard-header">
-            <div class="header-logo"><a href="dashboard.html"
-                    style="text-decoration:none; color:inherit; display:flex; gap:10px; align-items:center;"><img
-                        src="images/classybetcasino-logo.jpeg" alt="ClassyBet Logo"><span>Mines</span></a></div>
+            <div class="header-logo">
+                <a href="dashboard.html"
+                    style="text-decoration:none; color:inherit; display:flex; gap:10px; align-items:center;">
+                    <img src="images/classybetaviator-logo.svg" alt="ClassyBet Logo">
+                    <span>Mines</span>
+                </a>
+            </div>
             <div class="header-user-info">
                 <div class="user-balance">
                     <div class="balance-label">Balance</div>
                     <div class="balance-amount" id="headerBalance">Loading...</div>
                 </div>
-                <button class="btn btn-outline-light" onclick="window.location.href='dashboard.html'"><i
-                        class="fas fa-arrow-left"></i> Lobby</button>
+                <button class="btn btn-outline-light" onclick="window.location.href='dashboard.html'">
+                    <i class="fas fa-arrow-left"></i> Lobby
+                </button>
             </div>
         </header>
 
         <main class="dashboard-main" style="display: block;">
-            <div class="container" style="max-width: 1000px; margin: 0 auto;">
-                <div class="game-frame" id="gameFrame">
-                    <div style="text-align:center;">
-                        <h1 style="font-size:64px; margin-bottom:20px;">💣</h1>
-                        <h2 style="color:#2196f3;">Mines</h2>
-                    </div>
-                    <div id="resultOverlay" class="game-result-overlay">
-                        <div class="result-content"></div>
-                    </div>
-                </div>
+            <div class="game-container">
+                <div class="game-layout">
+                    <div class="game-main">
+                        <div class="game-stats">
+                            <div class="stat-box">
+                                <div class="stat-label">Gems Found</div>
+                                <div class="stat-value" id="gemsFound">0</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-label">Current Multiplier</div>
+                                <div class="stat-value multiplier" id="currentMultiplier">1.00x</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-label">Potential Win</div>
+                                <div class="stat-value" id="potentialWin">KES 0</div>
+                            </div>
+                        </div>
 
-                <div class="game-controls-area">
-                    <div class="bet-input-group">
-                        <input type="number" id="betAmount" class="bet-input" value="50" min="10">
+                        <div class="game-frame" id="gameFrame">
+                            <div class="mines-grid" id="minesGrid">
+                                <!-- 25 tiles (5x5 grid) will be generated by JavaScript -->
+                            </div>
+
+                            <div id="resultOverlay" class="game-result-overlay">
+                                <div class="result-content"></div>
+                            </div>
+                        </div>
                     </div>
-                    <button id="playBtn" class="play-button-large">PLAY</button>
+
+                    <div class="sidebar">
+                        <div class="control-panel">
+                            <div class="control-group">
+                                <label>Bet Amount (KES)</label>
+                                <input type="number" id="betAmount" class="control-input" value="100" min="10"
+                                    step="10">
+                            </div>
+
+                            <div class="control-group">
+                                <label>Number of Mines</label>
+                                <div class="mines-selector">
+                                    <button class="mines-option" data-mines="3">3</button>
+                                    <button class="mines-option selected" data-mines="5">5</button>
+                                    <button class="mines-option" data-mines="7">7</button>
+                                    <button class="mines-option" data-mines="10">10</button>
+                                    <button class="mines-option" data-mines="15">15</button>
+                                    <button class="mines-option" data-mines="20">20</button>
+                                </div>
+                            </div>
+
+                            <button id="startBtn" class="action-button">
+                                <i class="fas fa-play-circle"></i> Start Game
+                            </button>
+
+                            <button id="cashoutBtn" class="action-button cashout" disabled>
+                                <i class="fas fa-hand-holding-usd"></i> Cash Out
+                            </button>
+
+                            <div class="multiplier-display">
+                                <div class="label">Next Tile Multiplier</div>
+                                <div class="value" id="nextMultiplier">1.00x</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </main>
     </div>
+
     <script src="js/casino-game.js"></script>
-    <script>document.addEventListener('DOMContentLoaded', () => { new CasinoGame('mines', 'Mines'); });</script>
+    <script src="js/mines-game.js"></script>
 </body>
 
 </html>

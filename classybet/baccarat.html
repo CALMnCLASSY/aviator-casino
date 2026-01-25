@@ -4,70 +4,243 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Baccarat - ClassyBet Casino</title>
+    <title>Speed Baccarat - ClassyBet Casino</title>
     <link rel="icon" type="image/svg+xml" href="images/classybetcasino-logo.jpeg">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <style>
+        .game-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
         .game-frame {
-            background: url('https://placehold.co/1200x800/d32f2f/ffffff?text=Baccarat') center/cover;
-            height: 500px;
+            background: linear-gradient(135deg, #1a5f1a 0%, #0d3d0d 100%);
+            min-height: 600px;
             position: relative;
-            border-radius: 12px;
+            border-radius: 16px;
             overflow: hidden;
+            border: 3px solid #2d7a2d;
+            padding: 30px;
+        }
+
+        .baccarat-table {
             display: flex;
+            justify-content: space-around;
+            align-items: center;
+            margin: 40px 0;
+            gap: 30px;
+        }
+
+        .hand-section {
+            flex: 1;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 30px;
+            border-radius: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .hand-section.winner {
+            border-color: #36cb12;
+            box-shadow: 0 0 30px rgba(54, 203, 18, 0.5);
+            transform: scale(1.05);
+        }
+
+        .hand-section h3 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .cards-display {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            min-height: 140px;
+            align-items: center;
+            margin: 20px 0;
+        }
+
+        .card {
+            width: 80px;
+            height: 120px;
+            background: white;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            border: 2px solid #d32f2f;
+            font-size: 32px;
+            font-weight: bold;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            animation: dealCard 0.5s ease-out;
+            position: relative;
         }
 
-        .game-controls-area {
-            background: #000;
-            padding: 20px;
+        @keyframes dealCard {
+            from {
+                transform: translateY(-100px) rotateY(180deg);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0) rotateY(0);
+                opacity: 1;
+            }
+        }
+
+        .card.red {
+            color: #d32f2f;
+        }
+
+        .card.black {
+            color: #000;
+        }
+
+        .card-suit {
+            font-size: 20px;
+            margin-top: 5px;
+        }
+
+        .hand-total {
+            font-size: 48px;
+            font-weight: bold;
+            color: #36cb12;
+            margin: 20px 0;
+            text-shadow: 0 0 10px rgba(54, 203, 18, 0.5);
+        }
+
+        .betting-area {
+            background: rgba(0, 0, 0, 0.6);
+            padding: 30px;
             border-radius: 12px;
-            margin-top: 20px;
-            border: 1px solid #333;
+            margin-top: 30px;
         }
 
-        .bet-input-group {
+        .bet-options {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .bet-button {
+            padding: 20px;
+            background: linear-gradient(135deg, #2d7a2d, #1a5f1a);
+            border: 2px solid #36cb12;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .bet-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(54, 203, 18, 0.4);
+        }
+
+        .bet-button.selected {
+            background: linear-gradient(135deg, #36cb12, #2d9a2d);
+            border-color: #fff;
+            box-shadow: 0 0 20px rgba(54, 203, 18, 0.6);
+        }
+
+        .bet-button .payout {
+            display: block;
+            font-size: 14px;
+            opacity: 0.8;
+            margin-top: 5px;
+        }
+
+        .bet-amount-section {
             display: flex;
-            gap: 10px;
+            gap: 15px;
+            align-items: center;
             margin-bottom: 20px;
         }
 
         .bet-input {
             flex: 1;
-            padding: 15px;
+            padding: 18px;
             background: #1a1a1a;
-            border: 1px solid #333;
+            border: 2px solid #333;
             color: white;
-            border-radius: 8px;
-            font-size: 18px;
+            border-radius: 10px;
+            font-size: 20px;
             font-weight: bold;
+            text-align: center;
         }
 
-        .play-button-large {
+        .bet-input:focus {
+            outline: none;
+            border-color: #36cb12;
+        }
+
+        .quick-bet-chips {
+            display: flex;
+            gap: 10px;
+        }
+
+        .chip-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 3px solid #ffd700;
+            background: linear-gradient(135deg, #d32f2f, #8b0000);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+
+        .chip-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
+        }
+
+        .deal-button {
             width: 100%;
-            padding: 20px;
-            background: #d32f2f;
+            padding: 25px;
+            background: linear-gradient(135deg, #d32f2f, #8b0000);
             color: white;
             font-weight: 800;
-            font-size: 24px;
+            font-size: 28px;
             border: none;
-            border-radius: 8px;
+            border-radius: 12px;
             cursor: pointer;
             text-transform: uppercase;
             transition: all 0.3s ease;
+            letter-spacing: 2px;
         }
 
-        .play-button-large:hover {
-            filter: brightness(1.1);
+        .deal-button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(211, 47, 47, 0.5);
+        }
+
+        .deal-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
 
         .game-result-overlay {
             position: absolute;
             inset: 0;
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0, 0, 0, 0.95);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -75,6 +248,7 @@
             pointer-events: none;
             transition: opacity 0.3s ease;
             z-index: 10;
+            flex-direction: column;
         }
 
         .game-result-overlay.active {
@@ -84,15 +258,88 @@
 
         .result-content {
             text-align: center;
+            animation: resultPop 0.5s ease-out;
+        }
+
+        @keyframes resultPop {
+            0% {
+                transform: scale(0.5);
+                opacity: 0;
+            }
+
+            50% {
+                transform: scale(1.1);
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
         }
 
         .result-content h2 {
-            font-size: 48px;
-            margin-bottom: 10px;
+            font-size: 64px;
+            margin-bottom: 20px;
+            text-transform: uppercase;
         }
 
         .game-result-overlay.win h2 {
             color: #36cb12;
+            text-shadow: 0 0 20px rgba(54, 203, 18, 0.8);
+        }
+
+        .game-result-overlay.loss h2 {
+            color: #d32f2f;
+            text-shadow: 0 0 20px rgba(211, 47, 47, 0.8);
+        }
+
+        .result-amount {
+            font-size: 48px;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+
+        .game-stats {
+            display: flex;
+            justify-content: space-around;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            opacity: 0.7;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #36cb12;
+        }
+
+        @media (max-width: 768px) {
+            .baccarat-table {
+                flex-direction: column;
+            }
+
+            .bet-options {
+                grid-template-columns: 1fr;
+            }
+
+            .quick-bet-chips {
+                flex-wrap: wrap;
+            }
+
+            .result-content h2 {
+                font-size: 40px;
+            }
         }
     </style>
 </head>
@@ -100,42 +347,101 @@
 <body>
     <div class="dashboard-container">
         <header class="dashboard-header">
-            <div class="header-logo"><a href="dashboard.html"
-                    style="text-decoration:none; color:inherit; display:flex; gap:10px; align-items:center;"><img
-                        src="images/classybetaviator-logo.svg" alt="ClassyBet Logo"><span>Baccarat</span></a></div>
+            <div class="header-logo">
+                <a href="dashboard.html"
+                    style="text-decoration:none; color:inherit; display:flex; gap:10px; align-items:center;">
+                    <img src="images/classybetaviator-logo.svg" alt="ClassyBet Logo">
+                    <span>Speed Baccarat</span>
+                </a>
+            </div>
             <div class="header-user-info">
                 <div class="user-balance">
                     <div class="balance-label">Balance</div>
                     <div class="balance-amount" id="headerBalance">Loading...</div>
                 </div>
-                <button class="btn btn-outline-light" onclick="window.location.href='dashboard.html'"><i
-                        class="fas fa-arrow-left"></i> Lobby</button>
+                <button class="btn btn-outline-light" onclick="window.location.href='dashboard.html'">
+                    <i class="fas fa-arrow-left"></i> Lobby
+                </button>
             </div>
         </header>
 
         <main class="dashboard-main" style="display: block;">
-            <div class="container" style="max-width: 1000px; margin: 0 auto;">
-                <div class="game-frame" id="gameFrame">
-                    <div style="text-align:center;">
-                        <h1 style="font-size:64px; margin-bottom:20px;">🃏</h1>
-                        <h2 style="color:#d32f2f;">Speed Baccarat</h2>
+            <div class="game-container">
+                <div class="game-stats">
+                    <div class="stat-item">
+                        <div class="stat-label">Player Wins</div>
+                        <div class="stat-value" id="playerWins">0</div>
                     </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Banker Wins</div>
+                        <div class="stat-value" id="bankerWins">0</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Ties</div>
+                        <div class="stat-value" id="ties">0</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Current Streak</div>
+                        <div class="stat-value" id="streak">-</div>
+                    </div>
+                </div>
+
+                <div class="game-frame" id="gameFrame">
+                    <div class="baccarat-table">
+                        <div class="hand-section" id="playerSection">
+                            <h3><i class="fas fa-user"></i> Player</h3>
+                            <div class="cards-display" id="playerCards"></div>
+                            <div class="hand-total" id="playerTotal">-</div>
+                        </div>
+
+                        <div class="hand-section" id="bankerSection">
+                            <h3><i class="fas fa-building"></i> Banker</h3>
+                            <div class="cards-display" id="bankerCards"></div>
+                            <div class="hand-total" id="bankerTotal">-</div>
+                        </div>
+                    </div>
+
                     <div id="resultOverlay" class="game-result-overlay">
                         <div class="result-content"></div>
                     </div>
                 </div>
 
-                <div class="game-controls-area">
-                    <div class="bet-input-group">
-                        <input type="number" id="betAmount" class="bet-input" value="100" min="10">
+                <div class="betting-area">
+                    <div class="bet-options">
+                        <button class="bet-button" data-bet="player" id="betPlayer">
+                            <i class="fas fa-user"></i> Player
+                            <span class="payout">Pays 1:1</span>
+                        </button>
+                        <button class="bet-button" data-bet="banker" id="betBanker">
+                            <i class="fas fa-building"></i> Banker
+                            <span class="payout">Pays 1:1</span>
+                        </button>
+                        <button class="bet-button" data-bet="tie" id="betTie">
+                            <i class="fas fa-handshake"></i> Tie
+                            <span class="payout">Pays 8:1</span>
+                        </button>
                     </div>
-                    <button id="playBtn" class="play-button-large">DEAL PLAYER</button>
+
+                    <div class="bet-amount-section">
+                        <input type="number" id="betAmount" class="bet-input" value="100" min="10" step="10">
+                        <div class="quick-bet-chips">
+                            <button class="chip-btn" data-amount="50">50</button>
+                            <button class="chip-btn" data-amount="100">100</button>
+                            <button class="chip-btn" data-amount="500">500</button>
+                            <button class="chip-btn" data-amount="1000">1K</button>
+                        </div>
+                    </div>
+
+                    <button id="dealBtn" class="deal-button" disabled>
+                        <i class="fas fa-play-circle"></i> Select Bet & Deal
+                    </button>
                 </div>
             </div>
         </main>
     </div>
+
     <script src="js/casino-game.js"></script>
-    <script>document.addEventListener('DOMContentLoaded', () => { new CasinoGame('baccarat', 'Baccarat'); });</script>
+    <script src="js/baccarat-game.js"></script>
 </body>
 
 </html>

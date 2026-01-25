@@ -9,116 +9,365 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <style>
-        /* Game Specific Styles */
-        .game-frame {
-            background: url('https://placehold.co/1200x800/1a1a1a/ff6d00?text=Ultimate+Hot+Slot') center/cover;
-            height: 500px;
-            position: relative;
-            border-radius: 12px;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 2px solid #ff6d00;
+        .game-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
         }
 
-        .game-controls-area {
-            background: #000;
+        .game-frame {
+            background: linear-gradient(135deg, #8b0000 0%, #4a0000 100%);
+            min-height: 700px;
+            position: relative;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 3px solid #d32f2f;
+            padding: 30px;
+        }
+
+        .slot-machine {
+            background: linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%);
+            padding: 40px;
+            border-radius: 20px;
+            border: 5px solid #ffd700;
+            box-shadow: 0 0 40px rgba(255, 215, 0, 0.4);
+        }
+
+        .slot-title {
+            text-align: center;
+            font-size: 48px;
+            font-weight: 800;
+            color: #ffd700;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+            margin-bottom: 30px;
+            letter-spacing: 3px;
+        }
+
+        .reels-container {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 15px;
+            margin: 30px 0;
             padding: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 15px;
+        }
+
+        .reel {
+            background: linear-gradient(180deg, #2d2d2d 0%, #1a1a1a 100%);
+            border: 3px solid #444;
+            border-radius: 12px;
+            padding: 20px 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .reel.spinning {
+            animation: reelSpin 0.5s linear infinite;
+        }
+
+        @keyframes reelSpin {
+            0% {
+                transform: translateY(0);
+            }
+
+            100% {
+                transform: translateY(-100px);
+            }
+        }
+
+        .symbol {
+            font-size: 72px;
+            text-align: center;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .symbol.winning {
+            animation: symbolWin 0.8s ease-in-out infinite;
+            background: rgba(255, 215, 0, 0.3);
+        }
+
+        @keyframes symbolWin {
+
+            0%,
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+            }
+
+            50% {
+                transform: scale(1.1);
+                box-shadow: 0 0 30px rgba(255, 215, 0, 0.8);
+            }
+        }
+
+        .paylines-display {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .payline-indicator {
+            padding: 12px;
+            background: rgba(255, 215, 0, 0.2);
+            border: 2px solid #ffd700;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .payline-indicator.active {
+            background: rgba(255, 215, 0, 0.5);
+            animation: paylinePulse 1s ease-in-out infinite;
+        }
+
+        @keyframes paylinePulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .game-controls {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 30px;
             border-radius: 12px;
             margin-top: 20px;
-            border: 1px solid #333;
         }
 
-        .bet-input-group {
-            display: flex;
-            gap: 10px;
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
             margin-bottom: 20px;
         }
 
-        .bet-input {
-            flex: 1;
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .control-group label {
+            font-size: 14px;
+            opacity: 0.8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .control-input {
             padding: 15px;
             background: #1a1a1a;
-            border: 1px solid #333;
+            border: 2px solid #444;
             color: white;
             border-radius: 8px;
             font-size: 18px;
             font-weight: bold;
+            text-align: center;
         }
 
-        .play-button-large {
-            width: 100%;
-            padding: 20px;
-            background: linear-gradient(to bottom, #ff6d00, #e65100);
-            color: #fff;
-            font-weight: 800;
-            font-size: 24px;
-            border: none;
+        .control-input:focus {
+            outline: none;
+            border-color: #ffd700;
+        }
+
+        .bet-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .bet-btn {
+            flex: 1;
+            padding: 12px;
+            background: #2d2d2d;
+            border: 2px solid #444;
+            color: white;
             border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        .bet-btn:hover {
+            background: #3d3d3d;
+            border-color: #ffd700;
+        }
+
+        .spin-button {
+            width: 100%;
+            padding: 25px;
+            background: linear-gradient(135deg, #d32f2f, #8b0000);
+            color: white;
+            font-weight: 800;
+            font-size: 32px;
+            border: none;
+            border-radius: 12px;
             cursor: pointer;
             text-transform: uppercase;
             transition: all 0.3s ease;
-            text-shadow: 0 2px 2px rgba(0, 0, 0, 0.5);
+            letter-spacing: 3px;
+            box-shadow: 0 8px 25px rgba(211, 47, 47, 0.5);
         }
 
-        .play-button-large:hover {
-            filter: brightness(1.2);
-            transform: translateY(-2px);
+        .spin-button:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(211, 47, 47, 0.7);
         }
 
-        .play-button-large:disabled {
-            background: #555;
+        .spin-button:disabled {
+            opacity: 0.5;
             cursor: not-allowed;
-            transform: none;
         }
 
-        .game-result-overlay {
-            position: absolute;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.8);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
-            z-index: 10;
+        .game-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
         }
 
-        .game-result-overlay.active {
-            opacity: 1;
-            pointer-events: auto;
-        }
-
-        .result-content {
+        .stat-box {
             text-align: center;
-            transform: scale(0.8);
-            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 10px;
+            border: 2px solid rgba(211, 47, 47, 0.3);
         }
 
-        .game-result-overlay.active .result-content {
-            transform: scale(1);
+        .stat-label {
+            font-size: 12px;
+            opacity: 0.7;
+            text-transform: uppercase;
+            margin-bottom: 8px;
         }
 
-        .result-content h2 {
-            font-size: 48px;
-            margin-bottom: 10px;
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #ffd700;
         }
 
-        .game-result-overlay.win h2 {
+        .paytable {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 20px;
+        }
+
+        .paytable h4 {
+            text-align: center;
+            color: #ffd700;
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+
+        .paytable-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            align-items: center;
+        }
+
+        .paytable-row:last-child {
+            border-bottom: none;
+        }
+
+        .paytable-symbols {
+            font-size: 32px;
+        }
+
+        .paytable-payout {
+            font-weight: bold;
             color: #36cb12;
         }
 
-        .game-result-overlay.loss h2 {
-            color: #ff4444;
+        .win-display {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.95);
+            padding: 50px;
+            border-radius: 20px;
+            border: 5px solid #ffd700;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .win-display.active {
+            opacity: 1;
+            animation: winPop 0.6s ease-out;
+        }
+
+        @keyframes winPop {
+            0% {
+                transform: translate(-50%, -50%) scale(0.5);
+            }
+
+            50% {
+                transform: translate(-50%, -50%) scale(1.1);
+            }
+
+            100% {
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+
+        .win-display h2 {
+            font-size: 64px;
+            color: #ffd700;
+            text-shadow: 0 0 30px rgba(255, 215, 0, 1);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .win-amount {
+            font-size: 56px;
+            color: #36cb12;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            .reels-container {
+                gap: 8px;
+                padding: 15px;
+            }
+
+            .symbol {
+                font-size: 48px;
+                padding: 10px;
+            }
+
+            .controls-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .game-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
         }
     </style>
 </head>
 
 <body>
     <div class="dashboard-container">
-        <!-- Header -->
         <header class="dashboard-header">
             <div class="header-logo">
                 <a href="dashboard.html"
@@ -133,60 +382,116 @@
                     <div class="balance-amount" id="headerBalance">Loading...</div>
                 </div>
                 <button class="btn btn-outline-light" onclick="window.location.href='dashboard.html'">
-                    <i class="fas fa-arrow-left"></i> Back to Lobby
+                    <i class="fas fa-arrow-left"></i> Lobby
                 </button>
             </div>
         </header>
 
         <main class="dashboard-main" style="display: block;">
-            <div class="container" style="max-width: 1000px; margin: 0 auto;">
-
-                <!-- Game Display -->
-                <div class="game-frame" id="gameFrame">
-                    <div class="game-display-text" style="text-align:center;">
-                        <h1 style="font-size:64px; margin-bottom:20px;">🍒 🔥 7️⃣</h1>
-                        <h2 style="color:#ff6d00;">Ultimate Hot</h2>
-                        <p style="color:#888;">Classic 3-Reel Slot</p>
+            <div class="game-container">
+                <div class="game-stats">
+                    <div class="stat-box">
+                        <div class="stat-label">Total Spins</div>
+                        <div class="stat-value" id="totalSpins">0</div>
                     </div>
-
-                    <!-- Result Overlay -->
-                    <div id="resultOverlay" class="game-result-overlay">
-                        <div class="result-content">
-                            <!-- Injected via JS -->
-                        </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Total Won</div>
+                        <div class="stat-value" id="totalWon">KES 0</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Biggest Win</div>
+                        <div class="stat-value" id="biggestWin">KES 0</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Win Rate</div>
+                        <div class="stat-value" id="winRate">0%</div>
                     </div>
                 </div>
 
-                <!-- Controls -->
-                <div class="game-controls-area">
-                    <div class="bet-input-group">
-                        <button class="quick-amount btn btn-secondary" data-amount="20">20</button>
-                        <button class="quick-amount btn btn-secondary" data-amount="50">50</button>
-                        <button class="quick-amount btn btn-secondary" data-amount="100">100</button>
-                        <button class="quick-amount btn btn-secondary" data-amount="200">200</button>
-                        <input type="number" id="betAmount" class="bet-input" value="50" min="10">
+                <div class="game-frame" id="gameFrame">
+                    <div class="slot-machine">
+                        <div class="slot-title">🔥 ULTIMATE HOT 🔥</div>
+
+                        <div class="paylines-display">
+                            <div class="payline-indicator">Line 1</div>
+                            <div class="payline-indicator">Line 2</div>
+                            <div class="payline-indicator">Line 3</div>
+                            <div class="payline-indicator">Line 4</div>
+                            <div class="payline-indicator">Line 5</div>
+                        </div>
+
+                        <div class="reels-container" id="reelsContainer">
+                            <!-- 5 reels will be generated by JavaScript -->
+                        </div>
                     </div>
-                    <button id="playBtn" class="play-button-large">
-                        SPIN
+
+                    <div class="win-display" id="winDisplay">
+                        <h2>BIG WIN!</h2>
+                        <div class="win-amount" id="winAmount">+KES 0</div>
+                    </div>
+                </div>
+
+                <div class="game-controls">
+                    <div class="controls-grid">
+                        <div class="control-group">
+                            <label>Bet Per Line (KES)</label>
+                            <input type="number" id="betAmount" class="control-input" value="10" min="10" step="10">
+                        </div>
+                        <div class="control-group">
+                            <label>Lines (1-5)</label>
+                            <input type="number" id="linesCount" class="control-input" value="5" min="1" max="5">
+                        </div>
+                        <div class="control-group">
+                            <label>Total Bet</label>
+                            <input type="text" id="totalBet" class="control-input" value="KES 50" readonly>
+                        </div>
+                    </div>
+
+                    <div class="bet-buttons">
+                        <button class="bet-btn" data-bet="10">10 KES</button>
+                        <button class="bet-btn" data-bet="50">50 KES</button>
+                        <button class="bet-btn" data-bet="100">100 KES</button>
+                        <button class="bet-btn" data-bet="500">500 KES</button>
+                    </div>
+
+                    <button id="spinBtn" class="spin-button">
+                        <i class="fas fa-sync-alt"></i> SPIN
                     </button>
                 </div>
 
-                <!-- Footer Info -->
-                <div style="margin-top: 30px; text-align: center; color: #666;">
-                    <p>EGT Interactive • RTP 95.5%</p>
+                <div class="paytable">
+                    <h4><i class="fas fa-trophy"></i> Paytable</h4>
+                    <div class="paytable-row">
+                        <div class="paytable-symbols">🍒 🍒 🍒 🍒 🍒</div>
+                        <div class="paytable-payout">500x</div>
+                    </div>
+                    <div class="paytable-row">
+                        <div class="paytable-symbols">🍋 🍋 🍋 🍋 🍋</div>
+                        <div class="paytable-payout">200x</div>
+                    </div>
+                    <div class="paytable-row">
+                        <div class="paytable-symbols">🍊 🍊 🍊 🍊 🍊</div>
+                        <div class="paytable-payout">100x</div>
+                    </div>
+                    <div class="paytable-row">
+                        <div class="paytable-symbols">🍇 🍇 🍇 🍇 🍇</div>
+                        <div class="paytable-payout">50x</div>
+                    </div>
+                    <div class="paytable-row">
+                        <div class="paytable-symbols">💎 💎 💎 💎 💎</div>
+                        <div class="paytable-payout">1000x</div>
+                    </div>
+                    <div class="paytable-row">
+                        <div class="paytable-symbols">7️⃣ 7️⃣ 7️⃣ 7️⃣ 7️⃣</div>
+                        <div class="paytable-payout">2000x</div>
+                    </div>
                 </div>
-
             </div>
         </main>
     </div>
 
-    <!-- Logic -->
     <script src="js/casino-game.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            new CasinoGame('ultimate_hot', 'Ultimate Hot');
-        });
-    </script>
+    <script src="js/ultimate-hot-game.js"></script>
 </body>
 
 </html>

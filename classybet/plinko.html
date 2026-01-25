@@ -9,90 +9,290 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <style>
-        .game-frame {
-            background: url('https://placehold.co/1200x800/673ab7/ffffff?text=Plinko') center/cover;
-            height: 500px;
-            position: relative;
-            border-radius: 12px;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 2px solid #673ab7;
+        .game-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
         }
 
-        .game-controls-area {
-            background: #000;
-            padding: 20px;
+        .game-frame {
+            background: linear-gradient(135deg, #6a1b9a 0%, #38006b 100%);
+            min-height: 700px;
+            position: relative;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 3px solid #9c27b0;
+            padding: 30px;
+        }
+
+        .plinko-board {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 30px 20px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 16px;
+        }
+
+        .plinko-canvas {
+            width: 100%;
+            height: 500px;
+            background: linear-gradient(180deg, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0.4) 100%);
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .pegs-container {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-evenly;
+            padding: 40px 20px 80px;
+        }
+
+        .peg-row {
+            display: flex;
+            justify-content: space-evenly;
+            align-items: center;
+        }
+
+        .peg {
+            width: 12px;
+            height: 12px;
+            background: radial-gradient(circle, #ffd700, #ffa000);
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
+        }
+
+        .ball {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: radial-gradient(circle at 30% 30%, #ff4081, #c51162);
+            border-radius: 50%;
+            box-shadow: 0 0 15px rgba(255, 64, 129, 0.8);
+            z-index: 10;
+            transition: all 0.15s ease-out;
+        }
+
+        .multipliers-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 4px;
+            margin-top: 10px;
+        }
+
+        .multiplier-slot {
+            flex: 1;
+            padding: 12px 8px;
+            background: linear-gradient(135deg, #2d2d2d, #1a1a1a);
+            border: 2px solid #444;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 14px;
+            color: #fff;
+        }
+
+        .multiplier-slot.low {
+            background: linear-gradient(135deg, #1976d2, #0d47a1);
+            border-color: #2196f3;
+            color: #fff;
+        }
+
+        .multiplier-slot.medium {
+            background: linear-gradient(135deg, #ffa726, #f57c00);
+            border-color: #ffb74d;
+            color: #000;
+        }
+
+        .multiplier-slot.high {
+            background: linear-gradient(135deg, #36cb12, #2d9a2d);
+            border-color: #4caf50;
+            color: #fff;
+        }
+
+        .multiplier-slot.hit {
+            animation: slotHit 0.6s ease-out;
+        }
+
+        @keyframes slotHit {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.2);
+                box-shadow: 0 0 25px rgba(255, 215, 0, 0.8);
+            }
+        }
+
+        .game-controls {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 25px;
             border-radius: 12px;
             margin-top: 20px;
-            border: 1px solid #333;
         }
 
-        .bet-input-group {
-            display: flex;
-            gap: 10px;
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
             margin-bottom: 20px;
         }
 
-        .bet-input {
-            flex: 1;
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .control-group label {
+            font-size: 14px;
+            opacity: 0.8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .control-input {
             padding: 15px;
             background: #1a1a1a;
-            border: 1px solid #333;
+            border: 2px solid #444;
             color: white;
             border-radius: 8px;
             font-size: 18px;
             font-weight: bold;
-        }
-
-        .play-button-large {
-            width: 100%;
-            padding: 20px;
-            background: #673ab7;
-            color: white;
-            font-weight: 800;
-            font-size: 24px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            text-transform: uppercase;
-            transition: all 0.3s ease;
-        }
-
-        .play-button-large:hover {
-            filter: brightness(1.1);
-        }
-
-        .game-result-overlay {
-            position: absolute;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.8);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
-            z-index: 10;
-        }
-
-        .game-result-overlay.active {
-            opacity: 1;
-            pointer-events: auto;
-        }
-
-        .result-content {
             text-align: center;
         }
 
-        .result-content h2 {
-            font-size: 48px;
-            margin-bottom: 10px;
+        .control-input:focus {
+            outline: none;
+            border-color: #9c27b0;
         }
 
-        .game-result-overlay.win h2 {
-            color: #36cb12;
+        .risk-selector {
+            display: flex;
+            gap: 10px;
+        }
+
+        .risk-btn {
+            flex: 1;
+            padding: 12px;
+            background: #2d2d2d;
+            border: 2px solid #444;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .risk-btn:hover {
+            background: #3d3d3d;
+            border-color: #9c27b0;
+        }
+
+        .risk-btn.selected {
+            background: linear-gradient(135deg, #9c27b0, #6a1b9a);
+            border-color: #ce93d8;
+        }
+
+        .drop-button {
+            width: 100%;
+            padding: 22px;
+            background: linear-gradient(135deg, #ff4081, #c51162);
+            color: white;
+            font-weight: 800;
+            font-size: 26px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+            letter-spacing: 2px;
+        }
+
+        .drop-button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 64, 129, 0.6);
+        }
+
+        .drop-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .game-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-box {
+            text-align: center;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 10px;
+            border: 2px solid rgba(156, 39, 176, 0.3);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            opacity: 0.7;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #ff4081;
+        }
+
+        .recent-drops {
+            display: flex;
+            gap: 8px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            overflow-x: auto;
+            margin-top: 15px;
+        }
+
+        .drop-badge {
+            min-width: 60px;
+            padding: 10px;
+            background: linear-gradient(135deg, #2d2d2d, #1a1a1a);
+            border-radius: 6px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .drop-badge.win {
+            background: linear-gradient(135deg, #36cb12, #2d9a2d);
+        }
+
+        .drop-badge.loss {
+            background: linear-gradient(135deg, #d32f2f, #8b0000);
+        }
+
+        @media (max-width: 768px) {
+            .controls-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .multiplier-slot {
+                font-size: 11px;
+                padding: 10px 4px;
+            }
         }
     </style>
 </head>
@@ -100,42 +300,85 @@
 <body>
     <div class="dashboard-container">
         <header class="dashboard-header">
-            <div class="header-logo"><a href="dashboard.html"
-                    style="text-decoration:none; color:inherit; display:flex; gap:10px; align-items:center;"><img
-                        src="images/classybetaviator-logo.svg" alt="ClassyBet Logo"><span>Plinko</span></a></div>
+            <div class="header-logo">
+                <a href="dashboard.html"
+                    style="text-decoration:none; color:inherit; display:flex; gap:10px; align-items:center;">
+                    <img src="images/classybetaviator-logo.svg" alt="ClassyBet Logo">
+                    <span>Plinko</span>
+                </a>
+            </div>
             <div class="header-user-info">
                 <div class="user-balance">
                     <div class="balance-label">Balance</div>
                     <div class="balance-amount" id="headerBalance">Loading...</div>
                 </div>
-                <button class="btn btn-outline-light" onclick="window.location.href='dashboard.html'"><i
-                        class="fas fa-arrow-left"></i> Lobby</button>
+                <button class="btn btn-outline-light" onclick="window.location.href='dashboard.html'">
+                    <i class="fas fa-arrow-left"></i> Lobby
+                </button>
             </div>
         </header>
 
         <main class="dashboard-main" style="display: block;">
-            <div class="container" style="max-width: 1000px; margin: 0 auto;">
-                <div class="game-frame" id="gameFrame">
-                    <div style="text-align:center;">
-                        <h1 style="font-size:64px; margin-bottom:20px;">🔻</h1>
-                        <h2 style="color:#673ab7;">Plinko</h2>
+            <div class="game-container">
+                <div class="game-stats">
+                    <div class="stat-box">
+                        <div class="stat-label">Total Drops</div>
+                        <div class="stat-value" id="totalDrops">0</div>
                     </div>
-                    <div id="resultOverlay" class="game-result-overlay">
-                        <div class="result-content"></div>
+                    <div class="stat-box">
+                        <div class="stat-label">Total Won</div>
+                        <div class="stat-value" id="totalWon">KES 0</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Biggest Win</div>
+                        <div class="stat-value" id="biggestWin">0x</div>
                     </div>
                 </div>
 
-                <div class="game-controls-area">
-                    <div class="bet-input-group">
-                        <input type="number" id="betAmount" class="bet-input" value="50" min="10">
+                <div class="game-frame" id="gameFrame">
+                    <div class="plinko-board">
+                        <div class="plinko-canvas" id="plinkoCanvas">
+                            <div class="pegs-container" id="pegsContainer">
+                                <!-- Pegs will be generated by JavaScript -->
+                            </div>
+                        </div>
+
+                        <div class="multipliers-row" id="multipliersRow">
+                            <!-- Multiplier slots will be generated by JavaScript -->
+                        </div>
                     </div>
-                    <button id="playBtn" class="play-button-large">DROP BALL</button>
+
+                    <div class="recent-drops" id="recentDrops">
+                        <span style="opacity: 0.5; font-size: 14px;">Recent drops will appear here</span>
+                    </div>
+                </div>
+
+                <div class="game-controls">
+                    <div class="controls-grid">
+                        <div class="control-group">
+                            <label>Bet Amount (KES)</label>
+                            <input type="number" id="betAmount" class="control-input" value="100" min="10" step="10">
+                        </div>
+                        <div class="control-group">
+                            <label>Risk Level</label>
+                            <div class="risk-selector">
+                                <button class="risk-btn" data-risk="low">Low</button>
+                                <button class="risk-btn selected" data-risk="medium">Medium</button>
+                                <button class="risk-btn" data-risk="high">High</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button id="dropBtn" class="drop-button">
+                        <i class="fas fa-circle"></i> Drop Ball
+                    </button>
                 </div>
             </div>
         </main>
     </div>
+
     <script src="js/casino-game.js"></script>
-    <script>document.addEventListener('DOMContentLoaded', () => { new CasinoGame('plinko', 'Plinko'); });</script>
+    <script src="js/plinko-game.js"></script>
 </body>
 
 </html>
