@@ -8,6 +8,7 @@ const Bet = require('../models/Bet');
 const { sendTelegramNotification } = require('../utils/telegram');
 const { sendSlackMessage } = require('../utils/slack');
 const { applyPromoCodeToUser } = require('../utils/affiliate');
+const { getCurrencyForCountryCode } = require('../utils/currencyConfig');
 const rateLimit = require('express-rate-limit');
 
 const router = express.Router();
@@ -20,7 +21,7 @@ const authLimiter = rateLimit({
 });
 
 // Register
-router.post('/register', 
+router.post('/register',
   authLimiter,
   [
     body('username')
@@ -41,7 +42,7 @@ router.post('/register',
       // Connect to MongoDB for serverless
       const { connectToMongoDB } = require('../utils/database');
       await connectToMongoDB();
-      
+
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
         // Format validation errors into a more readable structure
@@ -49,8 +50,8 @@ router.post('/register',
           acc[error.param] = error.msg;
           return acc;
         }, {});
-        
-        return res.status(400).json({ 
+
+        return res.status(400).json({
           error: 'Validation failed',
           message: Object.values(formattedErrors).join('\n'),
           errors: formattedErrors
@@ -59,6 +60,9 @@ router.post('/register',
 
       const { username, email, password, phone, countryCode, promoCode } = req.body;
       const fullPhone = `${countryCode}${phone}`;
+
+      // Get currency and country from country code
+      const { currency, country } = getCurrencyForCountryCode(countryCode);
 
       // Check if user already exists
       // Check each field individually for more specific error messages
@@ -77,8 +81,8 @@ router.post('/register',
         if (existingEmail) {
           errorMessage.push('Email address is already registered');
         }
-        
-        return res.status(400).json({ 
+
+        return res.status(400).json({
           error: 'User already exists',
           message: errorMessage.join('\n'),
           errors: {
@@ -95,7 +99,9 @@ router.post('/register',
         email: email || null,
         password,
         phone,
-        countryCode
+        countryCode,
+        currency,
+        country
       });
 
       await user.save();
@@ -110,7 +116,7 @@ router.post('/register',
 
       // Generate JWT
       const token = jwt.sign(
-        { 
+        {
           userId: user._id,
           userIdString: user.userId,
           isDemo: user.isDemo || false
@@ -161,10 +167,10 @@ router.post('/register',
 router.post('/demo', async (req, res) => {
   try {
     const demoUser = User.createDemoSession();
-    
+
     // Generate JWT for demo session (shorter expiry)
     const token = jwt.sign(
-      { 
+      {
         userId: demoUser._id,
         isDemo: true
       },
@@ -194,17 +200,17 @@ router.post('/login',
   async (req, res) => {
     try {
       console.log('Login attempt started:', req.body.login);
-      
+
       // Connect to MongoDB for serverless
       const { connectToMongoDB } = require('../utils/database');
       await connectToMongoDB();
-      
+
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
         console.log('Validation errors:', errors.array());
-        return res.status(400).json({ 
-          error: 'Validation failed', 
-          details: errors.array() 
+        return res.status(400).json({
+          error: 'Validation failed',
+          details: errors.array()
         });
       }
 
@@ -217,12 +223,12 @@ router.post('/login',
         { userId: login.toUpperCase() },
         { fullPhone: login }
       ];
-      
+
       // Only search by email if it looks like an email
       if (login.includes('@')) {
         searchQuery.push({ email: login.toLowerCase() });
       }
-      
+
       const user = await User.findOne({
         $or: searchQuery
       });
@@ -255,7 +261,7 @@ router.post('/login',
 
       // Generate JWT
       const token = jwt.sign(
-        { 
+        {
           userId: user._id,
           userIdString: user.userId,
           isDemo: user.isDemo || false
@@ -296,7 +302,7 @@ router.post('/login',
         jwtSecret: !!process.env.JWT_SECRET,
         mongodbUri: !!process.env.MONGODB_URI
       });
-      res.status(500).json({ 
+      res.status(500).json({
         error: 'Internal server error',
         debug: process.env.NODE_ENV === 'development' ? error.message : undefined
       });
@@ -310,14 +316,14 @@ router.get('/profile', async (req, res) => {
     // Connect to MongoDB for serverless
     const { connectToMongoDB } = require('../utils/database');
     await connectToMongoDB();
-    
+
     const token = req.header('Authorization')?.replace('Bearer ', '');
     if (!token) {
       return res.status(401).json({ error: 'Access denied. No token provided.' });
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    
+
     // Handle demo users
     if (decoded.isDemo || decoded.userId.startsWith('demo_')) {
       return res.json({
@@ -372,7 +378,7 @@ router.get('/transactions', async (req, res) => {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const { page = 1, limit = 20, type } = req.query;
-    
+
     const filter = { user: decoded.userId };  // ✅ Changed from userId to user
     if (type) {
       filter.type = type;
@@ -411,7 +417,7 @@ router.get('/bets', async (req, res) => {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const { page = 1, limit = 20 } = req.query;
-    
+
     const bets = await Bet.find({ userId: decoded.userId })
       .sort({ createdAt: -1 })
       .limit(limit * 1)

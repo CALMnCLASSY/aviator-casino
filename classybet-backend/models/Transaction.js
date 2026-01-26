@@ -40,12 +40,31 @@ const transactionSchema = new mongoose.Schema({
     unique: true,
     sparse: true
   },
+  currency: {
+    type: String,
+    required: true,
+    default: 'KES'
+  },
+  paymentProvider: {
+    type: String,
+    enum: ['mpesa', 'paystack', 'manual'],
+    default: 'manual'
+  },
   // M-Pesa specific fields
   mpesaReceiptNumber: {
     type: String,
     sparse: true
   },
   mpesaPhoneNumber: {
+    type: String,
+    sparse: true
+  },
+  // Paystack specific fields
+  paystackReference: {
+    type: String,
+    sparse: true
+  },
+  paystackAccessCode: {
     type: String,
     sparse: true
   },
@@ -67,7 +86,7 @@ const transactionSchema = new mongoose.Schema({
 });
 
 // Generate unique reference
-transactionSchema.pre('save', async function(next) {
+transactionSchema.pre('save', async function (next) {
   if (!this.reference) {
     const timestamp = Date.now().toString(36);
     const random = Math.random().toString(36).substr(2, 5);

@@ -47,6 +47,17 @@ const userSchema = new mongoose.Schema({
     unique: true,
     sparse: true
   },
+  country: {
+    type: String,
+    required: true,
+    default: 'Kenya'
+  },
+  currency: {
+    type: String,
+    required: true,
+    default: 'KES',
+    enum: ['KES', 'NGN', 'GHS', 'ZAR', 'USD', 'GBP', 'EUR']
+  },
   isDemo: {
     type: Boolean,
     default: false
@@ -224,6 +235,9 @@ userSchema.methods.getPublicProfile = function getPublicProfile() {
     email: this.email,
     phone: this.phone,
     fullPhone: this.fullPhone,
+    country: this.country,
+    countryCode: this.countryCode,
+    currency: this.currency,
     balance: this.balance,
     isDemo: this.isDemo,
     isAdmin: this.isAdmin,

@@ -7,6 +7,8 @@ const { authenticateToken } = require('../middleware/auth');
 const { sendTelegramNotification } = require('../utils/telegram');
 const { sendSlackMessage } = require('../utils/slack');
 const { recordAffiliateDeposit } = require('../utils/affiliate');
+const paystackService = require('../utils/paystackService');
+const { validateDepositAmount, formatCurrency } = require('../utils/currencyConfig');
 
 const router = express.Router();
 
@@ -26,9 +28,9 @@ router.post('/stk-push',
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
-        return res.status(400).json({ 
-          error: 'Validation failed', 
-          details: errors.array() 
+        return res.status(400).json({
+          error: 'Validation failed',
+          details: errors.array()
         });
       }
 
@@ -102,7 +104,7 @@ router.post('/confirm-deposit',
   async (req, res) => {
     try {
       const { transactionId, mpesaReceiptNumber } = req.body;
-      
+
       // Check if user is admin
       const admin = await User.findById(req.userId);
       if (!admin.isAdmin) {
@@ -224,7 +226,7 @@ router.post('/cancel-deposit',
 router.post('/deposit-tab-click', authenticateToken, async (req, res) => {
   try {
     const user = await User.findById(req.userId);
-    
+
     // Send Slack notification for deposit tab click
     await sendSlackMessage(
       process.env.SLACK_WEBHOOK_DEPOSIT_TAB,
@@ -288,9 +290,9 @@ router.post('/withdraw',
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
-        return res.status(400).json({ 
-          error: 'Validation failed', 
-          details: errors.array() 
+        return res.status(400).json({
+          error: 'Validation failed',
+          details: errors.array()
         });
       }
 
@@ -299,7 +301,7 @@ router.post('/withdraw',
 
       // Check if user has sufficient balance
       if (user.balance < amount) {
-        return res.status(400).json({ 
+        return res.status(400).json({
           error: 'Insufficient balance',
           currentBalance: user.balance
         });
@@ -370,7 +372,7 @@ router.post('/confirm-withdrawal',
   async (req, res) => {
     try {
       const { transactionId, mpesaReceiptNumber } = req.body;
-      
+
       // Check if user is admin
       const admin = await User.findById(req.userId);
       if (!admin.isAdmin) {
@@ -489,5 +491,301 @@ router.post('/cancel-withdrawal',
     }
   }
 );
+
+// ==================== PAYSTACK ENDPOINTS ====================
+
+// Initialize Paystack deposit
+router.post('/deposit-initialize',
+  authenticateToken,
+  [
+    body('amount').isNumeric().withMessage('Amount must be a number')
+  ],
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({
+          error: 'Validation failed',
+          details: errors.array()
+        });
+      }
+
+      const { amount } = req.body;
+      const user = await User.findById(req.userId);
+
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      // Validate amount for user's currency
+      const validation = validateDepositAmount(amount, user.currency);
+      if (!validation.valid) {
+        return res.status(400).json({ error: validation.error });
+      }
+
+      // Create pending transaction
+      const transaction = new Transaction({
+        user: user._id,
+        type: 'deposit',
+        amount: parseFloat(amount),
+        currency: user.currency,
+        balanceBefore: user.balance,
+        balanceAfter: user.balance, // Will be updated when confirmed
+        status: 'pending',
+        description: `Paystack deposit of ${formatCurrency(amount, user.currency)}`,
+        paymentProvider: 'paystack'
+      });
+
+      await transaction.save();
+
+      // Initialize Paystack transaction
+      const paystackResult = await paystackService.initializeTransaction({
+        email: user.email || `${user.username}@classybet.com`,
+        amount: amount,
+        currency: user.currency,
+        reference: transaction.reference,
+        channels: ['card', 'bank', 'ussd', 'qr', 'mobile_money', 'bank_transfer', 'eft'], // All available payment methods
+        metadata: {
+          userId: user._id.toString(),
+          username: user.username,
+          transactionId: transaction._id.toString(),
+          callback_url: `${process.env.FRONTEND_URL}/deposit-success.html`
+        }
+      });
+
+      if (!paystackResult.success) {
+        transaction.status = 'failed';
+        await transaction.save();
+        return res.status(400).json({
+          error: 'Failed to initialize payment',
+          details: paystackResult.error
+        });
+      }
+
+      // Update transaction with Paystack details
+      transaction.paystackReference = paystackResult.data.reference;
+      transaction.paystackAccessCode = paystackResult.data.access_code;
+      await transaction.save();
+
+      // Send notification
+      await sendTelegramNotification(
+        `💳 Paystack Deposit Initiated!\\n\\n` +
+        `User: ${user.username}\\n` +
+        `Amount: ${formatCurrency(amount, user.currency)}\\n` +
+        `Currency: ${user.currency}\\n` +
+        `Reference: ${transaction.reference}\\n` +
+        `Time: ${new Date().toLocaleString()}`
+      );
+
+      res.json({
+        success: true,
+        message: 'Payment initialized successfully',
+        data: {
+          authorization_url: paystackResult.data.authorization_url,
+          access_code: paystackResult.data.access_code,
+          reference: paystackResult.data.reference,
+          transactionId: transaction.reference
+        }
+      });
+
+    } catch (error) {
+      console.error('Deposit initialization error:', error);
+      res.status(500).json({ error: 'Failed to initialize deposit' });
+    }
+  }
+);
+
+// Verify Paystack deposit
+router.post('/deposit-verify',
+  authenticateToken,
+  [
+    body('reference').notEmpty().withMessage('Reference is required')
+  ],
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({
+          error: 'Validation failed',
+          details: errors.array()
+        });
+      }
+
+      const { reference } = req.body;
+      const user = await User.findById(req.userId);
+
+      // Find transaction
+      const transaction = await Transaction.findOne({
+        reference: reference,
+        user: user._id
+      });
+
+      if (!transaction) {
+        return res.status(404).json({ error: 'Transaction not found' });
+      }
+
+      if (transaction.status === 'completed') {
+        return res.json({
+          success: true,
+          message: 'Transaction already completed',
+          newBalance: user.balance
+        });
+      }
+
+      // Verify with Paystack
+      const verificationResult = await paystackService.verifyTransaction(reference);
+
+      if (!verificationResult.success) {
+        return res.status(400).json({
+          error: 'Verification failed',
+          details: verificationResult.error
+        });
+      }
+
+      const paymentData = verificationResult.data;
+
+      // Check if payment was successful
+      if (paymentData.status !== 'success') {
+        transaction.status = 'failed';
+        await transaction.save();
+        return res.status(400).json({
+          error: 'Payment was not successful',
+          status: paymentData.status
+        });
+      }
+
+      // Update user balance
+      user.balance += transaction.amount;
+      await user.save();
+
+      // Record affiliate deposit if applicable
+      try {
+        await recordAffiliateDeposit(user, transaction.amount);
+      } catch (error) {
+        console.error('Affiliate deposit tracking failed:', error.message);
+      }
+
+      // Update transaction
+      transaction.status = 'completed';
+      transaction.balanceAfter = user.balance;
+      transaction.processedAt = new Date();
+      transaction.metadata = {
+        ...transaction.metadata,
+        paystackData: {
+          channel: paymentData.channel,
+          paidAt: paymentData.paidAt,
+          customer: paymentData.customer
+        }
+      };
+      await transaction.save();
+
+      // Send confirmation notification
+      await sendTelegramNotification(
+        `✅ Paystack Deposit Confirmed!\\n\\n` +
+        `User: ${user.username}\\n` +
+        `Amount: ${formatCurrency(transaction.amount, user.currency)}\\n` +
+        `Currency: ${user.currency}\\n` +
+        `New Balance: ${formatCurrency(user.balance, user.currency)}\\n` +
+        `Reference: ${reference}\\n` +
+        `Channel: ${paymentData.channel}\\n` +
+        `Time: ${new Date().toLocaleString()}`
+      );
+
+      res.json({
+        success: true,
+        message: 'Deposit confirmed successfully',
+        transaction: {
+          reference: transaction.reference,
+          amount: transaction.amount,
+          currency: transaction.currency,
+          status: transaction.status
+        },
+        newBalance: user.balance
+      });
+
+    } catch (error) {
+      console.error('Deposit verification error:', error);
+      res.status(500).json({ error: 'Failed to verify deposit' });
+    }
+  }
+);
+
+// Paystack webhook handler
+router.post('/paystack-webhook', async (req, res) => {
+  try {
+    const signature = req.headers['x-paystack-signature'];
+
+    // Verify webhook signature
+    if (!paystackService.verifyWebhookSignature(signature, req.body)) {
+      console.error('Invalid webhook signature');
+      return res.status(400).json({ error: 'Invalid signature' });
+    }
+
+    const event = req.body;
+    console.log('📨 Paystack webhook received:', event.event);
+
+    // Handle charge.success event
+    if (event.event === 'charge.success') {
+      const data = event.data;
+      const reference = data.reference;
+
+      // Find transaction
+      const transaction = await Transaction.findOne({ reference });
+
+      if (!transaction) {
+        console.error('Transaction not found for reference:', reference);
+        return res.status(404).json({ error: 'Transaction not found' });
+      }
+
+      // Skip if already processed
+      if (transaction.status === 'completed') {
+        console.log('Transaction already completed:', reference);
+        return res.json({ message: 'Already processed' });
+      }
+
+      // Update user balance
+      const user = await User.findById(transaction.user);
+      user.balance += transaction.amount;
+      await user.save();
+
+      // Record affiliate deposit
+      try {
+        await recordAffiliateDeposit(user, transaction.amount);
+      } catch (error) {
+        console.error('Affiliate deposit tracking failed:', error.message);
+      }
+
+      // Update transaction
+      transaction.status = 'completed';
+      transaction.balanceAfter = user.balance;
+      transaction.processedAt = new Date();
+      transaction.metadata = {
+        ...transaction.metadata,
+        webhookData: data
+      };
+      await transaction.save();
+
+      console.log('✅ Webhook processed successfully:', reference);
+
+      // Send notification
+      await sendTelegramNotification(
+        `🎉 Automatic Deposit Confirmed (Webhook)!\\n\\n` +
+        `User: ${user.username}\\n` +
+        `Amount: ${formatCurrency(transaction.amount, transaction.currency)}\\n` +
+        `New Balance: ${formatCurrency(user.balance, user.currency)}\\n` +
+        `Reference: ${reference}`
+      );
+    }
+
+    res.json({ message: 'Webhook processed' });
+
+  } catch (error) {
+    console.error('Webhook processing error:', error);
+    res.status(500).json({ error: 'Webhook processing failed' });
+  }
+});
+
+module.exports = router;
+
 
 module.exports = router;
