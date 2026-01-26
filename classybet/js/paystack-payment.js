@@ -88,10 +88,21 @@ async function initiatePaystackDeposit(amount) {
  * Open Paystack payment popup with all payment methods
  */
 function openPaystackPopup(paymentData, userData, currency) {
+    // Get the actual amount from the transaction data
+    // Amount must be in kobo/cents (multiply by 100)
+    const amountInMinorUnits = Math.round(parseFloat(paymentData.amount) * 100);
+
+    console.log('💳 Opening Paystack popup:', {
+        reference: paymentData.reference,
+        amount: paymentData.amount,
+        amountInKobo: amountInMinorUnits,
+        currency: currency
+    });
+
     const handler = PaystackPop.setup({
         key: PAYSTACK_PUBLIC_KEY,
         email: userData.email || `${userData.username}@classybet.com`,
-        amount: Math.round(parseFloat(paymentData.transactionId.split('_')[1]) * 100), // Amount in kobo/cents
+        amount: amountInMinorUnits, // Amount in kobo/cents
         currency: currency,
         ref: paymentData.reference,
         // Enable all payment channels - Paystack will show available ones for the currency
