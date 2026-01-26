@@ -584,7 +584,9 @@ router.post('/deposit-initialize',
           authorization_url: paystackResult.data.authorization_url,
           access_code: paystackResult.data.access_code,
           reference: paystackResult.data.reference,
-          transactionId: transaction.reference
+          transactionId: transaction.reference,
+          amount: amount, // Add amount for frontend
+          currency: user.currency // Add currency for frontend
         }
       });
 
