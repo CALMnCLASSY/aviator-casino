@@ -7,6 +7,8 @@
     <title>ClassyBet Profile</title>
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Paystack SDK -->
+    <script src="https://js.paystack.co/v1/inline.js"></script>
     <style>
         * {
             margin: 0;
@@ -723,7 +725,6 @@
                     </ul>
 
                     <!-- Deposit Section -->
-                    <!-- Deposit Section -->
                     <div id="deposit-section" class="content-section">
                         <div class="section-header">
                             <button class="back-button" onclick="showMainMenu()">
@@ -732,61 +733,45 @@
                             <h2 class="section-title">Deposit</h2>
                         </div>
 
-
-                        <h4 style="margin-bottom: 1rem; color: #30fcbe;">STK Push Deposit</h4>
+                        <h4 style="margin-bottom: 0.5rem; color: #30fcbe;">💳 Deposit Funds</h4>
+                        <p style="color: #ccc; margin-bottom: 1.5rem; font-size: 0.95rem;">
+                            Choose from multiple payment methods: Cards, Bank Transfer, USSD, Mobile Money, and more!
+                        </p>
 
                         <div id="deposit-error" class="error" style="display: none;"></div>
                         <div id="deposit-success" class="success" style="display: none;"></div>
-                        <form id="deposit-form">
+
+                        <form id="deposit-form" onsubmit="handlePaystackDeposit(event)">
                             <div class="form-group">
-                                <label for="deposit-amount">Amount (KES)</label>
-                                <input type="number" id="deposit-amount" class="form-control" min="200" max="150000"
-                                    step="1" required>
-                                <small style="color: #ccc;">Minimum: KES 200, Maximum: KES 150,000</small>
+                                <label for="deposit-amount">Amount (<span id="currency-code">KES</span>)</label>
+                                <input type="number" id="deposit-amount" class="form-control" required>
+                                <small style="color: #ccc;">
+                                    Min: <span id="min-deposit">200</span> | Max: <span id="max-deposit">150,000</span>
+                                </small>
                             </div>
 
-                            <div class="form-group">
-                                <label for="deposit-phone">M-Pesa Phone Number</label>
-                                <input type="tel" id="deposit-phone" class="form-control" placeholder="254700000000"
-                                    required>
-                            </div>
-
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-mobile-alt"></i> DEPOSIT
+                            <button type="submit" class="btn btn-primary" style="width: 100%;">
+                                <i class="fas fa-credit-card"></i> PAY WITH PAYSTACK
                             </button>
 
                             <div
-                                style="margin-top: 2rem; padding: 1rem; background: rgba(255, 165, 0, 0.1); border-radius: 8px;">
-                                <h5 style="color: #ffa500; margin-bottom: 0.5rem;">⚠️ Deposit Notice</h5>
-                                <p style="color: #ccc; font-size: 0.9rem;">Deposit processing is instant but may take
-                                    upto 10 minutes for prompt to appear. You'll receive an SMS confirmation immediately
-                                    once processed.</p>
+                                style="margin-top: 1.5rem; padding: 1.25rem; background: rgba(48, 252, 190, 0.08); border: 1px solid rgba(48, 252, 190, 0.2); border-radius: 12px;">
+                                <h5 style="color: #30fcbe; margin-bottom: 0.75rem; font-size: 1rem;">
+                                    <i class="fas fa-info-circle"></i> Available Payment Methods
+                                </h5>
+                                <ul style="color: #ccc; font-size: 0.9rem; padding-left: 1.5rem; margin: 0;">
+                                    <li>💳 Credit/Debit Cards (Visa, Mastercard, Verve)</li>
+                                    <li>🏦 Bank Transfer & EFT</li>
+                                    <li>📱 Mobile Money (M-Pesa, MTN, Vodafone, etc.)</li>
+                                    <li>💰 USSD Banking</li>
+                                    <li>🔐 Secure & Instant Processing</li>
+                                </ul>
+                                <p style="color: #999; font-size: 0.85rem; margin-top: 0.75rem; margin-bottom: 0;">
+                                    <i class="fas fa-shield-alt"></i> Powered by Paystack - Payment methods vary by
+                                    country
+                                </p>
                             </div>
                         </form>
-
-                        <div class="deposit-instructions" style="display: none;">
-                            <h4><i class="fas fa-info-circle"></i> Deposit Instructions if STK Push doesn't appear</h4>
-                            <div class="paybill-info">
-                                <div class="paybill-item">
-                                    <div style="color: #ccc; margin-bottom: 0.5rem;">Paybill Number</div>
-                                    <div class="paybill-number" id="paybill-number">793174</div>
-                                </div>
-                                <div class="paybill-item">
-                                    <div style="color: #ccc; margin-bottom: 0.5rem;">Account No: Your Account User ID
-                                    </div>
-                                    <div class="paybill-number" id="account-number">745087451</div>
-                                </div>
-                            </div>
-                            <p style="color: #ccc; margin-bottom: 1rem;">Follow these steps to deposit:</p>
-                            <ol style="color: #ccc; padding-left: 1.5rem;">
-                                <li>Go to M-PESA menu</li>
-                                <li>Select Lipa na M-PESA → Pay Bill</li>
-                                <li>Enter Business Number: <strong>793174</strong></li>
-                                <li>Enter Account Number(Your Given Account ID): <strong>745087451</strong></li>
-                                <li>Enter amount and complete payment</li>
-                                <li>Or use STK Push above for instant deposit</li>
-                            </ol>
-                        </div>
                     </div>
 
                     <!-- Withdraw Section -->
@@ -1116,64 +1101,45 @@
             }
         });
 
-        // Deposit form handler
-        const profileDepositInstructions = document.querySelector('#deposit-section .deposit-instructions');
-
-        document.getElementById('deposit-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
+        // Paystack Deposit form handler
+        async function handlePaystackDeposit(event) {
+            event.preventDefault();
 
             const amount = document.getElementById('deposit-amount').value;
-            let phoneNumber = document.getElementById('deposit-phone').value;
+            const errorDiv = document.getElementById('deposit-error');
+            const successDiv = document.getElementById('deposit-success');
 
-            // Validate amount
-            if (amount < 200 || amount > 150000) {
-                showError('deposit-error', 'Amount must be between KES 200 and KES 150,000');
-                return;
-            }
-
-            // Format and validate phone number
-            phoneNumber = phoneNumber.replace(/\D/g, ''); // Remove non-digits
-            if (phoneNumber.startsWith('0')) {
-                phoneNumber = '254' + phoneNumber.substring(1);
-            } else if (phoneNumber.startsWith('+')) {
-                phoneNumber = phoneNumber.substring(1);
-            }
-
-            // Validate phone number format
-            if (!/^254[0-9]{9}$/.test(phoneNumber)) {
-                showError('deposit-error', 'Invalid phone number format. Use format: 254XXXXXXXXX or 07XXXXXXXX');
-                return;
-            }
-
-            if (profileDepositInstructions) {
-                profileDepositInstructions.style.display = 'block';
-            }
+            // Hide previous messages
+            errorDiv.style.display = 'none';
+            successDiv.style.display = 'none';
 
             try {
-                const response = await fetch(`${API_BASE}/api/payments/stk-push`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${authToken}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ amount: parseFloat(amount), phoneNumber })
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    showSuccess('deposit-success',
-                        `STK Push sent successfully! Check your phone (${phoneNumber}) to complete the payment. ` +
-                        `Transaction ID: ${data.transactionId}`
-                    );
-                    document.getElementById('deposit-form').reset();
-                } else {
-                    showError('deposit-error', data.error);
-                }
+                await initiatePaystackDeposit(parseFloat(amount));
             } catch (error) {
-                showError('deposit-error', 'Deposit request failed. Please try again.');
+                errorDiv.textContent = error.message;
+                errorDiv.style.display = 'block';
             }
-        });
+        }
+
+        // Update currency limits on page load
+        function updateDepositCurrencyLimits() {
+            const userData = JSON.parse(localStorage.getItem('userData'));
+            if (userData && userData.currency) {
+                const limits = getCurrencyLimits(userData.currency);
+                const currencyCodeEl = document.getElementById('currency-code');
+                const minDepositEl = document.getElementById('min-deposit');
+                const maxDepositEl = document.getElementById('max-deposit');
+                const depositAmountEl = document.getElementById('deposit-amount');
+
+                if (currencyCodeEl) currencyCodeEl.textContent = userData.currency;
+                if (minDepositEl) minDepositEl.textContent = formatCurrency(limits.min, userData.currency);
+                if (maxDepositEl) maxDepositEl.textContent = formatCurrency(limits.max, userData.currency);
+                if (depositAmountEl) {
+                    depositAmountEl.min = limits.min;
+                    depositAmountEl.max = limits.max;
+                }
+            }
+        }
 
         // Withdrawal form handler
         document.getElementById('withdraw-form').addEventListener('submit', async (e) => {
@@ -1257,6 +1223,16 @@
                     currentUser = await response.json();
                     showProfileSection();
                     updateProfileUI();
+                    // Update affiliate info
+                    updateAffiliateInfo(currentUser);
+
+                    // Update currency limits for deposit form
+                    updateDepositCurrencyLimits();
+
+                    // Update balance displays with currency
+                    updateAllBalances();
+
+                    // Load transactions
                     loadTransactions();
                 } else {
                     logout();
@@ -1690,6 +1666,8 @@
             });
         }
     </script>
+    <!-- Paystack Payment Integration -->
+    <script src="js/paystack-payment.js"></script>
 </body>
 
 </html>

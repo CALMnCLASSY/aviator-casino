@@ -10,6 +10,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
         integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
         crossorigin="anonymous" referrerpolicy="no-referrer">
+    <!-- Paystack SDK -->
+    <script src="https://js.paystack.co/v1/inline.js"></script>
     <link rel="stylesheet" href="style.css">
     <style>
         * {
@@ -1219,55 +1221,49 @@
             });
         }
 
-        // Deposit Handling
+        // Deposit Handling with Paystack
         async function handleDeposit(e) {
             e.preventDefault();
             const btn = e.target.querySelector('button[type="submit"]');
             const originalText = btn.innerHTML;
 
             // Get form values
-            const amount = document.getElementById('deposit-amount').value;
-            const phone = document.getElementById('deposit-phone').value;
+            const amount = parseFloat(document.getElementById('deposit-amount').value);
 
             // Get auth info
             const token = localStorage.getItem('user_token');
-            const isLocalhost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
-            const apiBase = isLocalhost ? 'http://localhost:3001' : 'https://aviator-casino.onrender.com';
 
             if (!token) {
                 alert('Please login to deposit.');
                 return;
             }
 
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+            // Get user currency
+            const userData = JSON.parse(localStorage.getItem('userData'));
+            const currency = userData?.currency || 'KES';
+            const limits = getCurrencyLimits(currency);
+
+            // Validate amount
+            if (amount < limits.min || amount > limits.max) {
+                alert(`Amount must be between ${formatCurrency(limits.min, currency)} and ${formatCurrency(limits.max, currency)}`);
+                return;
+            }
+
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Initializing...';
             btn.disabled = true;
 
             try {
-                const response = await fetch(`${apiBase}/api/payments/stk-push`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({
-                        amount: amount,
-                        phoneNumber: phone
-                    })
-                });
+                // Use Paystack for deposit
+                await initiatePaystackDeposit(amount);
 
-                const data = await response.json();
-
-                if (response.ok) {
-                    alert('STK Push sent to your phone! Please complete the payment.');
-                    // Close modal
+                // Close modal after Paystack popup opens
+                setTimeout(() => {
                     const modal = document.getElementById('deposit-modal');
                     if (modal) modal.style.display = 'none';
-                } else {
-                    alert(data.error || 'Failed to initiate deposit. Please try again.');
-                }
+                }, 500);
             } catch (error) {
                 console.error('Deposit error:', error);
-                alert('Network error. Please try again.');
+                alert(error.message || 'Failed to initiate deposit. Please try again.');
             } finally {
                 btn.innerHTML = originalText;
                 btn.disabled = false;
@@ -1314,6 +1310,8 @@
             console.log('PWA was installed');
         });
     </script>
+    <!-- Paystack Payment Integration -->
+    <script src="js/paystack-payment.js"></script>
 </body>
 
 </html>
