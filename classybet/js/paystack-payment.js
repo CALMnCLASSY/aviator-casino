@@ -1,11 +1,8 @@
 /**
  * Paystack Payment Integration
  * Handles multi-currency deposits with all available payment methods
+ * Note: Requires global API_BASE to be defined before this script loads
  */
-
-// API Base URL - auto-detect localhost vs production
-const isLocalhost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
-const API_BASE = isLocalhost ? 'http://localhost:3001' : 'https://aviator-casino.onrender.com';
 
 const PAYSTACK_PUBLIC_KEY = 'pk_live_4b4f3a0ed97c13680b6a29897e6624734c072f54';
 

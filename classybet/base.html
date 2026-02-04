@@ -608,35 +608,40 @@
                 <div id="deposit-error" class="error-message" style="display: none;"></div>
                 <div id="deposit-success" class="success-message" style="display: none;"></div>
 
-                <form id="deposit-form">
+                <h4 style="margin-bottom: 0.5rem; color: #30fcbe;">💳 Deposit Funds</h4>
+                <p style="color: #ccc; margin-bottom: 1.5rem; font-size: 0.95rem;">
+                    Choose from multiple payment methods: Cards, Bank Transfer, USSD, Mobile Money, and more!
+                </p>
+
+                <form id="deposit-form" onsubmit="handleDepositSubmit(event)">
                     <div class="form-group">
-                        <label for="deposit-amount">Amount (KES)</label>
+                        <label for="deposit-amount">Amount (<span id="deposit-currency-code">KES</span>)</label>
                         <input type="number" id="deposit-amount" class="form-control" min="200" max="150000" step="1"
                             required>
-                        <small>Minimum: KES 200, Maximum: KES 150,000</small>
-                    </div>
-                    <div class="form-group">
-                        <label for="deposit-phone">M-Pesa Phone Number</label>
-                        <input type="tel" id="deposit-phone" class="form-control" placeholder="254700000000" required>
+                        <small>Minimum: KES <span id="deposit-min">200</span>, Maximum: KES <span
+                                id="deposit-max">150,000</span></small>
                     </div>
                     <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-mobile-alt"></i> Deposit
+                        <i class="fas fa-credit-card"></i> PAY WITH PAYSTACK
                     </button>
-                    <p>Deposit using M-Pesa STK Push or Paybill option below</p>
-                </form>
-                <div class="deposit-instructions" style="display: none;">
-                    <h4><i class="fas fa-info-circle"></i>Manual Payment Instructions if prompt fails</h4>
-                    <div class="paybill-info">
-                        <div class="paybill-item">
-                            <span>Paybill Number:</span>
-                            <strong>793174</strong>
-                        </div>
-                        <div class="paybill-item">
-                            <span>Your Assigned Account Number:</span>
-                            <strong>745087451</strong>
-                        </div>
+
+                    <div
+                        style="margin-top: 1.5rem; padding: 1.25rem; background: rgba(48, 252, 190, 0.08); border: 1px solid rgba(48, 252, 190, 0.2); border-radius: 12px;">
+                        <h5 style="color: #30fcbe; margin-bottom: 0.75rem; font-size: 1rem;">
+                            <i class="fas fa-info-circle"></i> Available Payment Methods
+                        </h5>
+                        <ul style="color: #ccc; font-size: 0.9rem; padding-left: 1.5rem; margin: 0;">
+                            <li>💳 Credit/Debit Cards (Visa, Mastercard, Verve)</li>
+                            <li>🏦 Bank Transfer & EFT</li>
+                            <li>📱 Mobile Money (M-Pesa, MTN, Vodafone, etc.)</li>
+                            <li>💰 USSD Banking</li>
+                            <li>🔐 Secure & Instant Processing</li>
+                        </ul>
+                        <p style="color: #999; font-size: 0.85rem; margin-top: 0.75rem; margin-bottom: 0;">
+                            <i class="fas fa-shield-alt"></i> Powered by Paystack - Payment methods vary by country
+                        </p>
                     </div>
-                </div>
+                </form>
             </div>
         </div>
     </div>
@@ -1047,11 +1052,62 @@
         }
     </style>
 
+    <!-- Paystack SDK -->
+    <script src="https://js.paystack.co/v1/inline.js"></script>
+
     <script src="./api.js?v=2.4"></script>
     <script src="./gameSocket.js?v=2.5"></script>
     <script src="./script.js?v=2.5"></script>
     <script src="./script_helpers.js?v=2.4"></script>
+    <!-- Paystack Payment Integration -->
+    <script src="./js/paystack-payment.js"></script>
     <script>
+        // Deposit form handler for Paystack
+        function handleDepositSubmit(event) {
+            event.preventDefault();
+            const amount = document.getElementById('deposit-amount').value;
+
+            // Hide any previous errors/success messages
+            const errorEl = document.getElementById('deposit-error');
+            const successEl = document.getElementById('deposit-success');
+            if (errorEl) errorEl.style.display = 'none';
+            if (successEl) successEl.style.display = 'none';
+
+            // Validate amount
+            if (!amount || amount < 200) {
+                if (errorEl) {
+                    errorEl.textContent = 'Please enter a valid amount (minimum KES 200)';
+                    errorEl.style.display = 'block';
+                }
+                return;
+            }
+
+            // Call Paystack integration
+            if (typeof initiatePaystackDeposit === 'function') {
+                initiatePaystackDeposit(parseFloat(amount))
+                    .catch(error => {
+                        console.error('Deposit error:', error);
+                        if (errorEl) {
+                            errorEl.textContent = error.message || 'Deposit failed. Please try again.';
+                            errorEl.style.display = 'block';
+                        }
+                    });
+            } else {
+                if (errorEl) {
+                    errorEl.textContent = 'Payment system not loaded. Please refresh the page.';
+                    errorEl.style.display = 'block';
+                }
+            }
+        }
+
+        // Helper to close deposit modal
+        function closeDepositModal() {
+            const modal = document.getElementById('deposit-modal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
+
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('sw.js')
