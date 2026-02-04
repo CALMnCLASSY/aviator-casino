@@ -1234,11 +1234,38 @@
 
                     // Load transactions
                     loadTransactions();
-                } else {
+                } else if (response.status === 401) {
+                    // Only logout on authentication failures
+                    console.log('Authentication failed (401), logging out');
                     logout();
+                } else {
+                    // For other errors, show message but don't logout
+                    console.error(`Profile load failed with status ${response.status}`);
+                    const userData = localStorage.getItem('userData');
+                    if (userData) {
+                        // Use cached user data
+                        try {
+                            currentUser = JSON.parse(userData);
+                            showProfileSection();
+                            updateProfileUI();
+                        } catch (e) {
+                            console.error('Failed to parse cached user data:', e);
+                        }
+                    }
                 }
             } catch (error) {
-                logout();
+                // Network errors - don't logout, use cached data
+                console.error('Network error loading profile:', error);
+                const userData = localStorage.getItem('userData');
+                if (userData) {
+                    try {
+                        currentUser = JSON.parse(userData);
+                        showProfileSection();
+                        updateProfileUI();
+                    } catch (e) {
+                        console.error('Failed to parse cached user data:', e);
+                    }
+                }
             }
         }
 

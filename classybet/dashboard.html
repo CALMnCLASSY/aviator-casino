@@ -954,16 +954,67 @@
     </div>
 
     <script>
+        // Global API_BASE for paystack-payment.js
+        const API_BASE = (() => {
+            const isLocalhost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+            return isLocalhost ? 'http://localhost:3001' : 'https://aviator-casino.onrender.com';
+        })();
+
+        // Helper function to close modal
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        // Helper function to show deposit modal
+        function showDepositModal() {
+            const modal = document.getElementById('deposit-modal');
+            if (modal) {
+                modal.style.display = 'flex';
+            }
+        }
+
+        // Helper function to navigate to profile
+        function goToProfile() {
+            window.location.href = 'profile.html';
+        }
+
+        // Helper function to navigate to game
+        function playGame() {
+            window.location.href = 'base.html';
+        }
+
+        // Helper function to logout
+        function logout() {
+            localStorage.removeItem('user_token');
+            localStorage.removeItem('userData');
+            window.location.href = 'index.html';
+        }
+
+        // Currency formatting helper
+        function formatCurrency(amount, currency = 'KES') {
+            return `${currency} ${parseFloat(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        }
+
+        // Currency limits helper
+        function getCurrencyLimits(currency = 'KES') {
+            const limits = {
+                'KES': { min: 200, max: 150000 },
+                'USD': { min: 2, max: 1000 },
+                'GHS': { min: 20, max: 10000 },
+                'NGN': { min: 1000, max: 500000 },
+                'ZAR': { min: 30, max: 20000 }
+            };
+            return limits[currency] || limits['KES'];
+        }
+
         // Dashboard functionality
         class Dashboard {
             constructor() {
-                this.apiBase = this.getApiBase();
+                this.apiBase = API_BASE;
                 this.init();
-            }
-
-            getApiBase() {
-                const isLocalhost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
-                return isLocalhost ? 'http://localhost:3001' : 'https://aviator-casino.onrender.com';
             }
 
             init() {
@@ -1173,22 +1224,38 @@
                 <div id="deposit-error" class="error-message" style="display: none;"></div>
                 <div id="deposit-success" class="success-message" style="display: none;"></div>
 
+                <h4 style="margin-bottom: 0.5rem; color: #30fcbe;">💳 Deposit Funds</h4>
+                <p style="color: #ccc; margin-bottom: 1.5rem; font-size: 0.95rem;">
+                    Choose from multiple payment methods: Cards, Bank Transfer, USSD, Mobile Money, and more!
+                </p>
+
                 <form id="deposit-form" onsubmit="handleDeposit(event)">
                     <div class="form-group">
-                        <label for="deposit-amount">Amount (KES)</label>
+                        <label for="deposit-amount">Amount (<span id="deposit-currency-code">KES</span>)</label>
                         <input type="number" id="deposit-amount" class="form-control" min="200" max="150000" step="1"
                             required>
                         <small style="color: #888;">Minimum: KES 200, Maximum: KES 150,000</small>
                     </div>
-                    <div class="form-group">
-                        <label for="deposit-phone">Phone Number</label>
-                        <input type="tel" id="deposit-phone" class="form-control" placeholder="2547XXXXXXXX" required>
-                    </div>
                     <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 15px;">
-                        <i class="fas fa-mobile-alt"></i> Deposit
+                        <i class="fas fa-credit-card"></i> PAY WITH PAYSTACK
                     </button>
-                    <p style="text-align: center; margin-top: 10px; font-size: 0.9em; color: #888;">
-                        multiple payment methods: Cards, Bank Transfer, USSD, Mobile Money, and more!</p>
+
+                    <div
+                        style="margin-top: 1.5rem; padding: 1.25rem; background: rgba(48, 252, 190, 0.08); border: 1px solid rgba(48, 252, 190, 0.2); border-radius: 12px;">
+                        <h5 style="color: #30fcbe; margin-bottom: 0.75rem; font-size: 1rem;">
+                            <i class="fas fa-info-circle"></i> Available Payment Methods
+                        </h5>
+                        <ul style="color: #ccc; font-size: 0.9rem; padding-left: 1.5rem; margin: 0;">
+                            <li>💳 Credit/Debit Cards (Visa, Mastercard, Verve)</li>
+                            <li>🏦 Bank Transfer & EFT</li>
+                            <li>📱 Mobile Money (M-Pesa, MTN, Vodafone, etc.)</li>
+                            <li>💰 USSD Banking</li>
+                            <li>🔐 Secure & Instant Processing</li>
+                        </ul>
+                        <p style="color: #999; font-size: 0.85rem; margin-top: 0.75rem; margin-bottom: 0;">
+                            <i class="fas fa-shield-alt"></i> Powered by Paystack - Payment methods vary by country
+                        </p>
+                    </div>
                 </form>
             </div>
         </div>
