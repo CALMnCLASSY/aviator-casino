@@ -890,37 +890,39 @@
 
                         <ul class="footer-nav">
                             <li class="footer-nav-item">
-                                <a href="#" class="footer-nav-link" onclick="return false;">
+                                <a href="#" class="footer-nav-link"
+                                    onclick="openFooterModal('responsible'); return false;">
                                     Responsible Gambling
                                 </a>
                             </li>
                             <li class="footer-nav-item">
-                                <a href="#" class="footer-nav-link" onclick="return false;">
+                                <a href="#" class="footer-nav-link" onclick="openFooterModal('contact'); return false;">
                                     Contact Us
                                 </a>
                             </li>
                             <li class="footer-nav-item">
-                                <a href="#" class="footer-nav-link" onclick="return false;">
+                                <a href="#" class="footer-nav-link" onclick="openFooterModal('terms'); return false;">
                                     Terms & Conditions
                                 </a>
                             </li>
                             <li class="footer-nav-item">
-                                <a href="#" class="footer-nav-link" onclick="return false;">
+                                <a href="#" class="footer-nav-link" onclick="openFooterModal('privacy'); return false;">
                                     Privacy Policy
                                 </a>
                             </li>
                             <li class="footer-nav-item">
-                                <a href="#" class="footer-nav-link" onclick="return false;">
+                                <a href="#" class="footer-nav-link" onclick="openFooterModal('faqs'); return false;">
                                     FAQs
                                 </a>
                             </li>
                             <li class="footer-nav-item">
-                                <a href="#" class="footer-nav-link" onclick="return false;">
+                                <a href="#" class="footer-nav-link"
+                                    onclick="openFooterModal('disputes'); return false;">
                                     Disputes
                                 </a>
                             </li>
                             <li class="footer-nav-item">
-                                <a href="#" class="footer-nav-link" onclick="return false;">
+                                <a href="#" class="footer-nav-link" onclick="openFooterModal('refund'); return false;">
                                     Refund Policy
                                 </a>
                             </li>
@@ -1008,6 +1010,206 @@
                 'ZAR': { min: 30, max: 20000 }
             };
             return limits[currency] || limits['KES'];
+        }
+
+        // Footer modal function
+        function openFooterModal(section) {
+            const modal = document.getElementById('footer-modal');
+            const title = document.getElementById('footer-modal-title');
+            const body = document.getElementById('footer-modal-body');
+
+            const content = {
+                'contact': {
+                    title: 'Contact Us',
+                    body: `
+                        <h4 style="color: #30fcbe; margin-bottom: 1rem;"><i class="fas fa-envelope"></i> Get in Touch</h4>
+                        <p style="margin-bottom: 1.5rem; color: #ccc;">We're here to help! Reach out to us anytime.</p>
+                        
+                        <div style="background: rgba(48, 252, 190, 0.05); border: 1px solid rgba(48, 252, 190, 0.2); border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem;">
+                            <h5 style="color: #30fcbe; margin-bottom: 1rem;"><i class="fas fa-headset"></i> Customer Care</h5>
+                            
+                            <div style="margin-bottom: 1rem;">
+                                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 0.5rem;">
+                                    <i class="fas fa-envelope" style="color: #30fcbe; width: 20px;"></i>
+                                    <strong style="color: #fff;">Email:</strong>
+                                </div>
+                                <a href="mailto:classybetcasino@gmail.com" style="color: #30fcbe; margin-left: 30px; text-decoration: none;">
+                                    classybetcasino@gmail.com
+                                </a>
+                            </div>
+                            
+                            <div>
+                                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 0.5rem;">
+                                    <i class="fas fa-phone" style="color: #30fcbe; width: 20px;"></i>
+                                    <strong style="color: #fff;">Phone:</strong>
+                                </div>
+                                <a href="tel:+254770655092" style="color: #30fcbe; margin-left: 30px; text-decoration: none;">
+                                    +254 770 655 092
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <div style="background: rgba(251, 2, 76, 0.05); border: 1px solid rgba(251, 2, 76, 0.2); border-radius: 12px; padding: 1.5rem;">
+                            <h5 style="color: #fb024c; margin-bottom: 0.75rem;"><i class="fas fa-clock"></i> Support Hours</h5>
+                            <p style="color: #ccc; margin: 0;">Available 24/7 to assist you with any questions or concerns.</p>
+                        </div>
+                    `
+                },
+                'terms': {
+                    title: 'Terms & Conditions',
+                    body: `
+                        <h4 style="color: #30fcbe; margin-bottom: 1rem;">Terms of Service</h4>
+                        <p style="color: #ccc; margin-bottom: 1rem;">Last Updated: January 2025</p>
+                        
+                        <h5 style="color: #fff; margin-top: 1.5rem; margin-bottom: 0.75rem;">1. Acceptance of Terms</h5>
+                        <p style="color: #ccc;">By accessing and using ClassyBet Aviator, you accept and agree to be bound by these Terms and Conditions.</p>
+                        
+                        <h5 style="color: #fff; margin-top: 1.5rem; margin-bottom: 0.75rem;">2. Eligibility</h5>
+                        <p style="color: #ccc;">You must be at least 18 years old to use our services. By using this platform, you confirm that you meet the minimum age requirement.</p>
+                        
+                        <h5 style="color: #fff; margin-top: 1.5rem; margin-bottom: 0.75rem;">3. Account Responsibilities</h5>
+                        <p style="color: #ccc;">You are responsible for maintaining the confidentiality of your account credentials and for all activities that occur under your account.</p>
+                        
+                        <h5 style="color: #fff; margin-top: 1.5rem; margin-bottom: 0.75rem;">4. Betting Rules</h5>
+                        <p style="color: #ccc;">All bets are final once placed. The platform reserves the right to void bets in case of technical errors or fraudulent activities.</p>
+                        
+                        <h5 style="color: #fff; margin-top: 1.5rem; margin-bottom: 0.75rem;">5. Withdrawals and Deposits</h5>
+                        <p style="color: #ccc;">Minimum deposit is KES 200. Withdrawals are processed within 24-48 hours. Additional verification may be required for large transactions.</p>
+                    `
+                },
+                'privacy': {
+                    title: 'Privacy Policy',
+                    body: `
+                        <h4 style="color: #30fcbe; margin-bottom: 1rem;">Your Privacy Matters</h4>
+                        <p style="color: #ccc; margin-bottom: 1rem;">Last Updated: January 2025</p>
+                        
+                        <h5 style="color: #fff; margin-top: 1.5rem; margin-bottom: 0.75rem;">1. Information We Collect</h5>
+                        <p style="color: #ccc;">We collect personal information including your name, email address, phone number, and transaction data to provide our services.</p>
+                        
+                        <h5 style="color: #fff; margin-top: 1.5rem; margin-bottom: 0.75rem;">2. How We Use Your Information</h5>
+                        <p style="color: #ccc;">Your information is used to process transactions, verify your identity, improve our services, and communicate important updates.</p>
+                        
+                        <h5 style="color: #fff; margin-top: 1.5rem; margin-bottom: 0.75rem;">3. Data Security</h5>
+                        <p style="color: #ccc;">We implement industry-standard security measures to protect your personal information from unauthorized access, disclosure, or misuse.</p>
+                        
+                        <h5 style="color: #fff; margin-top: 1.5rem; margin-bottom: 0.75rem;">4. Third-Party Services</h5>
+                        <p style="color: #ccc;">We use trusted third-party payment processors (Paystack) to handle transactions securely. These services have their own privacy policies.</p>
+                        
+                        <h5 style="color: #fff; margin-top: 1.5rem; margin-bottom: 0.75rem;">5. Your Rights</h5>
+                        <p style="color: #ccc;">You have the right to access, update, or delete your personal information. Contact us at classybetcasino@gmail.com for assistance.</p>
+                    `
+                },
+                'faqs': {
+                    title: 'Frequently Asked Questions',
+                    body: `
+                        <h4 style="color: #30fcbe; margin-bottom: 1.5rem;"><i class="fas fa-question-circle"></i> FAQs</h4>
+                        
+                        <div style="margin-bottom: 1.5rem;">
+                            <h5 style="color: #fb024c; margin-bottom: 0.5rem;">How do I deposit funds?</h5>
+                            <p style="color: #ccc;">Click the "Deposit" button in your dashboard, enter the amount, and choose your preferred payment method through Paystack (M-Pesa, Cards, Bank Transfer, etc.).</p>
+                        </div>
+                        
+                        <div style="margin-bottom: 1.5rem;">
+                            <h5 style="color: #fb024c; margin-bottom: 0.5rem;">How long do withdrawals take?</h5>
+                            <p style="color: #ccc;">Withdrawals are processed within 24-48 hours. M-Pesa withdrawals are typically instant once approved.</p>
+                        </div>
+                        
+                        <div style="margin-bottom: 1.5rem;">
+                            <h5 style="color: #fb024c; margin-bottom: 0.5rem;">What is the minimum deposit?</h5>
+                            <p style="color: #ccc;">The minimum deposit is KES 200 for most payment methods.</p>
+                        </div>
+                        
+                        <div style="margin-bottom: 1.5rem;">
+                            <h5 style="color: #fb024c; margin-bottom: 0.5rem;">Is my information secure?</h5>
+                            <p style="color: #ccc;">Yes! We use industry-standard encryption and work with trusted payment processors to keep your information safe.</p>
+                        </div>
+                        
+                        <div style="margin-bottom: 1.5rem;">
+                            <h5 style="color: #fb024c; margin-bottom: 0.5rem;">How do I contact support?</h5>
+                            <p style="color: #ccc;">Email us at classybetcasino@gmail.com or call +254 770 655 092. We're available 24/7!</p>
+                        </div>
+                    `
+                },
+                'disputes': {
+                    title: 'Dispute Resolution',
+                    body: `
+                        <h4 style="color: #30fcbe; margin-bottom: 1rem;">Resolving Disputes</h4>
+                        
+                        <h5 style="color: #fff; margin-top: 1.5rem; margin-bottom: 0.75rem;">1. Filing a Dispute</h5>
+                        <p style="color: #ccc;">If you believe there has been an error with your account, bet, or transaction, please contact our customer support immediately at classybetcasino@gmail.com or +254 770 655 092.</p>
+                        
+                        <h5 style="color: #fff; margin-top: 1.5rem; margin-bottom: 0.75rem;">2. Investigation Process</h5>
+                        <p style="color: #ccc;">All disputes are investigated within 48 hours of submission. We may request additional information or documentation to resolve your case.</p>
+                        
+                        <h5 style="color: #fff; margin-top: 1.5rem; margin-bottom: 0.75rem;">3. Resolution Timeline</h5>
+                        <p style="color: #ccc;">Most disputes are resolved within 3-5 business days. Complex cases may take longer, and we'll keep you updated throughout the process.</p>
+                        
+                        <h5 style="color: #fff; margin-top: 1.5rem; margin-bottom: 0.75rem;">4. Escalation</h5>
+                        <p style="color: #ccc;">If you're not satisfied with the initial resolution, you can escalate your dispute to our management team for further review.</p>
+                    `
+                },
+                'refund': {
+                    title: 'Refund Policy',
+                    body: `
+                        <h4 style="color: #30fcbe; margin-bottom: 1rem;">Refund Policy</h4>
+                        
+                        <h5 style="color: #fff; margin-top: 1.5rem; margin-bottom: 0.75rem;">Eligible Refunds</h5>
+                        <p style="color: #ccc;">Refunds may be issued in the following cases:</p>
+                        <ul style="color: #ccc; margin-left: 1.5rem; margin-top: 0.5rem;">
+                            <li style="margin-bottom: 0.5rem;">Technical errors that affected game outcomes</li>
+                            <li style="margin-bottom: 0.5rem;">Duplicate deposits or payment processing errors</li>
+                            <li style="margin-bottom: 0.5rem;">Unauthorized transactions on your account</li>
+                        </ul>
+                        
+                        <h5 style="color: #fff; margin-top: 1.5rem; margin-bottom: 0.75rem;">Non-Refundable</h5>
+                        <p style="color: #ccc;">The following are not eligible for refunds:</p>
+                        <ul style="color: #ccc; margin-left: 1.5rem; margin-top: 0.5rem;">
+                            <li style="margin-bottom: 0.5rem;">Lost bets placed in fair gameplay</li>
+                            <li style="margin-bottom: 0.5rem;">Deposits initiated by you intentionally</li>
+                            <li style="margin-bottom: 0.5rem;">Bonuses or promotional credits</li>
+                        </ul>
+                        
+                        <h5 style="color: #fff; margin-top: 1.5rem; margin-bottom: 0.75rem;">Refund Process</h5>
+                        <p style="color: #ccc;">Approved refunds are processed within 5-7 business days to the original payment method. Contact support to initiate a refund request.</p>
+                    `
+                },
+                'responsible': {
+                    title: 'Responsible Gambling',
+                    body: `
+                        <h4 style="color: #30fcbe; margin-bottom: 1rem;"><i class="fas fa-shield-alt"></i> Play Responsibly</h4>
+                        
+                        <div style="background: rgba(251, 2, 76, 0.05); border: 1px solid rgba(251, 2, 76, 0.2); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem;">
+                            <p style="color: #ccc; margin: 0;"><strong>18+ Only.</strong> Gambling should be fun and entertaining. If it stops being fun, it's time to stop.</p>
+                        </div>
+                        
+                        <h5 style="color: #fff; margin-top: 1.5rem; margin-bottom: 0.75rem;">Set Limits</h5>
+                        <p style="color: #ccc;">Always set deposit and betting limits that you can afford. Never chase losses or bet more than you're comfortable losing.</p>
+                        
+                        <h5 style="color: #fff; margin-top: 1.5rem; margin-bottom: 0.75rem;">Know the Signs</h5>
+                        <p style="color: #ccc;">Be aware of problem gambling signs:</p>
+                        <ul style="color: #ccc; margin-left: 1.5rem; margin-top: 0.5rem;">
+                            <li style="margin-bottom: 0.5rem;">Spending more money than you can afford</li>
+                            <li style="margin-bottom: 0.5rem;">Gambling interfering with work or relationships</li>
+                            <li style="margin-bottom: 0.5rem;">Feeling anxious or irritable when not gambling</li>
+                        </ul>
+                        
+                        <h5 style="color: #fff; margin-top: 1.5rem; margin-bottom: 0.75rem;">Get Help</h5>
+                        <p style="color: #ccc;">If you need support, contact:</p>
+                        <ul style="color: #ccc; margin-left: 1.5rem; margin-top: 0.5rem;">
+                            <li style="margin-bottom: 0.5rem;">National Gambling Helpline (if available in your region)</li>
+                            <li style="margin-bottom: 0.5rem;">Our support team at classybetcasino@gmail.com</li>
+                        </ul>
+                        
+                        <p style="color: #30fcbe; margin-top: 1.5rem;"><strong>Remember:</strong> Gambling is not a way to make money. Play for entertainment only.</p>
+                    `
+                }
+            };
+
+            if (content[section]) {
+                title.innerHTML = `<i class="fas fa-info-circle"></i> ${content[section].title}`;
+                body.innerHTML = content[section].body;
+                modal.style.display = 'flex';
+            }
         }
 
         // Dashboard functionality
@@ -1213,6 +1415,18 @@
             });
         }
     </script>
+    <!-- Footer Modal -->
+    <div id="footer-modal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h3 id="footer-modal-title"></h3>
+                <span class="close" onclick="closeModal('footer-modal')">&times;</span>
+            </div>
+            <div class="modal-body" id="footer-modal-body" style="max-height: 70vh; overflow-y: auto;">
+            </div>
+        </div>
+    </div>
+
     <!-- Deposit Modal -->
     <div id="deposit-modal" class="modal" style="display: none;">
         <div class="modal-content">
