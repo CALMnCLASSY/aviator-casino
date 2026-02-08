@@ -1399,6 +1399,12 @@
                             }
                         } catch (e) { }
                     }
+
+                    // Update currency display
+                    if (typeof window.updateDepositModalCurrency === 'function') {
+                        window.updateDepositModalCurrency();
+                    }
+
                     modal.style.display = 'flex';
                 } else {
                     alert('Deposit feature unavailable.');
@@ -1451,9 +1457,10 @@
                 <form id="deposit-form" onsubmit="handleDeposit(event)">
                     <div class="form-group">
                         <label for="deposit-amount">Amount (<span id="deposit-currency-code">KES</span>)</label>
-                        <input type="number" id="deposit-amount" class="form-control" min="200" max="150000" step="1"
+                        <input type="number" id="deposit-amount" class="form-control" min="650" max="150000" step="1"
                             required>
-                        <small style="color: #888;">Minimum: KES 200, Maximum: KES 150,000</small>
+                        <small style="color: #888;">Minimum: <span id="deposit-min-formatted">KSh 650.00</span>,
+                            Maximum: <span id="deposit-max-formatted">KSh 150,000.00</span></small>
                     </div>
                     <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 15px;">
                         <i class="fas fa-credit-card"></i> DEPOSIT
@@ -1576,6 +1583,40 @@
                 btn.disabled = false;
             }
         }
+
+        // Update deposit modal with user's currency
+        function updateDepositModalCurrency() {
+            if (typeof formatDepositLimits === 'function' && typeof getUserCurrency === 'function') {
+                const currency = getUserCurrency();
+                const limits = formatDepositLimits(currency);
+
+                // Update currency code display
+                const currencyCodeEl = document.getElementById('deposit-currency-code');
+                if (currencyCodeEl) {
+                    currencyCodeEl.textContent = currency;
+                }
+
+                // Update min/max formatted displays
+                const minFormattedEl = document.getElementById('deposit-min-formatted');
+                const maxFormattedEl = document.getElementById('deposit-max-formatted');
+                if (minFormattedEl) minFormattedEl.textContent = limits.min;
+                if (maxFormattedEl) maxFormattedEl.textContent = limits.max;
+
+                // Update input constraints
+                const amountInput = document.getElementById('deposit-amount');
+                if (amountInput) {
+                    amountInput.min = limits.minValue;
+                    amountInput.max = limits.maxValue;
+                }
+            }
+        }
+
+        // Make function available globally for showDepositModal
+        window.updateDepositModalCurrency = updateDepositModalCurrency;
+
+        // Call on page load
+        document.addEventListener('DOMContentLoaded', updateDepositModalCurrency);
+
 
         // PWA Install Logic
         let deferredPrompt;
