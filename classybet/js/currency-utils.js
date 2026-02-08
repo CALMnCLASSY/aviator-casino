@@ -3,7 +3,6 @@
  * Provides currency formatting and symbol mapping for multi-currency support
  */
 
-// Currency symbols mapping
 const CURRENCY_SYMBOLS = {
     KES: 'KSh',
     NGN: '₦',
@@ -12,6 +11,17 @@ const CURRENCY_SYMBOLS = {
     USD: '$',
     GBP: '£',
     EUR: '€'
+};
+
+// Deposit limits for each currency (min and max amounts)
+const DEPOSIT_LIMITS = {
+    KES: { min: 650, max: 150000 },
+    NGN: { min: 12000, max: 2800000 },  // ~650 KES equivalent
+    GHS: { min: 1100, max: 250000 },    // ~650 KES equivalent
+    ZAR: { min: 230, max: 52000 },      // ~650 KES equivalent
+    USD: { min: 5, max: 1150 },         // ~650 KES equivalent
+    GBP: { min: 4, max: 920 },          // ~650 KES equivalent
+    EUR: { min: 5, max: 1050 }          // ~650 KES equivalent
 };
 
 /**
@@ -54,6 +64,32 @@ function formatCurrency(amount, currency = null) {
 }
 
 /**
+ * Get deposit limits for a given currency
+ * @param {string} currency - Currency code, uses user's currency if not provided
+ * @returns {object} Object with min and max deposit amounts
+ */
+function getDepositLimits(currency = null) {
+    const currencyCode = currency || getUserCurrency();
+    return DEPOSIT_LIMITS[currencyCode] || DEPOSIT_LIMITS.KES; // Default to KES if not found
+}
+
+/**
+ * Format deposit limits with currency symbol
+ * @param {string} currency - Currency code, uses user's currency if not provided
+ * @returns {object} Object with formatted min and max strings
+ */
+function formatDepositLimits(currency = null) {
+    const currencyCode = currency || getUserCurrency();
+    const limits = getDepositLimits(currencyCode);
+    return {
+        min: formatCurrency(limits.min, currencyCode),
+        max: formatCurrency(limits.max, currencyCode),
+        minValue: limits.min,
+        maxValue: limits.max
+    };
+}
+
+/**
  * Format amount for display in balance elements
  * @param {number} amount - Amount to format
  * @returns {string} Formatted balance string
@@ -68,7 +104,10 @@ if (typeof window !== 'undefined') {
     window.getUserCurrency = getUserCurrency;
     window.formatCurrency = formatCurrency;
     window.formatBalance = formatBalance;
+    window.getDepositLimits = getDepositLimits;
+    window.formatDepositLimits = formatDepositLimits;
     window.CURRENCY_SYMBOLS = CURRENCY_SYMBOLS;
+    window.DEPOSIT_LIMITS = DEPOSIT_LIMITS;
 }
 
 // Export for module systems
@@ -78,6 +117,9 @@ if (typeof module !== 'undefined' && module.exports) {
         getUserCurrency,
         formatCurrency,
         formatBalance,
-        CURRENCY_SYMBOLS
+        getDepositLimits,
+        formatDepositLimits,
+        CURRENCY_SYMBOLS,
+        DEPOSIT_LIMITS
     };
 }

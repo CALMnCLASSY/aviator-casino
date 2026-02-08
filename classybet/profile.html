@@ -744,9 +744,11 @@
                         <form id="deposit-form" onsubmit="handlePaystackDeposit(event)">
                             <div class="form-group">
                                 <label for="deposit-amount">Amount (<span id="currency-code">KES</span>)</label>
-                                <input type="number" id="deposit-amount" class="form-control" required>
+                                <input type="number" id="deposit-amount" class="form-control" min="650" max="150000"
+                                    step="1" required>
                                 <small style="color: #ccc;">
-                                    Min: <span id="min-deposit">200</span> | Max: <span id="max-deposit">150,000</span>
+                                    Min: <span id="min-deposit">KSh 650.00</span> | Max: <span id="max-deposit">KSh
+                                        150,000.00</span>
                                 </small>
                             </div>
 
@@ -1125,18 +1127,21 @@
         function updateDepositCurrencyLimits() {
             const userData = JSON.parse(localStorage.getItem('userData'));
             if (userData && userData.currency) {
-                const limits = getCurrencyLimits(userData.currency);
-                const currencyCodeEl = document.getElementById('currency-code');
-                const minDepositEl = document.getElementById('min-deposit');
-                const maxDepositEl = document.getElementById('max-deposit');
-                const depositAmountEl = document.getElementById('deposit-amount');
+                const limits = typeof formatDepositLimits === 'function' ? formatDepositLimits(userData.currency) : null;
 
-                if (currencyCodeEl) currencyCodeEl.textContent = userData.currency;
-                if (minDepositEl) minDepositEl.textContent = formatCurrency(limits.min, userData.currency);
-                if (maxDepositEl) maxDepositEl.textContent = formatCurrency(limits.max, userData.currency);
-                if (depositAmountEl) {
-                    depositAmountEl.min = limits.min;
-                    depositAmountEl.max = limits.max;
+                if (limits) {
+                    const currencyCodeEl = document.getElementById('currency-code');
+                    const minDepositEl = document.getElementById('min-deposit');
+                    const maxDepositEl = document.getElementById('max-deposit');
+                    const depositAmountEl = document.getElementById('deposit-amount');
+
+                    if (currencyCodeEl) currencyCodeEl.textContent = userData.currency;
+                    if (minDepositEl) minDepositEl.textContent = limits.min;
+                    if (maxDepositEl) maxDepositEl.textContent = limits.max;
+                    if (depositAmountEl) {
+                        depositAmountEl.min = limits.minValue;
+                        depositAmountEl.max = limits.maxValue;
+                    }
                 }
             }
         }

@@ -615,10 +615,10 @@
                 <form id="deposit-form" onsubmit="handleDepositSubmit(event)">
                     <div class="form-group">
                         <label for="deposit-amount">Amount (<span id="deposit-currency-code">KES</span>)</label>
-                        <input type="number" id="deposit-amount" class="form-control" min="200" max="150000" step="1"
+                        <input type="number" id="deposit-amount" class="form-control" min="650" max="150000" step="1"
                             required>
-                        <small>Minimum: KES <span id="deposit-min">200</span>, Maximum: KES <span
-                                id="deposit-max">150,000</span></small>
+                        <small>Minimum: <span id="deposit-min-formatted">KSh 650.00</span>, Maximum: <span
+                                id="deposit-max-formatted">KSh 150,000.00</span></small>
                     </div>
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-credit-card"></i> DEPOSIT
@@ -1059,9 +1059,51 @@
     <script src="./gameSocket.js?v=2.5"></script>
     <script src="./script.js?v=2.5"></script>
     <script src="./script_helpers.js?v=2.4"></script>
-    <!-- Paystack Payment Integration -->
     <script src="./js/paystack-payment.js"></script>
     <script>
+        // Update deposit modal with user's currency
+        function updateDepositModalCurrency() {
+            if (typeof formatDepositLimits === 'function' && typeof getUserCurrency === 'function') {
+                const currency = getUserCurrency();
+                const limits = formatDepositLimits(currency);
+
+                // Update currency code display
+                const currencyCodeEl = document.getElementById('deposit-currency-code');
+                if (currencyCodeEl) {
+                    currencyCodeEl.textContent = currency;
+                }
+
+                // Update min/max formatted displays
+                const minFormattedEl = document.getElementById('deposit-min-formatted');
+                const maxFormattedEl = document.getElementById('deposit-max-formatted');
+                if (minFormattedEl) minFormattedEl.textContent = limits.min;
+                if (maxFormattedEl) maxFormattedEl.textContent = limits.max;
+
+                // Update input constraints
+                const amountInput = document.getElementById('deposit-amount');
+                if (amountInput) {
+                    amountInput.min = limits.minValue;
+                    amountInput.max = limits.maxValue;
+                }
+            }
+        }
+
+        // Call on page load and when modal opens
+        document.addEventListener('DOMContentLoaded', updateDepositModalCurrency);
+
+        // Also update when opening deposit modal
+        const depositModal = document.getElementById('deposit-modal');
+        if (depositModal) {
+            const observer = new MutationObserver((mutations) => {
+                mutations.forEach((mutation) => {
+                    if (mutation.attributeName === 'style' && depositModal.style.display === 'block') {
+                        updateDepositModalCurrency();
+                    }
+                });
+            });
+            observer.observe(depositModal, { attributes: true });
+        }
+
         // Deposit form handler for Paystack
         function handleDepositSubmit(event) {
             event.preventDefault();
@@ -1073,10 +1115,15 @@
             if (errorEl) errorEl.style.display = 'none';
             if (successEl) successEl.style.display = 'none';
 
+            // Get dynamic limits for validation
+            const limits = typeof getDepositLimits === 'function' ? getDepositLimits() : { min: 650, max: 150000 };
+            const currency = typeof getUserCurrency === 'function' ? getUserCurrency() : 'KES';
+            const symbol = typeof getCurrencySymbol === 'function' ? getCurrencySymbol(currency) : currency;
+
             // Validate amount
-            if (!amount || amount < 200) {
+            if (!amount || parseFloat(amount) < limits.min) {
                 if (errorEl) {
-                    errorEl.textContent = 'Please enter a valid amount (minimum KES 200)';
+                    errorEl.textContent = `Please enter a valid amount (minimum ${symbol} ${limits.min})`;
                     errorEl.style.display = 'block';
                 }
                 return;
