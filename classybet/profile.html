@@ -1273,13 +1273,20 @@
             if (!currentUser) return;
 
             // Header
-            document.getElementById('header-balance').textContent = `KES ${currentUser.balance.toFixed(2)}`;
+            // Use formatCurrency if available
+            const balanceText = (typeof formatCurrency === 'function' && currentUser.currency)
+                ? formatCurrency(currentUser.balance, currentUser.currency)
+                : `KES ${currentUser.balance.toFixed(2)}`;
+            document.getElementById('header-balance').textContent = balanceText;
 
             // Profile section
             document.getElementById('profile-username').textContent = currentUser.username;
             document.getElementById('profile-email').textContent = currentUser.email;
             document.getElementById('profile-balance').textContent = currentUser.balance.toFixed(2);
-            document.getElementById('biggest-win').textContent = `KES ${(currentUser.biggestWin || 0).toFixed(2)}`;
+            const biggestWinText = (typeof formatCurrency === 'function' && currentUser.currency)
+                ? formatCurrency(currentUser.biggestWin || 0, currentUser.currency)
+                : `KES ${(currentUser.biggestWin || 0).toFixed(2)}`;
+            document.getElementById('biggest-win').textContent = biggestWinText;
             document.getElementById('biggest-multiplier').textContent = `${(currentUser.biggestMultiplier || 0).toFixed(2)}x`;
 
             // Handle referral stats and CTA
@@ -1313,7 +1320,10 @@
             if (referralEarningsCard && referralEarningsValue) {
                 if (referralBalance > 0 || currentUser.isAffiliate) {
                     referralEarningsCard.style.display = 'block';
-                    referralEarningsValue.textContent = `KES ${referralBalance.toFixed(2)}`;
+                    const refBalanceText = (typeof formatCurrency === 'function' && currentUser.currency)
+                        ? formatCurrency(referralBalance, currentUser.currency)
+                        : `KES ${referralBalance.toFixed(2)}`;
+                    referralEarningsValue.textContent = refBalanceText;
                 } else {
                     referralEarningsCard.style.display = 'none';
                 }
@@ -1410,10 +1420,10 @@
                             ${tx.type.toUpperCase()}
                         </div>
                         <div style="font-weight: bold; margin-top: 0.25rem; color: ${tx.amount >= 0 ? '#30fcbe' : '#fb024c'};">
-                            ${tx.amount >= 0 ? '+' : ''}KES ${Math.abs(tx.amount).toFixed(2)}
+                            ${tx.amount >= 0 ? '+' : ''}${(typeof formatCurrency === 'function' && currentUser.currency) ? formatCurrency(Math.abs(tx.amount), currentUser.currency) : 'KES ' + Math.abs(tx.amount).toFixed(2)}
                         </div>
                         <div style="font-size: 0.875rem; color: #ccc;">
-                            Balance: KES ${tx.balanceAfter?.toFixed(2) || '0.00'}
+                            Balance: ${(typeof formatCurrency === 'function' && currentUser.currency) ? formatCurrency(tx.balanceAfter || 0, currentUser.currency) : 'KES ' + (tx.balanceAfter?.toFixed(2) || '0.00')}
                         </div>
                     </div>
                 </div>
@@ -1693,6 +1703,8 @@
             });
         }
     </script>
+    <!-- Currency Utils -->
+    <script src="js/currency-utils.js"></script>
     <!-- Paystack Payment Integration -->
     <script src="js/paystack-payment.js"></script>
 </body>

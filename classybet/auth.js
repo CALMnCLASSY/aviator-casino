@@ -152,8 +152,8 @@ class AuthManager {
                     localStorage.setItem('userData', JSON.stringify(user));
                     // Update any displayed balance
                     const balanceDisplay = document.getElementById('nav-balance');
-                    if (balanceDisplay) {
-                        balanceDisplay.textContent = `KES ${data.balance.toFixed(2)}`;
+                    if (balanceDisplay && typeof window.formatCurrency === 'function') {
+                        balanceDisplay.textContent = window.formatCurrency(data.balance, user.currency);
                     }
                 }
             }

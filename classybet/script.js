@@ -212,7 +212,13 @@ class AviatorGame {
     // Currency formatting method
     formatCurrency(amount) {
         const numAmount = parseFloat(amount) || 0;
-        return `KES ${numAmount.toFixed(2)}`;
+        // Use global currency helper if available, otherwise fallback to KES
+        if (typeof window.getUserCurrency === 'function' && typeof window.getCurrencySymbol === 'function') {
+            const currency = window.getUserCurrency();
+            const symbol = window.getCurrencySymbol(currency);
+            return `${symbol} ${numAmount.toFixed(2)}`;
+        }
+        return `KES ${numAmount.toFixed(2)}`; // Fallback
     }
 
     updateBalance() {
@@ -3530,16 +3536,22 @@ function updateUserDisplay(user) {
 }
 
 function updateBalanceDisplay(balance) {
+    // Get user currency for formatting
+    const currency = (typeof window.getUserCurrency === 'function') ? window.getUserCurrency() : 'KES';
+    const formattedBalance = (typeof window.formatCurrency === 'function')
+        ? window.formatCurrency(balance, currency)
+        : `KES ${balance.toFixed(2)}`;
+
     // Update navigation balance
     const navBalance = document.getElementById('nav-balance');
     if (navBalance) {
-        navBalance.textContent = `KES ${balance.toFixed(2)}`;
+        navBalance.textContent = formattedBalance;
     }
 
     // Update game header balance
     const gameHeaderBalance = document.getElementById('balance-amount');
     if (gameHeaderBalance) {
-        gameHeaderBalance.textContent = `KES ${balance.toFixed(2)}`;
+        gameHeaderBalance.textContent = formattedBalance;
     }
 
     // Update game instance balance

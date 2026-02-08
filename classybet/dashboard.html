@@ -1257,7 +1257,12 @@
                     try {
                         const user = JSON.parse(userData);
                         document.getElementById('userName').textContent = user.username || 'Player';
-                        document.getElementById('headerBalance').textContent = `KES ${(user.balance || 0).toFixed(2)}`;
+                        // Use formatCurrency helper if available, otherwise fallback to KES
+                        const balance = user.balance || 0;
+                        const balanceText = (typeof formatCurrency === 'function' && user.currency)
+                            ? formatCurrency(balance, user.currency)
+                            : `KES ${balance.toFixed(2)}`;
+                        document.getElementById('headerBalance').textContent = balanceText;
                     } catch (error) {
                         console.error('Error loading user data:', error);
                     }
@@ -1612,6 +1617,8 @@
             console.log('PWA was installed');
         });
     </script>
+    <!-- Currency Utils -->
+    <script src="js/currency-utils.js"></script>
     <!-- Paystack Payment Integration -->
     <script src="js/paystack-payment.js"></script>
 </body>
