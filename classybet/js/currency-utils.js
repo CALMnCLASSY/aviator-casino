@@ -15,13 +15,13 @@ const CURRENCY_SYMBOLS = {
 
 // Deposit limits for each currency (min and max amounts)
 const DEPOSIT_LIMITS = {
-    KES: { min: 650, max: 150000 },
-    NGN: { min: 12000, max: 2800000 },  // ~650 KES equivalent
-    GHS: { min: 1100, max: 250000 },    // ~650 KES equivalent
-    ZAR: { min: 230, max: 52000 },      // ~650 KES equivalent
-    USD: { min: 5, max: 1150 },         // ~650 KES equivalent
-    GBP: { min: 4, max: 920 },          // ~650 KES equivalent
-    EUR: { min: 5, max: 1050 }          // ~650 KES equivalent
+    KES: { min: 350, max: 150000 },
+    NGN: { min: 6500, max: 2800000 },  // ~350 KES equivalent
+    GHS: { min: 600, max: 250000 },    // ~350 KES equivalent
+    ZAR: { min: 125, max: 52000 },      // ~350 KES equivalent
+    USD: { min: 3, max: 1150 },         // ~350 KES equivalent
+    GBP: { min: 2, max: 920 },          // ~350 KES equivalent
+    EUR: { min: 3, max: 1050 }          // ~350 KES equivalent
 };
 
 /**
