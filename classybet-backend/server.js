@@ -18,6 +18,7 @@ const casinoRoutes = require('./routes/casino');
 // Import models
 const User = require('./models/User');
 const { startRoundScheduler } = require('./utils/roundScheduler');
+const { sendSlackMessage } = require('./utils/slack');
 
 const app = express();
 
@@ -98,6 +99,44 @@ app.get('/health', (req, res) => {
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development'
   });
+});
+
+// Support chat -> Slack bridge
+app.post('/api/support/chat', async (req, res) => {
+  try {
+    const { message, page, url, meta } = req.body || {};
+
+    if (!message || typeof message !== 'string' || !message.trim()) {
+      return res.status(400).json({ error: 'Message is required' });
+    }
+
+    const pageTag = page ? `Page: ${page}\n` : '';
+    const urlTag = url ? `URL: ${url}\n` : '';
+    const metaLines = [];
+
+    if (meta) {
+      if (meta.username) metaLines.push(`Username: ${meta.username}`);
+      if (meta.email) metaLines.push(`Email: ${meta.email}`);
+      if (meta.phone) metaLines.push(`Phone: ${meta.phone}`);
+    }
+
+    const metaBlock = metaLines.length ? metaLines.join('\n') + '\n' : '';
+
+    const text =
+      `:speech_balloon: *New Support Chat Message*\n` +
+      pageTag +
+      urlTag +
+      metaBlock +
+      `\n*Message:*\n${message}\n` +
+      `\n_Time: ${new Date().toLocaleString('en-KE', { timeZone: 'Africa/Nairobi' })}_`;
+
+    await sendSlackMessage(process.env.SLACK_WEBHOOK_SUPPORT || process.env.SLACK_WEBHOOK_PROFILE, text);
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Support chat error:', error);
+    res.status(500).json({ error: 'Failed to send support message' });
+  }
 });
 
 // Connect to MongoDB
