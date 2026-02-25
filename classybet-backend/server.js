@@ -17,8 +17,10 @@ const casinoRoutes = require('./routes/casino');
 
 // Import models
 const User = require('./models/User');
+const SupportConversation = require('./models/SupportConversation');
 const { startRoundScheduler } = require('./utils/roundScheduler');
-const { sendSlackMessage } = require('./utils/slack');
+const { sendSlackMessage, postSlackThread, verifySlackSignature } = require('./utils/slack');
+const jwt = require('jsonwebtoken');
 
 const app = express();
 
@@ -28,7 +30,11 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 // Middleware
-app.use(express.json({ limit: '1mb' }));
+// Capture raw body for Slack signature verification
+app.use(express.json({
+  limit: '1mb',
+  verify: (req, _res, buf) => { req.rawBody = buf.toString(); }
+}));
 app.use(express.urlencoded({ extended: true }));
 // CORS configuration with multiple frontend domains
 const allowedOrigins = [
@@ -101,41 +107,189 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Support chat -> Slack bridge
+// ─── Support chat -> Slack bridge (two-way) ───
+
+// Helper: extract user from JWT if present
+function extractUserFromToken(req) {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
+    const decoded = jwt.verify(authHeader.split(' ')[1], process.env.JWT_SECRET);
+    return decoded;
+  } catch { return null; }
+}
+
+// POST /api/support/chat — send a message & persist conversation
 app.post('/api/support/chat', async (req, res) => {
   try {
-    const { message, page, url, meta } = req.body || {};
+    const { message, page, url, meta, conversationId, sessionId } = req.body || {};
 
     if (!message || typeof message !== 'string' || !message.trim()) {
       return res.status(400).json({ error: 'Message is required' });
     }
 
-    const pageTag = page ? `Page: ${page}\n` : '';
-    const urlTag = url ? `URL: ${url}\n` : '';
-    const metaLines = [];
+    const tokenUser = extractUserFromToken(req);
+    const userId = tokenUser ? tokenUser.userId : null;
+    const username = meta?.username || tokenUser?.username || 'Anonymous';
+    const sid = sessionId || `anon-${Date.now()}`;
 
-    if (meta) {
-      if (meta.username) metaLines.push(`Username: ${meta.username}`);
-      if (meta.email) metaLines.push(`Email: ${meta.email}`);
-      if (meta.phone) metaLines.push(`Phone: ${meta.phone}`);
+    // Find or create conversation
+    let conversation;
+    if (conversationId) {
+      conversation = await SupportConversation.findById(conversationId);
+    }
+    if (!conversation && userId) {
+      conversation = await SupportConversation.findOne({ userId, status: 'open' });
+    }
+    if (!conversation) {
+      conversation = await SupportConversation.findOne({ sessionId: sid, status: 'open' });
+    }
+    if (!conversation) {
+      conversation = new SupportConversation({
+        userId,
+        username,
+        sessionId: sid,
+        messages: [],
+        status: 'open'
+      });
     }
 
-    const metaBlock = metaLines.length ? metaLines.join('\n') + '\n' : '';
+    // Append user message
+    const now = new Date();
+    conversation.messages.push({ from: 'user', text: message.trim(), createdAt: now });
 
-    const text =
-      `:speech_balloon: *New Support Chat Message*\n` +
-      pageTag +
-      urlTag +
-      metaBlock +
-      `\n*Message:*\n${message}\n` +
-      `\n_Time: ${new Date().toLocaleString('en-KE', { timeZone: 'Africa/Nairobi' })}_`;
+    // Build Slack text
+    const metaLines = [];
+    if (username !== 'Anonymous') metaLines.push(`*User:* ${username}`);
+    if (meta?.email) metaLines.push(`*Email:* ${meta.email}`);
+    if (meta?.phone) metaLines.push(`*Phone:* ${meta.phone}`);
+    if (page) metaLines.push(`*Page:* ${page}`);
+    const header = metaLines.length ? metaLines.join(' | ') + '\n' : '';
+    const slackText = conversation.slackThreadTs
+      ? message.trim()
+      : `:speech_balloon: *New Support Conversation*\n${header}\n${message.trim()}`;
 
-    await sendSlackMessage(process.env.SLACK_WEBHOOK_SUPPORT || process.env.SLACK_WEBHOOK_PROFILE, text);
+    // Post to Slack (thread if existing)
+    const channel = process.env.SLACK_SUPPORT_CHANNEL_ID;
+    if (channel) {
+      const ts = await postSlackThread(channel, slackText, conversation.slackThreadTs);
+      if (ts && !conversation.slackThreadTs) {
+        conversation.slackThreadTs = ts;
+        conversation.slackChannel = channel;
+      }
+    } else {
+      // Fallback to webhook
+      await sendSlackMessage(process.env.SLACK_WEBHOOK_SUPPORT || process.env.SLACK_WEBHOOK_PROFILE, slackText);
+    }
 
-    res.json({ success: true });
+    await conversation.save();
+
+    res.json({
+      success: true,
+      conversationId: conversation._id,
+      sessionId: conversation.sessionId,
+      messages: conversation.messages
+    });
   } catch (error) {
     console.error('Support chat error:', error);
     res.status(500).json({ error: 'Failed to send support message' });
+  }
+});
+
+// GET /api/support/conversation/current — fetch latest open conversation
+app.get('/api/support/conversation/current', async (req, res) => {
+  try {
+    const tokenUser = extractUserFromToken(req);
+    const sessionId = req.query.sessionId;
+
+    let conversation = null;
+    if (tokenUser?.userId) {
+      conversation = await SupportConversation.findOne(
+        { userId: tokenUser.userId, status: 'open' }
+      ).sort({ updatedAt: -1 });
+    }
+    if (!conversation && sessionId) {
+      conversation = await SupportConversation.findOne(
+        { sessionId, status: 'open' }
+      ).sort({ updatedAt: -1 });
+    }
+
+    if (!conversation) {
+      return res.json({ conversationId: null, messages: [] });
+    }
+
+    res.json({
+      conversationId: conversation._id,
+      sessionId: conversation.sessionId,
+      messages: conversation.messages
+    });
+  } catch (error) {
+    console.error('Fetch conversation error:', error);
+    res.status(500).json({ error: 'Failed to fetch conversation' });
+  }
+});
+
+// GET /api/support/conversation/:id/updates — poll for new messages
+app.get('/api/support/conversation/:id/updates', async (req, res) => {
+  try {
+    const since = req.query.since ? new Date(req.query.since) : new Date(0);
+    const conversation = await SupportConversation.findById(req.params.id);
+    if (!conversation) {
+      return res.status(404).json({ error: 'Conversation not found' });
+    }
+
+    const newMessages = conversation.messages.filter(m => new Date(m.createdAt) > since);
+    res.json({ messages: newMessages });
+  } catch (error) {
+    console.error('Poll updates error:', error);
+    res.status(500).json({ error: 'Failed to poll updates' });
+  }
+});
+
+// POST /api/support/slack-events — receive replies from Slack
+app.post('/api/support/slack-events', async (req, res) => {
+  try {
+    // URL verification challenge
+    if (req.body.type === 'url_verification') {
+      return res.json({ challenge: req.body.challenge });
+    }
+
+    // Verify signature
+    if (!verifySlackSignature(req)) {
+      console.warn('Slack signature verification failed');
+      return res.status(401).json({ error: 'Invalid signature' });
+    }
+
+    const event = req.body.event;
+    if (!event) return res.sendStatus(200);
+
+    // Ignore bot messages
+    if (event.bot_id || event.subtype === 'bot_message') {
+      return res.sendStatus(200);
+    }
+
+    // Only process threaded replies in our support channel
+    if (event.thread_ts && event.channel) {
+      const conversation = await SupportConversation.findOne({
+        slackThreadTs: event.thread_ts,
+        slackChannel: event.channel
+      });
+
+      if (conversation) {
+        conversation.messages.push({
+          from: 'agent',
+          text: event.text,
+          createdAt: new Date()
+        });
+        await conversation.save();
+        console.log(`💬 Agent reply saved for conversation ${conversation._id}`);
+      }
+    }
+
+    res.sendStatus(200);
+  } catch (error) {
+    console.error('Slack events error:', error);
+    res.sendStatus(200); // Always 200 so Slack doesn't retry
   }
 });
 
