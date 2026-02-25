@@ -247,7 +247,13 @@ class AuthManager {
             }
 
             if (response.ok) {
+                // Store token and user data immediately
+                localStorage.setItem('user_token', data.token);
+                localStorage.setItem('userData', JSON.stringify(data.user));
+                localStorage.removeItem('isDemo');
+
                 if (data.requiresVerification) {
+                    // Show OTP popup then redirect to dashboard
                     this.showOTPVerification(data.userId, data.email, data.otp);
                     return;
                 }
@@ -352,16 +358,16 @@ class AuthManager {
             console.log('Registration response:', data);
 
             if (response.ok) {
+                // Store token and user data immediately
+                localStorage.setItem('user_token', data.token);
+                localStorage.setItem('userData', JSON.stringify(data.user));
+                localStorage.removeItem('isDemo');
+
                 if (data.requiresVerification) {
+                    // Show OTP popup then redirect to dashboard
                     this.showOTPVerification(data.userId, data.email, data.otp);
                     return;
                 }
-
-                // Store token and user data
-                localStorage.setItem('user_token', data.token);
-                localStorage.setItem('userData', JSON.stringify(data.user));
-                // Clear demo flag for real users
-                localStorage.removeItem('isDemo');
 
                 // Show User ID
                 document.getElementById('generatedUserId').textContent = data.user.userId;
@@ -520,12 +526,10 @@ class AuthManager {
             setTimeout(() => this.style.background = 'rgba(48,252,190,0.1)', 600);
         });
 
-        // Got it button: copy + auto-fill + close
+        // Got it button: close popup and redirect to dashboard
         modal.querySelector('#otp-popup-got-it').addEventListener('click', () => {
-            navigator.clipboard && navigator.clipboard.writeText(otp);
-            const input = document.getElementById('otpCode');
-            if (input) input.value = otp;
             modal.remove();
+            window.location.href = 'dashboard.html';
         });
 
         // Auto-fill OTP input immediately
