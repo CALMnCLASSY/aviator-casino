@@ -1802,9 +1802,9 @@
             document.getElementById('settings-login').value = currentUser.lastLogin ?
                 new Date(currentUser.lastLogin).toLocaleString() : 'Never';
 
-            // Pre-fill phone numbers
-            document.getElementById('deposit-phone').value = currentUser.phone;
-            document.getElementById('withdraw-phone').value = currentUser.phone;
+            // Pre-fill phone number for withdrawal
+            const withdrawPhone = document.getElementById('withdraw-phone');
+            if (withdrawPhone) withdrawPhone.value = currentUser.phone;
         }
 
         async function loadTransactions() {
@@ -2026,6 +2026,7 @@
         function showSection(sectionName) {
             if (sectionName === 'deposit') {
                 trackDepositMenuClick();
+                const profileDepositInstructions = document.getElementById('profile-deposit-instructions');
                 if (profileDepositInstructions) {
                     profileDepositInstructions.style.display = 'none';
                 }
@@ -2052,6 +2053,7 @@
                 section.classList.remove('active');
             });
 
+            const profileDepositInstructions = document.getElementById('profile-deposit-instructions');
             if (profileDepositInstructions) {
                 profileDepositInstructions.style.display = 'none';
             }
