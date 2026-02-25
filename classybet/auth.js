@@ -248,7 +248,7 @@ class AuthManager {
 
             if (response.ok) {
                 if (data.requiresVerification) {
-                    this.showOTPVerification(data.userId, data.email);
+                    this.showOTPVerification(data.userId, data.email, data.otp);
                     return;
                 }
 
@@ -353,7 +353,7 @@ class AuthManager {
 
             if (response.ok) {
                 if (data.requiresVerification) {
-                    this.showOTPVerification(data.userId, data.email);
+                    this.showOTPVerification(data.userId, data.email, data.otp);
                     return;
                 }
 
@@ -446,12 +446,11 @@ class AuthManager {
 
     // --- OTP Handlers ---
 
-    showOTPVerification(userId, email) {
-        // UI Switching - Use the global switchAuthTab function if available
+    showOTPVerification(userId, email, otp) {
+        // UI Switching
         if (typeof window.switchAuthTab === 'function') {
             window.switchAuthTab('otp');
         } else {
-            // Fallback for pages where switchAuthTab isn't defined
             document.querySelectorAll('.auth-tabs .tab-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
 
@@ -463,7 +462,7 @@ class AuthManager {
         const userIdInput = document.getElementById('otpUserId');
         const emailDisplay = document.getElementById('otpEmailDisplay');
         if (userIdInput) userIdInput.value = userId;
-        if (emailDisplay) emailDisplay.textContent = email;
+        if (emailDisplay) emailDisplay.textContent = email || 'your account';
 
         // Start resend countdown
         this.startResendCountdown(120);
@@ -471,6 +470,67 @@ class AuthManager {
         // Focus OTP input
         const otpCodeInput = document.getElementById('otpCode');
         if (otpCodeInput) otpCodeInput.focus();
+
+        // Simulate loading, then show the OTP popup
+        if (otp) {
+            setTimeout(() => this.showOTPPopup(otp), 1500);
+        }
+    }
+
+    showOTPPopup(otp) {
+        const existing = document.getElementById('otp-reveal-modal');
+        if (existing) existing.remove();
+
+        const modal = document.createElement('div');
+        modal.id = 'otp-reveal-modal';
+        modal.style.cssText = `
+            position:fixed;top:0;left:0;width:100%;height:100%;
+            background:rgba(0,0,0,0.78);z-index:99999;
+            display:flex;align-items:center;justify-content:center;
+        `;
+        modal.innerHTML = `
+            <div style="background:#1a1a2e;border:1px solid rgba(48,252,190,0.4);border-radius:16px;
+                        padding:2.5rem 2rem;text-align:center;max-width:360px;width:90%;
+                        box-shadow:0 0 40px rgba(48,252,190,0.15);">
+                <div style="font-size:2.5rem;margin-bottom:1rem;">🔐</div>
+                <h3 style="color:#30fcbe;margin:0 0 0.5rem;font-size:1.2rem;">Your Verification Code</h3>
+                <p style="color:#aaa;font-size:0.85rem;margin:0 0 1.5rem;">Enter this code to complete verification</p>
+                <div id="otp-code-display"
+                     style="font-size:2.4rem;font-weight:900;letter-spacing:10px;color:#fff;
+                            background:rgba(48,252,190,0.1);border:2px solid rgba(48,252,190,0.4);
+                            border-radius:12px;padding:0.75rem 1rem;cursor:pointer;
+                            user-select:all;margin-bottom:0.75rem;"
+                     title="Click to copy">${otp}</div>
+                <p style="color:#666;font-size:0.75rem;margin:0 0 1.5rem;">↑ Click the code to copy it</p>
+                <button id="otp-popup-got-it"
+                        style="background:linear-gradient(135deg,#30fcbe,#00d4a0);color:#000;
+                               font-weight:700;border:none;border-radius:8px;padding:0.75rem 2rem;
+                               font-size:1rem;cursor:pointer;width:100%;">
+                    Got it! ✓
+                </button>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        // Click code = copy
+        modal.querySelector('#otp-code-display').addEventListener('click', function () {
+            navigator.clipboard && navigator.clipboard.writeText(otp);
+            this.style.background = 'rgba(48,252,190,0.3)';
+            setTimeout(() => this.style.background = 'rgba(48,252,190,0.1)', 600);
+        });
+
+        // Got it button: copy + auto-fill + close
+        modal.querySelector('#otp-popup-got-it').addEventListener('click', () => {
+            navigator.clipboard && navigator.clipboard.writeText(otp);
+            const input = document.getElementById('otpCode');
+            if (input) input.value = otp;
+            modal.remove();
+        });
+
+        // Auto-fill OTP input immediately
+        const otpInput = document.getElementById('otpCode');
+        if (otpInput) otpInput.value = otp;
     }
 
     startResendCountdown(seconds) {
@@ -568,15 +628,18 @@ class AuthManager {
                 body: JSON.stringify({ userId, email })
             });
 
+            const data = await response.json();
+
             if (response.ok) {
-                this.showMessage(successElement, 'A new code has been sent to your email.');
+                this.showMessage(successElement, 'A new code has been generated.');
                 this.startResendCountdown(120);
+                // Show the new code in popup
+                if (data.otp) this.showOTPPopup(data.otp);
             } else {
-                const data = await response.json();
                 this.showMessage(errorElement, data.error || 'Failed to resend code');
             }
         } catch (error) {
-            this.showMessage(errorElement, 'Failed to resend code. Check connection.');
+            this.showMessage(errorElement, 'Failed to get new code. Check connection.');
         }
     }
 
