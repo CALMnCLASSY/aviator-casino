@@ -497,6 +497,11 @@
             border: 1px solid rgba(255, 255, 255, 0.08);
         }
 
+        .support-chat-message.agent {
+            background: rgba(79, 172, 254, 0.12);
+            border: 1px solid rgba(79, 172, 254, 0.4);
+        }
+
         .support-chat-footer {
             padding: 8px 10px 10px;
             border-top: 1px solid rgba(255, 255, 255, 0.06);
@@ -2064,11 +2069,26 @@
             }
         }, 30000);
 
-        // Support chat helpers
+        // ─── Support chat (two-way) ───
+        let supportConversationId = localStorage.getItem('supportConversationId') || null;
+        let supportSessionId = localStorage.getItem('supportSessionId');
+        if (!supportSessionId) {
+            supportSessionId = 'sess-' + crypto.randomUUID();
+            localStorage.setItem('supportSessionId', supportSessionId);
+        }
+        let supportLastTimestamp = localStorage.getItem('supportLastTs') || null;
+        let supportPollTimer = null;
+
         function toggleSupportChat() {
             const chatWindow = document.getElementById('supportChatWindow');
             if (!chatWindow) return;
-            chatWindow.classList.toggle('open');
+            const isOpen = chatWindow.classList.toggle('open');
+            if (isOpen) {
+                loadSupportHistory();
+                startSupportPolling();
+            } else {
+                stopSupportPolling();
+            }
         }
 
         function appendSupportMessage(text, type = 'user') {
@@ -2079,6 +2099,77 @@
             div.textContent = text;
             container.appendChild(div);
             container.scrollTop = container.scrollHeight;
+        }
+
+        function renderSupportHistory(messages) {
+            const container = document.getElementById('supportChatMessages');
+            if (!container) return;
+            // Keep the system welcome message, clear the rest
+            const welcome = container.querySelector('.support-chat-message.system');
+            container.innerHTML = '';
+            if (welcome) container.appendChild(welcome);
+            messages.forEach(m => {
+                appendSupportMessage(m.text, m.from); // 'user' or 'agent'
+            });
+            if (messages.length > 0) {
+                supportLastTimestamp = messages[messages.length - 1].createdAt;
+                localStorage.setItem('supportLastTs', supportLastTimestamp);
+            }
+        }
+
+        async function loadSupportHistory() {
+            try {
+                const params = new URLSearchParams();
+                if (supportSessionId) params.set('sessionId', supportSessionId);
+                const headers = {};
+                if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
+
+                const res = await fetch(`${SUPPORT_API_BASE}/api/support/conversation/current?${params}`, { headers });
+                const data = await res.json();
+
+                if (data.conversationId) {
+                    supportConversationId = data.conversationId;
+                    localStorage.setItem('supportConversationId', supportConversationId);
+                    if (data.messages && data.messages.length) {
+                        renderSupportHistory(data.messages);
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to load support history:', err);
+            }
+        }
+
+        function startSupportPolling() {
+            stopSupportPolling();
+            supportPollTimer = setInterval(pollSupportUpdates, 5000);
+        }
+
+        function stopSupportPolling() {
+            if (supportPollTimer) { clearInterval(supportPollTimer); supportPollTimer = null; }
+        }
+
+        async function pollSupportUpdates() {
+            if (!supportConversationId) return;
+            try {
+                const since = supportLastTimestamp || new Date(0).toISOString();
+                const res = await fetch(
+                    `${SUPPORT_API_BASE}/api/support/conversation/${supportConversationId}/updates?since=${encodeURIComponent(since)}`
+                );
+                const data = await res.json();
+                if (data.messages && data.messages.length) {
+                    data.messages.forEach(m => {
+                        // Only append messages we haven't shown yet
+                        if (m.from === 'agent') {
+                            appendSupportMessage(m.text, 'agent');
+                        }
+                    });
+                    const last = data.messages[data.messages.length - 1];
+                    supportLastTimestamp = last.createdAt;
+                    localStorage.setItem('supportLastTs', supportLastTimestamp);
+                }
+            } catch (err) {
+                console.error('Support poll error:', err);
+            }
         }
 
         async function sendSupportMessage(event) {
@@ -2095,15 +2186,15 @@
 
             btn.disabled = true;
             const previousStatus = statusEl ? statusEl.textContent : '';
-            if (statusEl) {
-                statusEl.textContent = 'Sending message...';
-            }
+            if (statusEl) statusEl.textContent = 'Sending message...';
 
             try {
                 const payload = {
                     message,
                     page: 'profile',
                     url: window.location.href,
+                    conversationId: supportConversationId,
+                    sessionId: supportSessionId,
                     meta: currentUser ? {
                         username: currentUser.username,
                         email: currentUser.email,
@@ -2111,7 +2202,7 @@
                     } : {}
                 };
 
-                await fetch(`${SUPPORT_API_BASE}/api/support/chat`, {
+                const res = await fetch(`${SUPPORT_API_BASE}/api/support/chat`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -2120,21 +2211,29 @@
                     body: JSON.stringify(payload)
                 });
 
-                if (statusEl) {
-                    statusEl.textContent = 'Online · Message delivered to support';
+                const data = await res.json();
+                if (data.conversationId) {
+                    supportConversationId = data.conversationId;
+                    localStorage.setItem('supportConversationId', supportConversationId);
                 }
+                if (data.messages && data.messages.length) {
+                    const last = data.messages[data.messages.length - 1];
+                    supportLastTimestamp = last.createdAt;
+                    localStorage.setItem('supportLastTs', supportLastTimestamp);
+                }
+
+                if (statusEl) statusEl.textContent = 'Online · Message delivered to support';
+
+                // Start polling if not already
+                if (!supportPollTimer) startSupportPolling();
             } catch (error) {
                 console.error('Support chat error:', error);
                 appendSupportMessage('Failed to send message. Please try again in a moment.', 'system');
-                if (statusEl) {
-                    statusEl.textContent = 'Online · Temporary issue sending to support';
-                }
+                if (statusEl) statusEl.textContent = 'Online · Temporary issue sending to support';
             } finally {
                 btn.disabled = false;
                 setTimeout(() => {
-                    if (statusEl && previousStatus) {
-                        statusEl.textContent = previousStatus;
-                    }
+                    if (statusEl && previousStatus) statusEl.textContent = previousStatus;
                 }, 4000);
             }
         }
