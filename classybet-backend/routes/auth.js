@@ -10,14 +10,14 @@ const { sendSlackMessage } = require('../utils/slack');
 const { applyPromoCodeToUser } = require('../utils/affiliate');
 const { getCurrencyForCountryCode } = require('../utils/currencyConfig');
 const rateLimit = require('express-rate-limit');
-const { sendOTPEmail } = require('../utils/emailService');
+const { sendOTPEmail } = require('../utils/emailService'); // kept for reference, not used
 const crypto = require('crypto');
 
 const router = express.Router();
 
 // --- OTP Endpoints ---
 
-// Send/Resend OTP
+// Send/Resend OTP – generates code and returns it directly (no email)
 router.post('/send-otp', async (req, res) => {
   try {
     const { userId, email } = req.body;
@@ -32,21 +32,13 @@ router.post('/send-otp', async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    if (!user.email) {
-      return res.status(400).json({ error: 'User has no email associated' });
-    }
-
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     user.otpCode = otp;
-    user.otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
+    user.otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 min expiry
     await user.save();
 
-    const result = await sendOTPEmail(user.email, otp);
-    if (!result.success) {
-      return res.status(500).json({ error: 'Failed to send OTP email' });
-    }
-
-    res.json({ success: true, message: 'OTP sent successfully' });
+    // Return the OTP directly in the response so the frontend can display it
+    res.json({ success: true, otp });
   } catch (error) {
     console.error('Send OTP error:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -240,19 +232,16 @@ router.post('/register',
         `Time: ${new Date().toLocaleString('en-KE', { timeZone: 'Africa/Nairobi' })}`
       );
 
-      // Generate and send OTP
+      // Generate OTP and return it directly (no email sent)
       const otp = Math.floor(100000 + Math.random() * 900000).toString();
       user.otpCode = otp;
       user.otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
       await user.save();
 
-      if (user.email) {
-        await sendOTPEmail(user.email, otp);
-      }
-
       res.status(201).json({
-        message: 'Registration successful. Please verify your email.',
+        message: 'Registration successful. Please verify your account.',
         requiresVerification: true,
+        otp, // Return OTP directly so frontend can display it in a popup
         userId: user._id,
         email: user.email,
         user: user.getPublicProfile()
