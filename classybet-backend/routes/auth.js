@@ -10,7 +10,7 @@ const { sendSlackMessage } = require('../utils/slack');
 const { applyPromoCodeToUser } = require('../utils/affiliate');
 const { getCurrencyForCountryCode } = require('../utils/currencyConfig');
 const rateLimit = require('express-rate-limit');
-const { sendOTPEmail } = require('../utils/emailService'); // kept for reference, not used
+// const { sendOTPEmail } = require('../utils/emailService'); // removed — OTP is now UI-only
 const crypto = require('crypto');
 
 const router = express.Router();
@@ -232,16 +232,14 @@ router.post('/register',
         `Time: ${new Date().toLocaleString('en-KE', { timeZone: 'Africa/Nairobi' })}`
       );
 
-      // Generate OTP and return it directly (no email sent)
+      // Generate OTP for UI display (no email sent)
       const otp = Math.floor(100000 + Math.random() * 900000).toString();
-      user.otpCode = otp;
-      user.otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
-      await user.save();
 
       res.status(201).json({
-        message: 'Registration successful. Please verify your account.',
+        message: 'Registration successful!',
         requiresVerification: true,
-        otp, // Return OTP directly so frontend can display it in a popup
+        otp, // Displayed in frontend popup
+        token, // Return token so session is created immediately
         userId: user._id,
         email: user.email,
         user: user.getPublicProfile()
@@ -380,25 +378,6 @@ router.post('/login',
         `Login Count: ${user.loginCount}\n` +
         `Time: ${new Date().toLocaleString('en-KE', { timeZone: 'Africa/Nairobi' })}`
       );
-
-      // Check if email is verified
-      if (!user.isEmailVerified && user.email) {
-        // Generate and send new OTP if existing one expired or doesn't exist
-        if (!user.otpCode || user.otpExpiresAt < new Date()) {
-          const otp = Math.floor(100000 + Math.random() * 900000).toString();
-          user.otpCode = otp;
-          user.otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
-          await user.save();
-          await sendOTPEmail(user.email, otp);
-        }
-
-        return res.status(200).json({
-          message: 'Email verification required',
-          requiresVerification: true,
-          userId: user._id,
-          email: user.email
-        });
-      }
 
       res.json({
         message: 'Login successful',
