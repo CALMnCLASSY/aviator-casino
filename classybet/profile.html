@@ -820,6 +820,48 @@
             </div>
         </div>
 
+        <!-- OTP Verification Section (initially hidden) -->
+        <div id="otp-section" class="card" style="display: none; max-width: 500px; margin: 0 auto;">
+            <h2 style="text-align: center; color: #fff; margin-bottom: 2rem;">
+                <i class="fas fa-envelope-open-text"></i> Verify Email
+            </h2>
+
+            <div id="otp-success" class="success" style="display: none;"></div>
+            <div id="otp-error" class="error" style="display: none;"></div>
+
+            <p style="text-align: center; color: #ccc; margin-bottom: 1.5rem;">
+                Enter the 6-digit code sent to <span id="otp-email-display"
+                    style="color: #30fcbe; font-weight: bold;"></span>
+            </p>
+
+            <form id="otp-form">
+                <input type="hidden" id="otp-userid">
+                <div class="form-group" style="text-align: center;">
+                    <input type="text" id="otp-code" class="form-control" placeholder="000000" maxlength="6"
+                        style="letter-spacing: 12px; font-size: 24px; text-align: center; font-weight: bold; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #fff; border-radius: 8px; width: 100%; padding: 15px;"
+                        required>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1.5rem;">
+                    <i class="fas fa-check-circle"></i> Verify Code
+                </button>
+            </form>
+
+            <div style="text-align: center; margin-top: 1.5rem;">
+                <p id="otp-timer-display" style="color: #999; font-size: 0.9rem;">
+                    Didn't receive the code? <a href="#" id="resend-otp-btn" onclick="handleResendOTP(event)"
+                        style="color: #30fcbe;">Resend</a>
+                </p>
+                <div id="otp-countdown" style="color: #666; font-size: 0.8rem; margin-top: 0.5rem;"></div>
+            </div>
+
+            <div
+                style="text-align: center; margin-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1rem;">
+                <a href="#" onclick="showRegisterForm()" style="color: #999; font-size: 0.9rem;">Back to
+                    registration</a>
+            </div>
+        </div>
+
         <!-- Profile Dashboard (initially hidden) -->
         <div id="profile-section" style="display: none;">
             <div class="profile-grid">
@@ -1424,6 +1466,10 @@
                 const data = await response.json();
 
                 if (response.ok) {
+                    if (data.requiresVerification) {
+                        showOTPSection(data.userId, data.email);
+                        return;
+                    }
                     authToken = data.token;
                     currentUser = data.user;
                     localStorage.setItem('user_token', authToken);
@@ -1462,6 +1508,10 @@
                 const data = await response.json();
 
                 if (response.ok) {
+                    if (data.requiresVerification) {
+                        showOTPSection(data.userId, data.email);
+                        return;
+                    }
                     authToken = data.token;
                     currentUser = data.user;
                     localStorage.setItem('user_token', authToken);
@@ -1784,27 +1834,48 @@
                 return;
             }
 
-            container.innerHTML = transactions.map(tx => `
+            // Status badge helper
+            function getStatusBadge(status) {
+                switch (status) {
+                    case 'completed':
+                        return '<span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:0.75rem;font-weight:600;background:rgba(48,252,190,0.15);color:#30fcbe;">✅ Completed</span>';
+                    case 'pending':
+                        return '<span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:0.75rem;font-weight:600;background:rgba(255,165,0,0.15);color:#ffa500;">⏳ Pending</span>';
+                    case 'cancelled':
+                        return '<span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:0.75rem;font-weight:600;background:rgba(251,2,76,0.15);color:#fb024c;">❌ Rejected</span>';
+                    default:
+                        return `<span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:0.75rem;font-weight:600;background:rgba(255,255,255,0.1);color:#ccc;">${status || 'Unknown'}</span>`;
+                }
+            }
+
+            container.innerHTML = transactions.map(tx => {
+                const cancelReason = (tx.status === 'cancelled' && tx.metadata && tx.metadata.cancelReason)
+                    ? `<div style="font-size:0.75rem;color:#fb024c;margin-top:4px;">Reason: ${tx.metadata.cancelReason}</div>`
+                    : '';
+
+                return `
                 <div class="transaction-item">
                     <div>
-                        <div style="font-weight: bold;">${tx.description}</div>
+                        <div style="font-weight: bold;">${tx.description || tx.type}</div>
                         <div style="font-size: 0.875rem; color: #ccc;">
                             ${new Date(tx.createdAt).toLocaleString()}
                         </div>
+                        <div style="margin-top: 4px;">${getStatusBadge(tx.status)}</div>
+                        ${cancelReason}
                     </div>
                     <div style="text-align: right;">
                         <div class="transaction-type type-${tx.type}">
                             ${tx.type.toUpperCase()}
                         </div>
-                        <div style="font-weight: bold; margin-top: 0.25rem; color: ${tx.amount >= 0 ? '#30fcbe' : '#fb024c'};">
-                            ${tx.amount >= 0 ? '+' : ''}${(typeof formatCurrency === 'function' && currentUser.currency) ? formatCurrency(Math.abs(tx.amount), currentUser.currency) : 'KES ' + Math.abs(tx.amount).toFixed(2)}
+                        <div style="font-weight: bold; margin-top: 0.25rem; color: ${tx.type === 'deposit' ? '#30fcbe' : '#fb024c'};">
+                            ${tx.type === 'deposit' ? '+' : '-'}${(typeof formatCurrency === 'function' && currentUser.currency) ? formatCurrency(Math.abs(tx.amount), currentUser.currency) : 'KES ' + Math.abs(tx.amount).toFixed(2)}
                         </div>
                         <div style="font-size: 0.875rem; color: #ccc;">
                             Balance: ${(typeof formatCurrency === 'function' && currentUser.currency) ? formatCurrency(tx.balanceAfter || 0, currentUser.currency) : 'KES ' + (tx.balanceAfter?.toFixed(2) || '0.00')}
                         </div>
                     </div>
                 </div>
-            `).join('');
+            `}).join('');
         }
 
         function showProfileSection() {
@@ -1823,7 +1894,115 @@
 
         function showRegisterForm() {
             document.getElementById('register-section').style.display = 'block';
+            document.getElementById('login-section').style.display = 'none';
             document.getElementById('profile-section').style.display = 'none';
+            document.getElementById('otp-section').style.display = 'none';
+        }
+
+        function showOTPSection(userId, email) {
+            document.getElementById('otp-userid').value = userId;
+            document.getElementById('otp-email-display').textContent = email;
+            document.getElementById('login-section').style.display = 'none';
+            document.getElementById('register-section').style.display = 'none';
+            document.getElementById('profile-section').style.display = 'none';
+            document.getElementById('otp-section').style.display = 'block';
+
+            // Focus on OTP input
+            document.getElementById('otp-code').focus();
+
+            // Start resend countdown (2 minutes)
+            startOTPCountdown(120);
+        }
+
+        let otpCountdownInterval;
+        function startOTPCountdown(seconds) {
+            const btn = document.getElementById('resend-otp-btn');
+            const countdownEl = document.getElementById('otp-countdown');
+
+            if (otpCountdownInterval) clearInterval(otpCountdownInterval);
+
+            btn.style.pointerEvents = 'none';
+            btn.style.opacity = '0.5';
+
+            let remaining = seconds;
+            otpCountdownInterval = setInterval(() => {
+                const mins = Math.floor(remaining / 60);
+                const secs = remaining % 60;
+                countdownEl.textContent = `You can resend in ${mins}:${secs < 10 ? '0' : ''}${secs}`;
+
+                if (remaining <= 0) {
+                    clearInterval(otpCountdownInterval);
+                    btn.style.pointerEvents = 'auto';
+                    btn.style.opacity = '1';
+                    countdownEl.textContent = '';
+                }
+                remaining--;
+            }, 1000);
+        }
+
+        // OTP Form Handler
+        document.getElementById('otp-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const userId = document.getElementById('otp-userid').value;
+            const otp = document.getElementById('otp-code').value;
+            const errorDiv = document.getElementById('otp-error');
+            const successDiv = document.getElementById('otp-success');
+
+            errorDiv.style.display = 'none';
+            successDiv.style.display = 'none';
+
+            try {
+                const response = await fetch(`${API_BASE}/api/auth/verify-otp`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId, otp })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    successDiv.textContent = 'Email verified successfully! Logging you in...';
+                    successDiv.style.display = 'block';
+
+                    setTimeout(() => {
+                        authToken = data.token;
+                        currentUser = data.user;
+                        localStorage.setItem('user_token', authToken);
+                        showProfileSection();
+                        loadUserProfile();
+                        document.getElementById('otp-section').style.display = 'none';
+                    }, 1500);
+                } else {
+                    errorDiv.textContent = data.error || 'Verification failed';
+                    errorDiv.style.display = 'block';
+                }
+            } catch (error) {
+                errorDiv.textContent = 'Connection error. Please try again.';
+                errorDiv.style.display = 'block';
+            }
+        });
+
+        async function handleResendOTP(e) {
+            if (e) e.preventDefault();
+            const userId = document.getElementById('otp-userid').value;
+            const email = document.getElementById('otp-email-display').textContent;
+
+            try {
+                const response = await fetch(`${API_BASE}/api/auth/send-otp`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId, email })
+                });
+
+                if (response.ok) {
+                    showSuccess('otp-success', 'New verification code sent to your email.');
+                    startOTPCountdown(120);
+                } else {
+                    showError('otp-error', 'Failed to resend code. Please try again.');
+                }
+            } catch (error) {
+                showError('otp-error', 'Network error. Please try again.');
+            }
         }
 
         async function trackDepositMenuClick() {

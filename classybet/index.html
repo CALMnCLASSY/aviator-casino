@@ -689,8 +689,7 @@
   <header class="header-logo" itemscope itemtype="http://schema.org/WPHeader">
     <div class="container">
       <a href="/" title="ClassyBet Casino - Home" itemprop="url">
-        <img src="images/classybetcasino-logo.jpeg" alt="ClassyBet Casino - Premium Online Casino Game"
-          itemprop="logo">
+        <img src="images/classybetcasino-logo.jpeg" alt="ClassyBet Casino - Premium Online Casino Game" itemprop="logo">
       </a>
     </div>
   </header>
@@ -829,6 +828,51 @@
           </form>
         </div>
 
+        <div id="otpTab" class="tab-content">
+          <h2 style="text-align: center; color: var(--primary-green); margin-bottom: 1.5rem; font-size: 24px;">
+            <i class="fas fa-shield-halved"></i> Verify Email
+          </h2>
+          <div class="error-message" id="otpError"></div>
+          <div class="success-message" id="otpSuccess"></div>
+
+          <p style="text-align: center; color: var(--text-muted); margin-bottom: 24px; font-size: 15px;">
+            We've sent a code to <span id="otpEmailDisplay" style="color: var(--text-light); font-weight: 600;"></span>
+          </p>
+
+          <form id="otpForm">
+            <input type="hidden" id="otpUserId">
+            <div class="form-group">
+              <div class="input-wrapper">
+                <i class="fas fa-key"></i>
+                <input type="text" id="otpCode" class="form-input" placeholder="000000" maxlength="6"
+                  style="letter-spacing: 8px; font-size: 20px; text-align: center; font-weight: bold;" required>
+              </div>
+            </div>
+
+            <button type="submit" class="auth-btn" id="verifyOtpBtn">
+              <i class="fas fa-check-circle"></i>
+              Verify Email
+            </button>
+          </form>
+
+          <div style="text-align: center; margin-top: 24px;">
+            <p style="font-size: 14px; color: var(--text-muted);">
+              Didn't get the code? <button type="button" id="resendBtn" onclick="window.authManager.handleResendOTP()"
+                style="background: none; border: none; color: var(--primary-green); font-weight: 600; cursor: pointer;">Resend
+                Code</button>
+            </p>
+            <div id="resendCountdown" style="font-size: 12px; color: #666; margin-top: 8px;"></div>
+          </div>
+
+          <div
+            style="text-align: center; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border-color);">
+            <button type="button" onclick="switchAuthTab('register')"
+              style="background: none; border: none; color: var(--text-muted); cursor: pointer;">
+              Back to registration
+            </button>
+          </div>
+        </div>
+
         <div class="demo-section">
           <button type="button" class="demo-btn" id="demoBtn">
             <i class="fas fa-plane-up"></i>
@@ -965,7 +1009,8 @@
         <button class="modal-close" onclick="closeModal('termsModal')">&times;</button>
       </div>
       <div class="modal-body">
-        <p>ClassyBet Casino is licensed under the Curacao eGaming License. Participation is strictly limited to players aged 18
+        <p>ClassyBet Casino is licensed under the Curacao eGaming License. Participation is strictly limited to players
+          aged 18
           years and above. Real-money wagering is available only after account verification.</p>
         <h3>Key highlights</h3>
         <p>&bull; Deposits are processed through secure paybill channels.<br>
@@ -987,7 +1032,8 @@
         <p>We collect personal data solely for account verification, gameplay security, and payment processing.
           Information is stored on encrypted servers with regular penetration testing and monitoring.</p>
         <h3>Your rights</h3>
-        <p>You can request data export or deletion by contacting classybetcasino@gmail.com. We never sell or share your data
+        <p>You can request data export or deletion by contacting classybetcasino@gmail.com. We never sell or share your
+          data
           with third parties without consent.</p>
       </div>
     </div>
@@ -1019,7 +1065,8 @@
       <div class="modal-body">
         <p>Casino outcomes are supplied by certified RNG providers and audited monthly. We actively monitor unusual
           cash-out behaviors to keep gameplay fair for everyone.</p>
-        <p>Remember: Casino games are a game of chance. Only wager what you can afford to lose and take regular breaks.</p>
+        <p>Remember: Casino games are a game of chance. Only wager what you can afford to lose and take regular breaks.
+        </p>
       </div>
     </div>
   </div>

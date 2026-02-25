@@ -107,6 +107,12 @@ class AuthManager {
             registerForm.addEventListener('submit', (e) => this.handleRegister(e));
         }
 
+        // OTP form
+        const otpForm = document.getElementById('otpForm');
+        if (otpForm) {
+            otpForm.addEventListener('submit', (e) => this.handleVerifyOTP(e));
+        }
+
         // Demo button
         const demoBtn = document.getElementById('demoBtn');
         if (demoBtn) {
@@ -241,6 +247,11 @@ class AuthManager {
             }
 
             if (response.ok) {
+                if (data.requiresVerification) {
+                    this.showOTPVerification(data.userId, data.email);
+                    return;
+                }
+
                 // Store token and user data
                 localStorage.setItem('user_token', data.token);
                 localStorage.setItem('userData', JSON.stringify(data.user));
@@ -341,6 +352,11 @@ class AuthManager {
             console.log('Registration response:', data);
 
             if (response.ok) {
+                if (data.requiresVerification) {
+                    this.showOTPVerification(data.userId, data.email);
+                    return;
+                }
+
                 // Store token and user data
                 localStorage.setItem('user_token', data.token);
                 localStorage.setItem('userData', JSON.stringify(data.user));
@@ -428,6 +444,142 @@ class AuthManager {
         }
     }
 
+    // --- OTP Handlers ---
+
+    showOTPVerification(userId, email) {
+        // UI Switching - Use the global switchAuthTab function if available
+        if (typeof window.switchAuthTab === 'function') {
+            window.switchAuthTab('otp');
+        } else {
+            // Fallback for pages where switchAuthTab isn't defined
+            document.querySelectorAll('.auth-tabs .tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            const otpTab = document.getElementById('otpTab');
+            if (otpTab) otpTab.classList.add('active');
+        }
+
+        // Set data
+        const userIdInput = document.getElementById('otpUserId');
+        const emailDisplay = document.getElementById('otpEmailDisplay');
+        if (userIdInput) userIdInput.value = userId;
+        if (emailDisplay) emailDisplay.textContent = email;
+
+        // Start resend countdown
+        this.startResendCountdown(120);
+
+        // Focus OTP input
+        const otpCodeInput = document.getElementById('otpCode');
+        if (otpCodeInput) otpCodeInput.focus();
+    }
+
+    startResendCountdown(seconds) {
+        const resendBtn = document.getElementById('resendBtn');
+        const countdownEl = document.getElementById('resendCountdown');
+        if (!resendBtn) return;
+
+        this.resendWait = seconds;
+        resendBtn.disabled = true;
+        resendBtn.style.opacity = '0.5';
+        resendBtn.style.cursor = 'not-allowed';
+
+        if (this.resendInterval) clearInterval(this.resendInterval);
+
+        this.resendInterval = setInterval(() => {
+            this.resendWait--;
+            const mins = Math.floor(this.resendWait / 60);
+            const secs = this.resendWait % 60;
+            if (countdownEl) {
+                countdownEl.textContent = `You can resend in ${mins}:${secs < 10 ? '0' : ''}${secs}`;
+            }
+
+            if (this.resendWait <= 0) {
+                clearInterval(this.resendInterval);
+                resendBtn.disabled = false;
+                resendBtn.style.opacity = '1';
+                resendBtn.style.cursor = 'pointer';
+                if (countdownEl) countdownEl.textContent = '';
+            }
+        }, 1000);
+    }
+
+    async handleVerifyOTP(e) {
+        if (e) e.preventDefault();
+
+        const verifyBtn = document.getElementById('verifyOtpBtn');
+        const errorElement = document.getElementById('otpError');
+        const successElement = document.getElementById('otpSuccess');
+
+        const userId = document.getElementById('otpUserId').value;
+        const otp = document.getElementById('otpCode').value.trim();
+
+        if (otp.length !== 6) {
+            this.showMessage(errorElement, 'Please enter a 6-digit code');
+            return;
+        }
+
+        try {
+            this.setLoading(verifyBtn, true);
+            this.hideMessage(errorElement);
+            this.hideMessage(successElement);
+
+            const response = await fetch(`${this.apiBase}/api/auth/verify-otp`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId, otp })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                this.showMessage(successElement, 'Email verified! Logging you in...');
+
+                // Store session
+                localStorage.setItem('user_token', data.token);
+                localStorage.setItem('userData', JSON.stringify(data.user));
+                localStorage.removeItem('isDemo');
+
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 1500);
+            } else {
+                this.showMessage(errorElement, data.error || 'Verification failed');
+            }
+        } catch (error) {
+            console.error('OTP Verification error:', error);
+            this.showMessage(errorElement, 'Error connecting to server');
+        } finally {
+            this.setLoading(verifyBtn, false);
+        }
+    }
+
+    async handleResendOTP() {
+        if (this.resendWait > 0) return;
+
+        const userId = document.getElementById('otpUserId').value;
+        const email = document.getElementById('otpEmailDisplay').textContent;
+        const successElement = document.getElementById('otpSuccess');
+        const errorElement = document.getElementById('otpError');
+
+        try {
+            const response = await fetch(`${this.apiBase}/api/auth/send-otp`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId, email })
+            });
+
+            if (response.ok) {
+                this.showMessage(successElement, 'A new code has been sent to your email.');
+                this.startResendCountdown(120);
+            } else {
+                const data = await response.json();
+                this.showMessage(errorElement, data.error || 'Failed to resend code');
+            }
+        } catch (error) {
+            this.showMessage(errorElement, 'Failed to resend code. Check connection.');
+        }
+    }
+
     // Utility methods
     setLoading(button, isLoading) {
         if (isLoading) {
@@ -441,6 +593,8 @@ class AuthManager {
                 button.innerHTML = '<i class="fas fa-user-plus"></i> Create Account';
             } else if (button.id === 'demoBtn') {
                 button.innerHTML = '<i class="fas fa-play"></i> Try Demo Version';
+            } else if (button.id === 'verifyOtpBtn') {
+                button.innerHTML = '<i class="fas fa-check-circle"></i> Verify Email';
             }
             button.disabled = false;
         }
@@ -532,7 +686,7 @@ document.addEventListener('keydown', (e) => {
 
 // Initialize authentication manager when page loads
 document.addEventListener('DOMContentLoaded', () => {
-    new AuthManager();
+    window.authManager = new AuthManager();
 });
 
 // Global tab switching function for authentication tabs

@@ -72,8 +72,9 @@ async function initiatePaystackDeposit(amount) {
 
         console.log('✅ Payment initialized:', data.data.reference);
 
-        // Open Paystack payment popup
-        openPaystackPopup(data.data, userData, currency);
+        // Use the currency from the backend response (may be USD if converted)
+        const paystackCurrency = data.data.currency || currency;
+        openPaystackPopup(data.data, userData, paystackCurrency);
 
     } catch (error) {
         console.error('❌ Deposit initialization error:', error);
