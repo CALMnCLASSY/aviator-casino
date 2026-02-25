@@ -59,6 +59,9 @@
                         <div id="balance-amount">KES 3,000.00</div>
                         <div class="header-controls">
 
+                            <button id="players-chat-toggle" class="players-chat-toggle-btn" title="Players Chat">
+                                <i class="fas fa-comments"></i>
+                            </button>
                             <div class="game-menu-container">
                                 <button id="game-menu-btn" class="game-menu-btn">
                                     <i class="fas fa-bars"></i>
@@ -101,6 +104,23 @@
                                 </div>
                             </div>
                         </div> <!-- End header-controls -->
+                    </div>
+                </div>
+
+                <!-- Players Chat Panel -->
+                <div id="players-chat-panel" class="players-chat-panel">
+                    <div class="players-chat-header">
+                        <span class="players-chat-title"><i class="fas fa-comments"></i> Chat</span>
+                        <span class="players-chat-online"><i class="fas fa-circle"></i> <span
+                                id="chat-online-count">342</span></span>
+                        <button id="players-chat-close" class="players-chat-close-btn">&times;</button>
+                    </div>
+                    <div class="players-chat-messages" id="players-chat-messages">
+                        <!-- Simulated messages appear here -->
+                    </div>
+                    <div class="players-chat-input-area">
+                        <input type="text" id="players-chat-input" placeholder="Say something..." maxlength="200" />
+                        <button id="players-chat-send"><i class="fas fa-paper-plane"></i></button>
                     </div>
                 </div>
 
@@ -1051,6 +1071,241 @@
         }
     </style>
 
+    <!-- Players Chat Styles -->
+    <style>
+        /* Chat Toggle Button */
+        .players-chat-toggle-btn {
+            background: none;
+            border: none;
+            color: #8a8aa0;
+            font-size: 1.1rem;
+            cursor: pointer;
+            padding: 6px 8px;
+            border-radius: 6px;
+            transition: all 0.25s ease;
+            position: relative;
+        }
+
+        .players-chat-toggle-btn:hover {
+            color: #30fcbe;
+            background: rgba(48, 252, 190, 0.1);
+        }
+
+        .players-chat-toggle-btn.active {
+            color: #30fcbe;
+        }
+
+        /* Chat Panel */
+        .players-chat-panel {
+            display: none;
+            background: #101025;
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            border-radius: 0 0 10px 10px;
+            overflow: hidden;
+            flex-direction: column;
+            height: 320px;
+            max-height: 320px;
+            animation: chatSlideDown 0.25s ease;
+        }
+
+        .players-chat-panel.open {
+            display: flex;
+        }
+
+        @keyframes chatSlideDown {
+            from {
+                opacity: 0;
+                max-height: 0;
+            }
+
+            to {
+                opacity: 1;
+                max-height: 320px;
+            }
+        }
+
+        /* Chat Header */
+        .players-chat-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: #1a1a35;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            flex-shrink: 0;
+        }
+
+        .players-chat-title {
+            color: #ccc;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .players-chat-title i {
+            color: #30fcbe;
+            margin-right: 5px;
+        }
+
+        .players-chat-online {
+            color: #5aff5a;
+            font-size: 0.72rem;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .players-chat-online i {
+            font-size: 0.45rem;
+            animation: pulse-dot 2s infinite;
+        }
+
+        @keyframes pulse-dot {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.3;
+            }
+        }
+
+        .players-chat-close-btn {
+            background: none;
+            border: none;
+            color: #666;
+            font-size: 1.3rem;
+            cursor: pointer;
+            padding: 0 4px;
+            line-height: 1;
+        }
+
+        .players-chat-close-btn:hover {
+            color: #fb024c;
+        }
+
+        /* Chat Messages */
+        .players-chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            scrollbar-width: thin;
+            scrollbar-color: #333 transparent;
+        }
+
+        .players-chat-messages::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .players-chat-messages::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 4px;
+        }
+
+        .pchat-msg {
+            display: flex;
+            align-items: flex-start;
+            gap: 6px;
+            font-size: 0.78rem;
+            line-height: 1.35;
+            padding: 3px 0;
+        }
+
+        .pchat-time {
+            color: #444;
+            font-size: 0.68rem;
+            flex-shrink: 0;
+            min-width: 38px;
+        }
+
+        .pchat-avatar {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            margin-top: 5px;
+        }
+
+        .pchat-name {
+            color: #5b8def;
+            font-weight: 600;
+            flex-shrink: 0;
+            margin-right: 4px;
+        }
+
+        .pchat-name.self {
+            color: #30fcbe;
+        }
+
+        .pchat-text {
+            color: #b0b0c8;
+            word-break: break-word;
+        }
+
+        .pchat-msg.system-msg .pchat-text {
+            color: #f0c040;
+            font-style: italic;
+        }
+
+        /* Chat Input */
+        .players-chat-input-area {
+            display: flex;
+            padding: 6px 8px;
+            background: #12122a;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        #players-chat-input {
+            flex: 1;
+            background: #1e1e3a;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 6px;
+            color: #ddd;
+            padding: 6px 10px;
+            font-size: 0.8rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        #players-chat-input:focus {
+            border-color: rgba(48, 252, 190, 0.4);
+        }
+
+        #players-chat-input::placeholder {
+            color: #555;
+        }
+
+        #players-chat-send {
+            background: #30fcbe;
+            border: none;
+            border-radius: 6px;
+            color: #0a0a1a;
+            padding: 6px 10px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: background 0.2s;
+        }
+
+        #players-chat-send:hover {
+            background: #26d9a2;
+        }
+
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            .players-chat-panel {
+                height: 260px;
+                max-height: 260px;
+                border-radius: 0;
+            }
+        }
+    </style>
+
     <!-- Paystack SDK -->
     <script src="https://js.paystack.co/v1/inline.js"></script>
     <!-- Currency Utils (must load first) -->
@@ -1165,6 +1420,252 @@
                     });
             });
         }
+    </script>
+
+    <!-- Players Chat Simulation -->
+    <script>
+        (function () {
+            'use strict';
+
+            // ─── Configuration ───
+            const MSG_INTERVAL_MIN = 2000;  // ms
+            const MSG_INTERVAL_MAX = 6000;
+            const ONLINE_UPDATE_INTERVAL = 20000;
+            const INITIAL_MSGS = 10;
+            const MAX_MSGS = 80;
+
+            // ─── Fake username initials (first***last) ───
+            const USERNAMES = [
+                'l***e', 'm***a', 'k***s', 'j***n', 'd***d', 's***h', 'a***i', 'p***r',
+                'r***o', 'c***a', 'f***k', 'b***y', 'w***e', 't***s', 'n***i', 'g***l',
+                'h***n', 'e***a', 'z***u', 'o***s', 'v***a', 'i***m', 'q***t', 'u***k',
+                'x***n', 'y***a', 'w***i', 'm***o', 'k***a', 'j***e', 'b***n', 's***a',
+                'r***k', 'l***n', 'd***a', 'p***e', 't***i', 'c***o', 'f***a', 'n***e'
+            ];
+
+            // ─── Avatar colors ───
+            const COLORS = [
+                '#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c',
+                '#e67e22', '#e91e63', '#00bcd4', '#8bc34a', '#ff5722', '#607d8b',
+                '#795548', '#ffeb3b', '#4caf50', '#03a9f4'
+            ];
+
+            // ─── Message pool ───
+            const MESSAGES = [
+                'Just cashed out at 3.2x 🔥', 'Going big this round 💰', 'Who else lost at 1.01x 😭',
+                'Nice win!', 'Let\'s goooo 🚀', 'That was close omg', 'I\'m on a streak today',
+                'Bet small win big 🎯', 'Anyone else scared to bet? 😂', '1.5x is safe enough for me',
+                'FLEW AWAY TOO FAST', 'Cash out early guys trust me', '5x coming soon I feel it',
+                'Lost 3 in a row smh', 'This game is addicting fr', 'Waiting for the right moment...',
+                'Who got the 10x?? 🤯', 'Small bets small wins 👌', 'My strategy is working today',
+                'Auto cashout at 2x is the way', 'RIP my balance 💀', 'Patience pays off 🙏',
+                'Just doubled up! 🎉', 'Don\'t get greedy guys', 'That 1.00x was brutal',
+                'How do you guys predict?', 'Going all in wish me luck 🍀', 'Legend says someone hit 100x',
+                'Cash out gang 💪', 'This round feels good', 'Trust the process',
+                'My heart is racing 😅', 'Slow and steady wins', '200 KES to 2000 today 📈',
+                'Who\'s playing safe?', 'That multiplier was insane!', 'I need to stop but I can\'t 😂',
+                'GG everyone', 'New here, any tips?', '3x minimum or bust',
+                'Late night grind 🌙', 'Morning bets hit different ☀️', 'Another day another cashout',
+                'Lucky number 7', 'The plane hates me today ✈️', 'Best game ever honestly',
+                'I\'m done for today... maybe', 'One more round then I stop 😤', 'Congrats to whoever cashed big'
+            ];
+
+            // ─── System messages ───
+            const SYSTEM_MSGS = [
+                '🏆 d***d won 12,450 KES at 5.2x!',
+                '🏆 k***a won 8,200 KES at 3.8x!',
+                '🎉 m***o hit a 7.5x multiplier!',
+                '🔥 Hot streak! 3 rounds above 3x',
+                '🏆 l***e won 15,000 KES at 6.1x!',
+                '🎉 j***n cashed out 22,000 KES!',
+                '🏆 s***a won 5,600 KES at 2.8x!'
+            ];
+
+            // ─── State ───
+            let chatOpen = false;
+            let chatInterval = null;
+            let onlineInterval = null;
+            let msgCount = 0;
+
+            // ─── DOM refs ───
+            const toggleBtn = document.getElementById('players-chat-toggle');
+            const panel = document.getElementById('players-chat-panel');
+            const closeBtn = document.getElementById('players-chat-close');
+            const msgsContainer = document.getElementById('players-chat-messages');
+            const chatInput = document.getElementById('players-chat-input');
+            const sendBtn = document.getElementById('players-chat-send');
+            const onlineCount = document.getElementById('chat-online-count');
+
+            if (!toggleBtn || !panel) return;
+
+            // ─── Helpers ───
+            function rand(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+            function pick(arr) { return arr[rand(0, arr.length - 1)]; }
+            function pickColor() { return pick(COLORS); }
+
+            function formatTime(date) {
+                const h = date.getHours().toString().padStart(2, '0');
+                const m = date.getMinutes().toString().padStart(2, '0');
+                return h + ':' + m;
+            }
+
+            function getUserInitials() {
+                try {
+                    const stored = localStorage.getItem('user') || sessionStorage.getItem('user');
+                    if (stored) {
+                        const user = JSON.parse(stored);
+                        const uname = user.username || user.name || '';
+                        if (uname.length >= 2) {
+                            return uname[0].toLowerCase() + '***' + uname[uname.length - 1].toLowerCase();
+                        }
+                    }
+                } catch (e) { }
+                return 'y***u';
+            }
+
+            // ─── Create message element ───
+            function createMsgEl(name, text, time, color, isSystem, isSelf) {
+                const div = document.createElement('div');
+                div.className = 'pchat-msg' + (isSystem ? ' system-msg' : '');
+
+                const timeSpan = document.createElement('span');
+                timeSpan.className = 'pchat-time';
+                timeSpan.textContent = time;
+
+                const avatar = document.createElement('span');
+                avatar.className = 'pchat-avatar';
+                avatar.style.background = color;
+
+                const nameSpan = document.createElement('span');
+                nameSpan.className = 'pchat-name' + (isSelf ? ' self' : '');
+                nameSpan.textContent = name + ':';
+
+                const textSpan = document.createElement('span');
+                textSpan.className = 'pchat-text';
+                textSpan.textContent = text;
+
+                div.appendChild(timeSpan);
+                if (!isSystem) div.appendChild(avatar);
+                div.appendChild(nameSpan);
+                div.appendChild(textSpan);
+                return div;
+            }
+
+            function addMessage(name, text, color, isSystem, isSelf) {
+                const now = new Date();
+                const el = createMsgEl(name, text, formatTime(now), color || pickColor(), isSystem || false, isSelf || false);
+                msgsContainer.appendChild(el);
+                msgCount++;
+
+                // Trim old messages
+                while (msgsContainer.children.length > MAX_MSGS) {
+                    msgsContainer.removeChild(msgsContainer.firstChild);
+                }
+
+                // Auto-scroll
+                msgsContainer.scrollTop = msgsContainer.scrollHeight;
+            }
+
+            function addRandomMessage() {
+                // 15% chance of system message
+                if (Math.random() < 0.15) {
+                    addMessage('🏆', pick(SYSTEM_MSGS), '#f0c040', true, false);
+                } else {
+                    addMessage(pick(USERNAMES), pick(MESSAGES), pickColor(), false, false);
+                }
+            }
+
+            // ─── Seed initial messages ───
+            function seedMessages() {
+                const now = new Date();
+                for (let i = 0; i < INITIAL_MSGS; i++) {
+                    const pastTime = new Date(now.getTime() - (INITIAL_MSGS - i) * rand(15000, 45000));
+                    const isSystem = Math.random() < 0.1;
+                    const name = isSystem ? '🏆' : pick(USERNAMES);
+                    const text = isSystem ? pick(SYSTEM_MSGS) : pick(MESSAGES);
+                    const el = createMsgEl(name, text, formatTime(pastTime), pickColor(), isSystem, false);
+                    msgsContainer.appendChild(el);
+                }
+                msgsContainer.scrollTop = msgsContainer.scrollHeight;
+            }
+
+            // ─── Auto message loop ───
+            function startAutoMessages() {
+                if (chatInterval) return;
+                function scheduleNext() {
+                    chatInterval = setTimeout(() => {
+                        addRandomMessage();
+                        scheduleNext();
+                    }, rand(MSG_INTERVAL_MIN, MSG_INTERVAL_MAX));
+                }
+                scheduleNext();
+            }
+
+            function stopAutoMessages() {
+                if (chatInterval) {
+                    clearTimeout(chatInterval);
+                    chatInterval = null;
+                }
+            }
+
+            // ─── Online count ───
+            function updateOnlineCount() {
+                const current = parseInt(onlineCount.textContent) || 342;
+                const delta = rand(-12, 15);
+                const newCount = Math.max(280, Math.min(500, current + delta));
+                onlineCount.textContent = newCount;
+            }
+
+            function startOnlineCounter() {
+                onlineInterval = setInterval(updateOnlineCount, ONLINE_UPDATE_INTERVAL);
+            }
+
+            // ─── Toggle ───
+            function openChat() {
+                chatOpen = true;
+                panel.classList.add('open');
+                toggleBtn.classList.add('active');
+                if (msgsContainer.children.length === 0) {
+                    seedMessages();
+                }
+                startAutoMessages();
+                msgsContainer.scrollTop = msgsContainer.scrollHeight;
+            }
+
+            function closeChat() {
+                chatOpen = false;
+                panel.classList.remove('open');
+                toggleBtn.classList.remove('active');
+                stopAutoMessages();
+            }
+
+            toggleBtn.addEventListener('click', () => {
+                chatOpen ? closeChat() : openChat();
+            });
+            closeBtn.addEventListener('click', closeChat);
+
+            // ─── User send ───
+            function sendUserMessage() {
+                const text = chatInput.value.trim();
+                if (!text) return;
+                chatInput.value = '';
+                const initials = getUserInitials();
+                addMessage(initials, text, '#30fcbe', false, true);
+            }
+
+            sendBtn.addEventListener('click', sendUserMessage);
+            chatInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    sendUserMessage();
+                }
+            });
+
+            // ─── Start online counter always ───
+            startOnlineCounter();
+            updateOnlineCount();
+
+        })();
     </script>
 </body>
 
