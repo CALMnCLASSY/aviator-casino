@@ -8,7 +8,7 @@ const { sendTelegramNotification } = require('../utils/telegram');
 const { sendSlackMessage } = require('../utils/slack');
 const { recordAffiliateDeposit } = require('../utils/affiliate');
 const paystackService = require('../utils/paystackService');
-const { validateDepositAmount, formatCurrency } = require('../utils/currencyConfig');
+const { validateDepositAmount, formatCurrency, convertToPaystackCurrency } = require('../utils/currencyConfig');
 
 const router = express.Router();
 
@@ -523,7 +523,16 @@ router.post('/deposit-initialize',
         return res.status(400).json({ error: validation.error });
       }
 
-      // Create pending transaction
+      // Convert currency if needed (only KES and USD are supported by Paystack account)
+      const conversion = convertToPaystackCurrency(amount, user.currency);
+      if (conversion.error) {
+        return res.status(400).json({ error: conversion.error });
+      }
+
+      const paystackAmount = conversion.paystackAmount;
+      const paystackCurrency = conversion.paystackCurrency;
+
+      // Create pending transaction (store in user's original currency)
       const transaction = new Transaction({
         user: user._id,
         type: 'deposit',
@@ -533,22 +542,32 @@ router.post('/deposit-initialize',
         balanceAfter: user.balance, // Will be updated when confirmed
         status: 'pending',
         description: `Paystack deposit of ${formatCurrency(amount, user.currency)}`,
-        paymentProvider: 'paystack'
+        paymentProvider: 'paystack',
+        metadata: {
+          paystackCurrency: paystackCurrency,
+          paystackAmount: paystackAmount,
+          converted: conversion.converted,
+          exchangeRate: conversion.exchangeRate || null,
+          originalCurrency: user.currency,
+          originalAmount: parseFloat(amount)
+        }
       });
 
       await transaction.save();
 
-      // Initialize Paystack transaction
+      // Initialize Paystack transaction with the converted currency/amount
       const paystackResult = await paystackService.initializeTransaction({
         email: user.email || `${user.username}@classybet.com`,
-        amount: amount,
-        currency: user.currency,
+        amount: paystackAmount,
+        currency: paystackCurrency,
         reference: transaction.reference,
         channels: ['card', 'bank', 'ussd', 'qr', 'mobile_money', 'bank_transfer', 'eft'], // All available payment methods
         metadata: {
           userId: user._id.toString(),
           username: user.username,
           transactionId: transaction._id.toString(),
+          originalCurrency: user.currency,
+          originalAmount: parseFloat(amount),
           callback_url: `${process.env.FRONTEND_URL}/deposit-success.html`
         }
       });
@@ -568,13 +587,28 @@ router.post('/deposit-initialize',
       await transaction.save();
 
       // Send notification
+      const currencyNote = conversion.converted
+        ? ` (converted to ${formatCurrency(paystackAmount, 'USD')})`
+        : '';
       await sendTelegramNotification(
         `💳 Paystack Deposit Initiated!\\n\\n` +
         `User: ${user.username}\\n` +
-        `Amount: ${formatCurrency(amount, user.currency)}\\n` +
+        `Amount: ${formatCurrency(amount, user.currency)}${currencyNote}\\n` +
         `Currency: ${user.currency}\\n` +
         `Reference: ${transaction.reference}\\n` +
         `Time: ${new Date().toLocaleString()}`
+      );
+
+      // Send Slack notification for deposit request
+      await sendSlackMessage(
+        process.env.SLACK_WEBHOOK_DEPOSIT_REQUEST,
+        `:moneybag: *Paystack Deposit Request*\n` +
+        `User: ${user.username}\n` +
+        `Amount: ${formatCurrency(amount, user.currency)}${currencyNote}\n` +
+        `Currency: ${user.currency}\n` +
+        `Reference: ${transaction.reference}\n` +
+        `Time: ${new Date().toLocaleString('en-KE', { timeZone: 'Africa/Nairobi' })}\n\n` +
+        `💳 Payment method: Paystack`
       );
 
       res.json({
@@ -585,8 +619,11 @@ router.post('/deposit-initialize',
           access_code: paystackResult.data.access_code,
           reference: paystackResult.data.reference,
           transactionId: transaction.reference,
-          amount: amount, // Add amount for frontend
-          currency: user.currency // Add currency for frontend
+          amount: paystackAmount, // Amount sent to Paystack
+          currency: paystackCurrency, // Currency sent to Paystack
+          originalAmount: parseFloat(amount), // User's original amount
+          originalCurrency: user.currency, // User's original currency
+          converted: conversion.converted
         }
       });
 
@@ -693,6 +730,18 @@ router.post('/deposit-verify',
         `Time: ${new Date().toLocaleString()}`
       );
 
+      // Send Slack notification for confirmed deposit
+      await sendSlackMessage(
+        process.env.SLACK_WEBHOOK_DEPOSIT_REQUEST,
+        `:white_check_mark: *Deposit Confirmed (Verified)*\n` +
+        `User: ${user.username}\n` +
+        `Amount: ${formatCurrency(transaction.amount, user.currency)}\n` +
+        `New Balance: ${formatCurrency(user.balance, user.currency)}\n` +
+        `Reference: ${reference}\n` +
+        `Channel: ${paymentData.channel}\n` +
+        `Time: ${new Date().toLocaleString('en-KE', { timeZone: 'Africa/Nairobi' })}`
+      );
+
       res.json({
         success: true,
         message: 'Deposit confirmed successfully',
@@ -776,6 +825,17 @@ router.post('/paystack-webhook', async (req, res) => {
         `Amount: ${formatCurrency(transaction.amount, transaction.currency)}\\n` +
         `New Balance: ${formatCurrency(user.balance, user.currency)}\\n` +
         `Reference: ${reference}`
+      );
+
+      // Send Slack notification for webhook deposit
+      await sendSlackMessage(
+        process.env.SLACK_WEBHOOK_DEPOSIT_REQUEST,
+        `:tada: *Automatic Deposit Confirmed (Webhook)*\n` +
+        `User: ${user.username}\n` +
+        `Amount: ${formatCurrency(transaction.amount, transaction.currency)}\n` +
+        `New Balance: ${formatCurrency(user.balance, user.currency)}\n` +
+        `Reference: ${reference}\n` +
+        `Time: ${new Date().toLocaleString('en-KE', { timeZone: 'Africa/Nairobi' })}`
       );
     }
 

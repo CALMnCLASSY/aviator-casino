@@ -10,8 +10,99 @@ const { sendSlackMessage } = require('../utils/slack');
 const { applyPromoCodeToUser } = require('../utils/affiliate');
 const { getCurrencyForCountryCode } = require('../utils/currencyConfig');
 const rateLimit = require('express-rate-limit');
+const { sendOTPEmail } = require('../utils/emailService');
+const crypto = require('crypto');
 
 const router = express.Router();
+
+// --- OTP Endpoints ---
+
+// Send/Resend OTP
+router.post('/send-otp', async (req, res) => {
+  try {
+    const { userId, email } = req.body;
+    const user = await User.findOne({
+      $or: [
+        { _id: userId },
+        { email: email }
+      ]
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    if (!user.email) {
+      return res.status(400).json({ error: 'User has no email associated' });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    user.otpCode = otp;
+    user.otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
+    await user.save();
+
+    const result = await sendOTPEmail(user.email, otp);
+    if (!result.success) {
+      return res.status(500).json({ error: 'Failed to send OTP email' });
+    }
+
+    res.json({ success: true, message: 'OTP sent successfully' });
+  } catch (error) {
+    console.error('Send OTP error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Verify OTP
+router.post('/verify-otp', async (req, res) => {
+  try {
+    const { userId, otp } = req.body;
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    if (user.isEmailVerified) {
+      return res.json({ success: true, message: 'Email already verified' });
+    }
+
+    if (user.otpCode !== otp) {
+      return res.status(400).json({ error: 'Invalid OTP code' });
+    }
+
+    if (user.otpExpiresAt < new Date()) {
+      return res.status(400).json({ error: 'OTP code has expired' });
+    }
+
+    user.isEmailVerified = true;
+    user.isVerified = true; // Also mark as generally verified
+    user.otpCode = null;
+    user.otpExpiresAt = null;
+    await user.save();
+
+    // Generate token after successful verification
+    const token = jwt.sign(
+      {
+        userId: user._id,
+        userIdString: user.userId,
+        isDemo: user.isDemo || false
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    res.json({
+      success: true,
+      message: 'Email verified successfully',
+      token,
+      user: user.getPublicProfile()
+    });
+  } catch (error) {
+    console.error('Verify OTP error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
 
 // Rate limiting for auth endpoints
 const authLimiter = rateLimit({
@@ -149,9 +240,21 @@ router.post('/register',
         `Time: ${new Date().toLocaleString('en-KE', { timeZone: 'Africa/Nairobi' })}`
       );
 
+      // Generate and send OTP
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      user.otpCode = otp;
+      user.otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+      await user.save();
+
+      if (user.email) {
+        await sendOTPEmail(user.email, otp);
+      }
+
       res.status(201).json({
-        message: 'Registration successful',
-        token,
+        message: 'Registration successful. Please verify your email.',
+        requiresVerification: true,
+        userId: user._id,
+        email: user.email,
         user: user.getPublicProfile()
       });
 
@@ -289,6 +392,25 @@ router.post('/login',
         `Time: ${new Date().toLocaleString('en-KE', { timeZone: 'Africa/Nairobi' })}`
       );
 
+      // Check if email is verified
+      if (!user.isEmailVerified && user.email) {
+        // Generate and send new OTP if existing one expired or doesn't exist
+        if (!user.otpCode || user.otpExpiresAt < new Date()) {
+          const otp = Math.floor(100000 + Math.random() * 900000).toString();
+          user.otpCode = otp;
+          user.otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
+          await user.save();
+          await sendOTPEmail(user.email, otp);
+        }
+
+        return res.status(200).json({
+          message: 'Email verification required',
+          requiresVerification: true,
+          userId: user._id,
+          email: user.email
+        });
+      }
+
       res.json({
         message: 'Login successful',
         token,
@@ -368,7 +490,7 @@ router.get('/profile', async (req, res) => {
   }
 });
 
-// Get user transactions
+// Get user transactions (deposits & withdrawals only, with status filtering)
 router.get('/transactions', async (req, res) => {
   try {
     const token = req.header('Authorization')?.replace('Bearer ', '');
@@ -379,15 +501,29 @@ router.get('/transactions', async (req, res) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const { page = 1, limit = 20, type } = req.query;
 
-    const filter = { user: decoded.userId };  // ✅ Changed from userId to user
+    // Build filter: only deposit & withdrawal by default
+    // Deposits: only completed
+    // Withdrawals: pending, completed, cancelled (so user can see status)
+    let filter;
     if (type) {
-      filter.type = type;
+      // If specific type requested, use it with user filter
+      filter = { user: decoded.userId, type };
+    } else {
+      // Default: show completed deposits + all withdrawals
+      filter = {
+        user: decoded.userId,
+        $or: [
+          { type: 'deposit', status: 'completed' },
+          { type: 'withdrawal', status: { $in: ['pending', 'completed', 'cancelled'] } }
+        ]
+      };
     }
 
     const transactions = await Transaction.find(filter)
       .sort({ createdAt: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit)
+      .select('type amount currency status description createdAt balanceBefore balanceAfter metadata processedAt')
       .exec();
 
     const total = await Transaction.countDocuments(filter);

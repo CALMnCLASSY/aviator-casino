@@ -3,8 +3,20 @@
  * Maps country codes to currencies and provides currency-specific settings
  */
 
-// Paystack supported currencies
-const PAYSTACK_CURRENCIES = ['NGN', 'GHS', 'ZAR', 'KES', 'USD', 'GBP', 'EUR'];
+// Paystack currencies actually enabled on the ClassyBet account
+const PAYSTACK_CURRENCIES = ['KES', 'USD'];
+
+// Approximate exchange rates TO USD (update periodically)
+// e.g. 1 ZAR ≈ 0.054 USD
+const USD_EXCHANGE_RATES = {
+    USD: 1,
+    KES: 0.0077,   // 1 KES ≈ $0.0077
+    NGN: 0.00062,  // 1 NGN ≈ $0.00062
+    GHS: 0.077,    // 1 GHS ≈ $0.077
+    ZAR: 0.054,    // 1 ZAR ≈ $0.054
+    GBP: 1.27,     // 1 GBP ≈ $1.27
+    EUR: 1.08      // 1 EUR ≈ $1.08
+};
 
 // Currency symbols
 const CURRENCY_SYMBOLS = {
@@ -310,8 +322,51 @@ function validateWithdrawalAmount(amount, currency) {
     return { valid: true };
 }
 
+/**
+ * Convert an amount to a Paystack-supported currency.
+ * KES stays as KES. Everything else converts to USD.
+ * @param {number} amount - Amount in the user's currency
+ * @param {string} fromCurrency - User's currency code
+ * @returns {object} - { paystackAmount, paystackCurrency, converted, originalAmount, originalCurrency }
+ */
+function convertToPaystackCurrency(amount, fromCurrency) {
+    // KES and USD are natively supported — pass through
+    if (PAYSTACK_CURRENCIES.includes(fromCurrency)) {
+        return {
+            paystackAmount: amount,
+            paystackCurrency: fromCurrency,
+            converted: false,
+            originalAmount: amount,
+            originalCurrency: fromCurrency
+        };
+    }
+
+    // Convert to USD
+    const rate = USD_EXCHANGE_RATES[fromCurrency];
+    if (!rate) {
+        // Unknown currency — reject
+        return {
+            paystackAmount: null,
+            paystackCurrency: null,
+            converted: false,
+            error: `Currency ${fromCurrency} is not supported`
+        };
+    }
+
+    const usdAmount = parseFloat((amount * rate).toFixed(2));
+    return {
+        paystackAmount: usdAmount,
+        paystackCurrency: 'USD',
+        converted: true,
+        originalAmount: amount,
+        originalCurrency: fromCurrency,
+        exchangeRate: rate
+    };
+}
+
 module.exports = {
     PAYSTACK_CURRENCIES,
+    USD_EXCHANGE_RATES,
     CURRENCY_SYMBOLS,
     CURRENCY_NAMES,
     COUNTRY_CURRENCY_MAP,
@@ -323,5 +378,6 @@ module.exports = {
     getDepositLimits,
     getWithdrawalLimits,
     validateDepositAmount,
-    validateWithdrawalAmount
+    validateWithdrawalAmount,
+    convertToPaystackCurrency
 };
