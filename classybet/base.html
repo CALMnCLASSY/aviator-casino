@@ -106,22 +106,7 @@
                     </div>
                 </div>
 
-                <!-- Players Chat Panel -->
-                <div id="players-chat-panel" class="players-chat-panel">
-                    <div class="players-chat-header">
-                        <span class="players-chat-title"><i class="fas fa-comments"></i> Chat</span>
-                        <span class="players-chat-online"><i class="fas fa-circle"></i> <span
-                                id="chat-online-count">342</span></span>
-                        <button id="players-chat-close" class="players-chat-close-btn">&times;</button>
-                    </div>
-                    <div class="players-chat-messages" id="players-chat-messages">
-                        <!-- Simulated messages appear here -->
-                    </div>
-                    <div class="players-chat-input-area">
-                        <input type="text" id="players-chat-input" placeholder="Say something..." maxlength="200" />
-                        <button id="players-chat-send"><i class="fas fa-paper-plane"></i></button>
-                    </div>
-                </div>
+
 
                 <!-- Game Content Area with Left Sidebar and Main Game -->
                 <div id="game-content">
@@ -1094,33 +1079,48 @@
             color: #30fcbe;
         }
 
-        /* Chat Panel */
+        /* Chat Panel — Fixed Right Sidebar */
         .players-chat-panel {
-            display: none;
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 340px;
+            height: 100vh;
+            height: 100dvh;
             background: #101025;
-            border: 1px solid rgba(255, 255, 255, 0.07);
-            border-radius: 0 0 10px 10px;
-            overflow: hidden;
+            border-left: 1px solid rgba(255, 255, 255, 0.07);
+            display: flex;
             flex-direction: column;
-            height: 320px;
-            max-height: 320px;
-            animation: chatSlideDown 0.25s ease;
+            z-index: 9999;
+            transform: translateX(100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: -4px 0 24px rgba(0, 0, 0, 0);
         }
 
         .players-chat-panel.open {
-            display: flex;
+            transform: translateX(0);
+            box-shadow: -4px 0 24px rgba(0, 0, 0, 0.5);
         }
 
-        @keyframes chatSlideDown {
-            from {
-                opacity: 0;
-                max-height: 0;
-            }
+        /* Chat Backdrop */
+        .chat-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 9998;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
 
-            to {
-                opacity: 1;
-                max-height: 320px;
-            }
+        .chat-backdrop.visible {
+            display: block;
+            opacity: 1;
+        }
+
+        /* Prevent body scroll when chat is open on mobile */
+        body.chat-panel-active {
+            overflow: hidden;
         }
 
         /* Chat Header */
@@ -1128,7 +1128,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 8px 12px;
+            padding: 14px 16px;
             background: #1a1a35;
             border-bottom: 1px solid rgba(255, 255, 255, 0.06);
             flex-shrink: 0;
@@ -1136,13 +1136,13 @@
 
         .players-chat-title {
             color: #ccc;
-            font-size: 0.85rem;
+            font-size: 0.95rem;
             font-weight: 600;
         }
 
         .players-chat-title i {
             color: #30fcbe;
-            margin-right: 5px;
+            margin-right: 6px;
         }
 
         .players-chat-online {
@@ -1171,24 +1171,27 @@
         }
 
         .players-chat-close-btn {
-            background: none;
+            background: rgba(255, 255, 255, 0.06);
             border: none;
-            color: #666;
+            color: #888;
             font-size: 1.3rem;
             cursor: pointer;
-            padding: 0 4px;
+            padding: 4px 8px;
+            border-radius: 6px;
             line-height: 1;
+            transition: all 0.2s;
         }
 
         .players-chat-close-btn:hover {
             color: #fb024c;
+            background: rgba(251, 2, 76, 0.1);
         }
 
         /* Chat Messages */
         .players-chat-messages {
             flex: 1;
             overflow-y: auto;
-            padding: 8px 10px;
+            padding: 10px 14px;
             display: flex;
             flex-direction: column;
             gap: 4px;
@@ -1253,7 +1256,7 @@
         /* Chat Input */
         .players-chat-input-area {
             display: flex;
-            padding: 6px 8px;
+            padding: 10px 14px;
             background: #12122a;
             border-top: 1px solid rgba(255, 255, 255, 0.06);
             gap: 6px;
@@ -1266,8 +1269,8 @@
             border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: 6px;
             color: #ddd;
-            padding: 6px 10px;
-            font-size: 0.8rem;
+            padding: 8px 12px;
+            font-size: 0.85rem;
             outline: none;
             transition: border-color 0.2s;
         }
@@ -1285,9 +1288,9 @@
             border: none;
             border-radius: 6px;
             color: #0a0a1a;
-            padding: 6px 10px;
+            padding: 8px 12px;
             cursor: pointer;
-            font-size: 0.8rem;
+            font-size: 0.85rem;
             transition: background 0.2s;
         }
 
@@ -1295,12 +1298,10 @@
             background: #26d9a2;
         }
 
-        /* Mobile responsive */
+        /* Mobile — full screen overlay */
         @media (max-width: 768px) {
             .players-chat-panel {
-                height: 260px;
-                max-height: 260px;
-                border-radius: 0;
+                width: 100vw;
             }
         }
     </style>
@@ -1420,6 +1421,26 @@
             });
         }
     </script>
+
+    <!-- Chat Backdrop Overlay -->
+    <div id="chat-backdrop" class="chat-backdrop"></div>
+
+    <!-- Players Chat Panel (Right Sidebar) -->
+    <div id="players-chat-panel" class="players-chat-panel">
+        <div class="players-chat-header">
+            <span class="players-chat-title"><i class="fas fa-comments"></i> Chat</span>
+            <span class="players-chat-online"><i class="fas fa-circle"></i> <span
+                    id="chat-online-count">342</span></span>
+            <button id="players-chat-close" class="players-chat-close-btn">&times;</button>
+        </div>
+        <div class="players-chat-messages" id="players-chat-messages">
+            <!-- Simulated messages appear here -->
+        </div>
+        <div class="players-chat-input-area">
+            <input type="text" id="players-chat-input" placeholder="Say something..." maxlength="200" />
+            <button id="players-chat-send"><i class="fas fa-paper-plane"></i></button>
+        </div>
+    </div>
 
     <!-- Players Chat Simulation -->
     <script>
@@ -1619,11 +1640,16 @@
                 onlineInterval = setInterval(updateOnlineCount, ONLINE_UPDATE_INTERVAL);
             }
 
+            // ─── Backdrop ref ───
+            const backdrop = document.getElementById('chat-backdrop');
+
             // ─── Toggle ───
             function openChat() {
                 chatOpen = true;
                 panel.classList.add('open');
                 toggleBtn.classList.add('active');
+                if (backdrop) backdrop.classList.add('visible');
+                document.body.classList.add('chat-panel-active');
                 if (msgsContainer.children.length === 0) {
                     seedMessages();
                 }
@@ -1635,6 +1661,8 @@
                 chatOpen = false;
                 panel.classList.remove('open');
                 toggleBtn.classList.remove('active');
+                if (backdrop) backdrop.classList.remove('visible');
+                document.body.classList.remove('chat-panel-active');
                 stopAutoMessages();
             }
 
@@ -1642,6 +1670,7 @@
                 chatOpen ? closeChat() : openChat();
             });
             closeBtn.addEventListener('click', closeChat);
+            if (backdrop) backdrop.addEventListener('click', closeChat);
 
             // ─── User send ───
             function sendUserMessage() {
