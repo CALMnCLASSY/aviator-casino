@@ -397,6 +397,12 @@ router.post('/confirm-withdrawal',
       transaction.mpesaReceiptNumber = mpesaReceiptNumber;
       transaction.processedBy = admin._id;
       transaction.processedAt = new Date();
+      transaction.metadata = {
+        ...(transaction.metadata || {}),
+        approvalReceiptNumber: mpesaReceiptNumber || null,
+        approvedBy: admin._id,
+        approvedAt: new Date()
+      };
       await transaction.save();
 
       const user = await User.findById(transaction.user);
@@ -555,6 +561,21 @@ router.post('/deposit-initialize',
 
       await transaction.save();
 
+      // Notify immediately after saving the pending transaction (even if Paystack init fails)
+      // This ensures you always see the user's requested amount in Slack.
+      const currencyNote = conversion.converted
+        ? ` (converted to ${formatCurrency(paystackAmount, 'USD')})`
+        : '';
+      await sendSlackMessage(
+        process.env.SLACK_WEBHOOK_DEPOSIT_REQUEST,
+        `:moneybag: *Paystack Deposit Initiated (Pending)*\n` +
+        `User: ${user.username}\n` +
+        `Requested: ${formatCurrency(parseFloat(amount), user.currency)}${currencyNote}\n` +
+        `Paystack Charge: ${formatCurrency(paystackAmount, paystackCurrency)}\n` +
+        `Reference: ${transaction.reference}\n` +
+        `Time: ${new Date().toLocaleString('en-KE', { timeZone: 'Africa/Nairobi' })}`
+      );
+
       // Initialize Paystack transaction with the converted currency/amount
       const paystackResult = await paystackService.initializeTransaction({
         email: user.email || `${user.username}@classybet.com`,
@@ -574,7 +595,20 @@ router.post('/deposit-initialize',
 
       if (!paystackResult.success) {
         transaction.status = 'failed';
+        transaction.metadata = {
+          ...transaction.metadata,
+          paystackInitError: paystackResult.error || 'Unknown Paystack init error'
+        };
         await transaction.save();
+        await sendSlackMessage(
+          process.env.SLACK_WEBHOOK_DEPOSIT_REQUEST,
+          `:x: *Paystack Deposit Init Failed*\n` +
+          `User: ${user.username}\n` +
+          `Requested: ${formatCurrency(parseFloat(amount), user.currency)}${currencyNote}\n` +
+          `Reference: ${transaction.reference}\n` +
+          `Error: ${paystackResult.error || 'Unknown error'}\n` +
+          `Time: ${new Date().toLocaleString('en-KE', { timeZone: 'Africa/Nairobi' })}`
+        );
         return res.status(400).json({
           error: 'Failed to initialize payment',
           details: paystackResult.error
@@ -587,9 +621,6 @@ router.post('/deposit-initialize',
       await transaction.save();
 
       // Send notification
-      const currencyNote = conversion.converted
-        ? ` (converted to ${formatCurrency(paystackAmount, 'USD')})`
-        : '';
       await sendTelegramNotification(
         `💳 Paystack Deposit Initiated!\\n\\n` +
         `User: ${user.username}\\n` +
@@ -606,6 +637,7 @@ router.post('/deposit-initialize',
         `User: ${user.username}\n` +
         `Amount: ${formatCurrency(amount, user.currency)}${currencyNote}\n` +
         `Currency: ${user.currency}\n` +
+        `Paystack Charge: ${formatCurrency(paystackAmount, paystackCurrency)}\n` +
         `Reference: ${transaction.reference}\n` +
         `Time: ${new Date().toLocaleString('en-KE', { timeZone: 'Africa/Nairobi' })}\n\n` +
         `💳 Payment method: Paystack`

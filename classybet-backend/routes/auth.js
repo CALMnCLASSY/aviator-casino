@@ -491,7 +491,7 @@ router.get('/transactions', async (req, res) => {
       .sort({ createdAt: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit)
-      .select('type amount currency status description createdAt balanceBefore balanceAfter metadata processedAt')
+      .select('type amount currency status description createdAt balanceBefore balanceAfter metadata processedAt mpesaReceiptNumber mpesaPhoneNumber paymentProvider reference')
       .exec();
 
     const total = await Transaction.countDocuments(filter);
