@@ -1078,6 +1078,9 @@
                                     Min: <span id="min-deposit">KSh 350.00</span> | Max: <span id="max-deposit">KSh
                                         150,000.00</span>
                                 </small>
+                                <small style="color: #999; font-size: 0.8rem; margin-top: 0.25rem; display: block;" id="deposit-note">
+                                    <i class="fas fa-info-circle"></i> Minimum deposit may vary based on your selected currency and payment method.
+                                </small>
                             </div>
 
                             <button type="submit" class="btn btn-primary" style="width: 100%;">
@@ -1545,7 +1548,7 @@
             }
         }
 
-        // Update currency limits on page load
+        // Update currency limits on page load and when user data changes
         function updateDepositCurrencyLimits() {
             const userData = JSON.parse(localStorage.getItem('userData'));
             if (userData && userData.currency) {
@@ -1556,6 +1559,7 @@
                     const minDepositEl = document.getElementById('min-deposit');
                     const maxDepositEl = document.getElementById('max-deposit');
                     const depositAmountEl = document.getElementById('deposit-amount');
+                    const depositNoteEl = document.getElementById('deposit-note');
 
                     if (currencyCodeEl) currencyCodeEl.textContent = userData.currency;
                     if (minDepositEl) minDepositEl.textContent = limits.min;
@@ -1563,7 +1567,33 @@
                     if (depositAmountEl) {
                         depositAmountEl.min = limits.minValue;
                         depositAmountEl.max = limits.maxValue;
+                        depositAmountEl.placeholder = `Min: ${limits.minValue}`;
                     }
+                    if (depositNoteEl) {
+                        depositNoteEl.innerHTML = `<i class="fas fa-info-circle"></i> Minimum deposit for ${userData.currency} is ${limits.min}. Limits may vary based on payment method.`;
+                    }
+                    
+                    console.log(`Updated deposit limits for ${userData.currency}: Min ${limits.min}, Max ${limits.max}`);
+                } else {
+                    // Fallback if formatDepositLimits is not available
+                    console.warn('formatDepositLimits function not available, using default KES values');
+                    const currencyCodeEl = document.getElementById('currency-code');
+                    if (currencyCodeEl) currencyCodeEl.textContent = 'KES';
+                }
+            } else {
+                // Default to KES if no user currency is set
+                const currencyCodeEl = document.getElementById('currency-code');
+                const minDepositEl = document.getElementById('min-deposit');
+                const maxDepositEl = document.getElementById('max-deposit');
+                const depositAmountEl = document.getElementById('deposit-amount');
+                
+                if (currencyCodeEl) currencyCodeEl.textContent = 'KES';
+                if (minDepositEl) minDepositEl.textContent = 'KSh 350.00';
+                if (maxDepositEl) maxDepositEl.textContent = 'KSh 150,000.00';
+                if (depositAmountEl) {
+                    depositAmountEl.min = 350;
+                    depositAmountEl.max = 150000;
+                    depositAmountEl.placeholder = 'Min: 350';
                 }
             }
         }
@@ -1698,6 +1728,9 @@
 
         function updateProfileUI() {
             if (!currentUser) return;
+
+            // Update deposit currency limits when user data changes
+            updateDepositCurrencyLimits();
 
             // Header
             // Use formatCurrency if available
@@ -2040,6 +2073,8 @@
                 if (profileDepositInstructions) {
                     profileDepositInstructions.style.display = 'none';
                 }
+                // Update deposit limits when showing deposit section
+                updateDepositCurrencyLimits();
             }
 
             // Hide the main menu
