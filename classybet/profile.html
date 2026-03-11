@@ -1853,6 +1853,15 @@
                     ? `<div style="font-size:0.75rem;color:#fb024c;margin-top:4px;">Reason: ${tx.metadata.cancelReason}</div>`
                     : '';
 
+                const receiptLine = (tx.type === 'withdrawal' && tx.status === 'completed')
+                    ? (() => {
+                        const receipt = tx.mpesaReceiptNumber || tx.metadata?.approvalReceiptNumber;
+                        return receipt
+                            ? `<div style="font-size:0.75rem;color:#30fcbe;margin-top:4px;">Receipt: ${receipt}</div>`
+                            : '';
+                    })()
+                    : '';
+
                 return `
                 <div class="transaction-item">
                     <div>
@@ -1862,6 +1871,7 @@
                         </div>
                         <div style="margin-top: 4px;">${getStatusBadge(tx.status)}</div>
                         ${cancelReason}
+                        ${receiptLine}
                     </div>
                     <div style="text-align: right;">
                         <div class="transaction-type type-${tx.type}">
