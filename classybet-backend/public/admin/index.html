@@ -260,6 +260,85 @@
                 box-shadow: 0 0 0 0 rgba(48, 252, 190, 0);
             }
         }
+
+        /* USER DETAIL MODAL */
+        .modal-content {
+            background: #1a2332;
+            width: 800px;
+            max-width: 95vw;
+            max-height: 90vh;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+
+        .modal-body {
+            padding: 20px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .user-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .info-group {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        .info-label {
+            color: var(--text-secondary);
+        }
+
+        .info-value {
+            font-weight: 600;
+        }
+        
+        .badge.deactivated {
+            background: rgba(251, 2, 76, 0.15);
+            color: var(--accent-red);
+        }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 15px;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            color: var(--text-secondary);
+        }
+        
+        .tab.active {
+            color: var(--accent-green);
+            border-bottom-color: var(--accent-green);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
     </style>
 </head>
 
@@ -413,6 +492,97 @@
         </div>
     </div>
 
+    <!-- User Detail Modal -->
+    <div id="user-detail-modal"
+        style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center;">
+        <div class="modal-content">
+            <div class="header" style="background: transparent; padding: 15px 20px; border-bottom: 1px solid var(--border-color);">
+                <h3 id="ud-title">User Details</h3>
+                <div style="display: flex; gap: 10px;">
+                    <button id="ud-toggle-status-btn" class="btn btn-sm" onclick="toggleUserStatus()"></button>
+                    <button onclick="closeUserDetailModal()" class="btn btn-sm btn-danger">X</button>
+                </div>
+            </div>
+            
+            <div class="tabs">
+                <div class="tab active" onclick="switchUserTab('overview')">Overview</div>
+                <div class="tab" onclick="switchUserTab('transactions')">Transactions</div>
+                <div class="tab" onclick="switchUserTab('referrals')">Referrals</div>
+            </div>
+
+            <div class="modal-body" id="ud-body">
+                <div id="tab-overview" class="tab-content active">
+                    <div class="user-grid">
+                        <div class="info-group">
+                            <h4 style="margin-bottom: 10px; color: var(--accent-green);"><i class="fas fa-user"></i> Profile Info</h4>
+                            <div class="info-row"><span class="info-label">ID:</span> <span class="info-value" id="ud-id">--</span></div>
+                            <div class="info-row"><span class="info-label">Username:</span> <span class="info-value" id="ud-username">--</span></div>
+                            <div class="info-row"><span class="info-label">Email:</span> <span class="info-value" id="ud-email">--</span></div>
+                            <div class="info-row"><span class="info-label">Phone:</span> <span class="info-value" id="ud-phone">--</span></div>
+                            <div class="info-row"><span class="info-label">Country:</span> <span class="info-value" id="ud-country">--</span></div>
+                            <div class="info-row"><span class="info-label">Joined:</span> <span class="info-value" id="ud-joined">--</span></div>
+                        </div>
+                        
+                        <div class="info-group">
+                            <h4 style="margin-bottom: 10px; color: var(--accent-green);"><i class="fas fa-wallet"></i> Account & Stats</h4>
+                            <div class="info-row"><span class="info-label">Balance:</span> <span class="info-value text-green" id="ud-balance">--</span></div>
+                            <div class="info-row"><span class="info-label">Currency:</span> <span class="info-value" id="ud-currency">--</span></div>
+                            <div class="info-row"><span class="info-label">Total Bets:</span> <span class="info-value" id="ud-total-bets">--</span></div>
+                            <div class="info-row"><span class="info-label">Total Wins:</span> <span class="info-value" id="ud-total-wins">--</span></div>
+                            <div class="info-row"><span class="info-label">Total Losses:</span> <span class="info-value text-red" id="ud-total-losses">--</span></div>
+                            <div class="info-row"><span class="info-label">Biggest Win:</span> <span class="info-value text-green" id="ud-biggest-win">--</span></div>
+                            <div class="info-row"><span class="info-label">Last Login:</span> <span class="info-value" id="ud-last-login">--</span></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="tab-transactions" class="tab-content">
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Type</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ud-transactions-list">
+                                <!-- Populated via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div id="tab-referrals" class="tab-content">
+                    <div class="info-group" style="margin-bottom: 15px;">
+                        <h4 style="margin-bottom: 10px;"><i class="fas fa-network-wired"></i> Affiliate Summary</h4>
+                        <div class="info-row"><span class="info-label">Is Affiliate:</span> <span class="info-value" id="ud-is-affiliate">--</span></div>
+                        <div class="info-row"><span class="info-label">Promo Code:</span> <span class="info-value" id="ud-promo-code">--</span></div>
+                        <div class="info-row"><span class="info-label">Affiliate Balance:</span> <span class="info-value text-green" id="ud-affiliate-balance">--</span></div>
+                        <div class="info-row"><span class="info-label">Pending Payout:</span> <span class="info-value" id="ud-pending-payout">--</span></div>
+                    </div>
+                    
+                    <h4>Referred Users</h4>
+                    <div class="table-responsive" style="margin-top: 10px;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Joined</th>
+                                    <th>Balance</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ud-referrals-list">
+                                <!-- Populated via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         const API_ROOT = window.location.hostname === 'localhost' ? 'http://localhost:3001/api' : '/api';
         const API_ADMIN = `${API_ROOT}/admin`;
@@ -518,26 +688,32 @@
 
             users.forEach(user => {
                 const isOnline = (new Date() - new Date(user.lastActivityAt)) < 5 * 60 * 1000; // Active within 5 mins
-                const statusBadge = isOnline
-                    ? `<span class="badge online">Online</span>`
-                    : `<span class="badge offline">Offline</span>`;
+                
+                let statusBadge = '';
+                if (!user.isActive) {
+                    statusBadge = `<span class="badge deactivated">Deactivated</span>`;
+                } else if (isOnline) {
+                    statusBadge = `<span class="badge online">Online</span>`;
+                } else {
+                    statusBadge = `<span class="badge offline">Offline</span>`;
+                }
 
                 const gameBadge = user.lastGamePlayed
                     ? `<span class="badge game">${getGameIcon(user.lastGamePlayed)} ${user.lastGamePlayed}</span>`
                     : `<span style="color:#666;">-</span>`;
 
                 const row = `
-                    <tr>
+                    <tr ${!user.isActive ? 'style="opacity: 0.6;"' : ''}>
                         <td>
                             <div style="font-weight:bold;">${user.username}</div>
-                            <div style="font-size:0.8rem; color:#888;">${user.phone}</div>
+                            <div style="font-size:0.8rem; color:#888;">${user.phone || 'N/A'}</div>
                         </td>
                         <td>${statusBadge}</td>
                         <td>${gameBadge}</td>
                         <td style="font-size:0.85rem; color:#888;">${new Date(user.lastActivityAt || user.updatedAt).toLocaleTimeString()}</td>
                         <td class="text-green" style="font-weight:bold;">KES ${user.balance.toFixed(2)}</td>
                         <td>
-                            <button class="btn btn-sm btn-primary" onclick="manageUser('${user._id}')">Manage</button>
+                            <button class="btn btn-sm btn-primary" onclick="openUserDetail('${user._id}')">Manage</button>
                         </td>
                     </tr>
                 `;
@@ -705,16 +881,21 @@
                     data.users.forEach(user => {
                         // Reuse the same row generation logic as loadAllUsers
                         const isOnline = (new Date() - new Date(user.lastActivityAt)) < 5 * 60 * 1000;
-                        const statusBadge = isOnline
-                            ? `<span class="badge online">Online</span>`
-                            : `<span class="badge offline">Offline</span>`;
+                        let statusBadge = '';
+                        if (!user.isActive) {
+                            statusBadge = `<span class="badge deactivated">Deactivated</span>`;
+                        } else if (isOnline) {
+                            statusBadge = `<span class="badge online">Online</span>`;
+                        } else {
+                            statusBadge = `<span class="badge offline">Offline</span>`;
+                        }
 
                         const gameBadge = user.lastGamePlayed
                             ? `<span class="badge game">${getGameIcon(user.lastGamePlayed)} ${user.lastGamePlayed}</span>`
                             : `<span style="color:#666;">-</span>`;
 
                         const row = `
-                            <tr>
+                            <tr ${!user.isActive ? 'style="opacity: 0.6;"' : ''}>
                                 <td>
                                     <div style="font-weight:bold;">${user.username}</div>
                                     <div style="font-size:0.8rem; color:#888;">${user.phone || 'N/A'}</div>
@@ -724,7 +905,7 @@
                                 <td style="font-size:0.85rem; color:#888;">${new Date(user.lastActivityAt || user.updatedAt).toLocaleTimeString()}</td>
                                 <td class="text-green" style="font-weight:bold;">KES ${user.balance.toFixed(2)}</td>
                                 <td>
-                                    <button class="btn btn-sm btn-primary" onclick="manageUser('${user._id}')">Manage</button>
+                                    <button class="btn btn-sm btn-primary" onclick="openUserDetail('${user._id}')">Manage</button>
                                 </td>
                             </tr>
                         `;
@@ -742,9 +923,193 @@
             }
         }
 
+        // Keep manageUser for backwards compatibility or explicitly rename
         function manageUser(id) {
             document.getElementById('bal-user-id').value = id;
             document.getElementById('balance-modal').style.display = 'flex';
+        }
+
+        // Global variable to store current managing user
+        let currentUserId = null;
+
+        function closeUserDetailModal() {
+            document.getElementById('user-detail-modal').style.display = 'none';
+            currentUserId = null;
+        }
+
+        function switchUserTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+        }
+
+        async function openUserDetail(userId) {
+            currentUserId = userId;
+            document.getElementById('user-detail-modal').style.display = 'flex';
+            
+            // Show loading state
+            document.getElementById('ud-title').textContent = 'Loading...';
+            document.getElementById('ud-transactions-list').innerHTML = '<tr><td colspan="4" style="text-align:center;">Loading...</td></tr>';
+            document.getElementById('ud-referrals-list').innerHTML = '<tr><td colspan="3" style="text-align:center;">Loading...</td></tr>';
+            
+            // Fetch User Details
+            try {
+                const res = await fetch(`${API_ADMIN}/users/${userId}`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                
+                if (!res.ok) throw new Error('Failed to fetch user');
+                
+                const data = await res.json();
+                populateUserDetail(data.user, data.referrals);
+                
+                // Fetch User Transactions parallel or sequential
+                fetchUserTransactions(userId);
+                
+            } catch (err) {
+                console.error(err);
+                alert('Failed to load user details');
+                closeUserDetailModal();
+            }
+        }
+
+        function populateUserDetail(user, referrals) {
+            document.getElementById('ud-title').textContent = `User: ${user.username}`;
+            
+            // Setup Toggle Status Button
+            const toggleBtn = document.getElementById('ud-toggle-status-btn');
+            if (user.isActive) {
+                toggleBtn.textContent = 'Deactivate Account';
+                toggleBtn.className = 'btn btn-sm btn-danger';
+            } else {
+                toggleBtn.textContent = 'Activate Account';
+                toggleBtn.className = 'btn btn-sm btn-primary';
+            }
+            
+            // Profile Info
+            document.getElementById('ud-id').textContent = user.userId || user._id;
+            document.getElementById('ud-username').textContent = user.username;
+            document.getElementById('ud-email').textContent = user.email || 'N/A';
+            document.getElementById('ud-phone').textContent = user.phone || 'N/A';
+            document.getElementById('ud-country').textContent = user.country || 'N/A';
+            document.getElementById('ud-joined').textContent = new Date(user.createdAt).toLocaleDateString();
+            
+            // Account & Stats
+            document.getElementById('ud-balance').textContent = `KES ${user.balance.toFixed(2)}`;
+            document.getElementById('ud-currency').textContent = user.currency || 'KES';
+            document.getElementById('ud-total-bets').textContent = user.totalBets || 0;
+            document.getElementById('ud-total-wins').textContent = user.totalWins || 0;
+            document.getElementById('ud-total-losses').textContent = user.totalLosses || 0;
+            document.getElementById('ud-biggest-win').textContent = `KES ${(user.biggestWin || 0).toFixed(2)}`;
+            document.getElementById('ud-last-login').textContent = user.lastLogin ? new Date(user.lastLogin).toLocaleString() : 'Never';
+            
+            // Affiliate Summary
+            document.getElementById('ud-is-affiliate').textContent = user.isAffiliate ? 'Yes' : 'No';
+            document.getElementById('ud-promo-code').textContent = user.promoCode || 'None';
+            
+            if (user.affiliateStats) {
+                document.getElementById('ud-affiliate-balance').textContent = `KES ${(user.affiliateStats.affiliateBalance || 0).toFixed(2)}`;
+                document.getElementById('ud-pending-payout').textContent = `KES ${(user.affiliateStats.pendingPayout || 0).toFixed(2)}`;
+            } else {
+                document.getElementById('ud-affiliate-balance').textContent = 'KES 0.00';
+                document.getElementById('ud-pending-payout').textContent = 'KES 0.00';
+            }
+            
+            // Referrals List
+            const refList = document.getElementById('ud-referrals-list');
+            refList.innerHTML = '';
+            
+            if (!referrals || referrals.length === 0) {
+                refList.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#ccc;">No referred users</td></tr>';
+            } else {
+                referrals.forEach(ref => {
+                    const u = ref.referredUser;
+                    if (!u) return;
+                    
+                    const tr = `
+                        <tr>
+                            <td>
+                                <div><strong>${u.username}</strong></div>
+                                <div style="font-size:0.8rem;color:#888;">${u.email || ''}</div>
+                            </td>
+                            <td>${new Date(ref.joinedAt || u.createdAt).toLocaleDateString()}</td>
+                            <td class="text-green">KES ${u.balance.toFixed(2)}</td>
+                        </tr>
+                    `;
+                    refList.insertAdjacentHTML('beforeend', tr);
+                });
+            }
+        }
+
+        async function fetchUserTransactions(userId) {
+            try {
+                const res = await fetch(`${API_ADMIN}/users/${userId}/transactions`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                
+                if (!res.ok) throw new Error('Failed to fetch transactions');
+                
+                const data = await res.json();
+                const txList = document.getElementById('ud-transactions-list');
+                txList.innerHTML = '';
+                
+                if (!data.transactions || data.transactions.length === 0) {
+                    txList.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#ccc;">No transactions</td></tr>';
+                    return;
+                }
+                
+                data.transactions.forEach(tx => {
+                    let statusColor = '#ccc';
+                    if (tx.status === 'completed') statusColor = 'var(--accent-green)';
+                    if (tx.status === 'pending') statusColor = 'orange';
+                    if (tx.status === 'cancelled') statusColor = 'var(--accent-red)';
+                    
+                    const amountColor = ['deposit', 'bonus', 'win'].includes(tx.type) ? 'var(--accent-green)' : 'var(--accent-red)';
+                    const sign = ['deposit', 'bonus', 'win'].includes(tx.type) ? '+' : '-';
+                    
+                    const tr = `
+                        <tr>
+                            <td style="font-size:0.85rem;">${new Date(tx.createdAt).toLocaleString()}</td>
+                            <td style="text-transform:uppercase; font-size:0.8rem;">${tx.type}</td>
+                            <td style="color:${amountColor}; font-weight:bold;">${sign}KES ${tx.amount.toFixed(2)}</td>
+                            <td><span class="badge" style="color:${statusColor}; border:1px solid ${statusColor}; background:transparent;">${tx.status}</span></td>
+                        </tr>
+                    `;
+                    txList.insertAdjacentHTML('beforeend', tr);
+                });
+                
+            } catch (err) {
+                console.error(err);
+                document.getElementById('ud-transactions-list').innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--accent-red);">Error loading transactions</td></tr>';
+            }
+        }
+
+        async function toggleUserStatus() {
+            if (!currentUserId) return;
+            
+            if (!confirm('Are you sure you want to toggle this account status?')) return;
+            
+            try {
+                const res = await fetch(`${API_ADMIN}/users/${currentUserId}/toggle-status`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                
+                if (res.ok) {
+                    alert('User status updated successfully');
+                    openUserDetail(currentUserId); // Reload modal
+                    loadAllUsers(); // Reload table
+                    loadStats();
+                } else {
+                    const data = await res.json();
+                    alert('Error: ' + data.error);
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Request failed');
+            }
         }
 
         async function processTx(ref, action) {

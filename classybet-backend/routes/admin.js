@@ -370,6 +370,39 @@ router.get(
   }
 );
 
+// Get single user details
+router.get('/users/:userId', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const user = await User.findById(req.params.userId).select('-password');
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Get referrals
+    const referrals = await Referral.find({ affiliate: user._id })
+      .populate('referredUser', 'username email balance createdAt lastActivityAt')
+      .sort({ joinedAt: -1 });
+
+    res.json({ user, referrals });
+  } catch (error) {
+    console.error('Get user details error:', error);
+    res.status(500).json({ error: 'Failed to fetch user details' });
+  }
+});
+
+// Get user transactions
+router.get('/users/:userId/transactions', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const transactions = await Transaction.find({ user: req.params.userId })
+      .sort({ createdAt: -1 })
+      .limit(50);
+    res.json({ transactions });
+  } catch (error) {
+    console.error('Get user transactions error:', error);
+    res.status(500).json({ error: 'Failed to fetch user transactions' });
+  }
+});
+
 // Toggle user active status
 router.post('/users/:userId/toggle-status', authenticateToken, requireAdmin, async (req, res) => {
   try {
