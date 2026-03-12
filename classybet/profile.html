@@ -1680,8 +1680,7 @@
                     currentUser = await response.json();
                     showProfileSection();
                     updateProfileUI();
-                    // Update affiliate info
-                    updateAffiliateInfo(currentUser);
+                    // Affiliate info is already updated by updateProfileUI()
 
                     // Update currency limits for deposit form
                     updateDepositCurrencyLimits();
