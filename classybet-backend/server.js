@@ -25,9 +25,7 @@ const jwt = require('jsonwebtoken');
 const app = express();
 
 // Trust proxy for rate limiting behind reverse proxies (Render, Heroku, etc.)
-if (process.env.NODE_ENV === 'production') {
   app.set('trust proxy', 1);
-}
 
 // Middleware
 // Capture raw body for Slack signature verification
@@ -51,8 +49,8 @@ const allowedOrigins = [
   'http://127.0.0.1:5500',
   'http://127.0.0.1:8080',
   'https://classybet.netlify.app',
-  'https://aviatorhub.xyz',
-  'https://www.aviatorhub.xyz',
+  'https://classybetaviator.com',
+  'https://www.classybetaviator.com',
   'https://avisignalspredictor.netlify.app',
   'file://' // For local file access
 ];
@@ -354,6 +352,8 @@ const gameStateManager = require('./utils/gameStateManager');
 
 const server = http.createServer(app);
 const io = new Server(server, {
+  pingTimeout: 60000,
+  pingInterval: 25000,
   cors: {
     origin: function (origin, callback) {
       callback(null, true); // Allow all origins for WebSocket
@@ -420,6 +420,9 @@ io.on('connection', (socket) => {
 
       console.log(`💰 Bet placed: ${userId} - ${amount} KES | New balance: ${user.balance} | Round: ${gameState.roundId}`);
 
+      // Increment shared bet counter — triggers broadcast to all clients
+      gameStateManager.incrementActiveBets();
+      
       socket.emit('bet-placed', {
         success: true,
         roundId: gameState.roundId,
@@ -481,6 +484,9 @@ io.on('connection', (socket) => {
       await bet.save();
 
       console.log(`💸 Cashout: ${userId} - ${winAmount} KES at ${currentMultiplier.toFixed(2)}x | New balance: ${user.balance} | Round: ${bet.gameRound}`);
+
+      // Decrement shared bet counter
+      gameStateManager.decrementActiveBets();
 
       socket.emit('cashout-result', {
         success: true,

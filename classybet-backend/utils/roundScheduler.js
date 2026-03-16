@@ -180,6 +180,17 @@ async function getRoundsInRange(from, to, limit = 200) {
     .lean();
 }
 
+/**
+ * Fetch the most recently completed rounds.
+ * Returns results sorted by newest first (startTime: -1).
+ */
+async function getRecentRounds(limit = 100) {
+  return RoundSchedule.find({ status: 'complete' })
+    .sort({ startTime: -1 })
+    .limit(Math.min(Math.max(limit, 1), 100))
+    .lean();
+}
+
 function startRoundScheduler() {
   populateRoundSchedule().catch((error) => {
     console.error('Round scheduler initial populate failed:', error.message);
@@ -199,6 +210,7 @@ module.exports = {
   getRoundState,
   getRoundById,
   getRoundsInRange,
+  getRecentRounds,
   startRoundScheduler,
   computeRoundId
 };

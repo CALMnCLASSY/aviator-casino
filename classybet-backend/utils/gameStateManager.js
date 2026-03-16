@@ -12,9 +12,10 @@ class GameStateManager {
     this.currentMultiplier = 1.00;
     this.startTime = null;
     this.crashMultiplier = null;
-    this.countdownSeconds = 5;
+    this.countdownSeconds = 2.5;
     this.io = null; // Socket.io instance
     this.gameLoopInterval = null;
+    this.activeBets = 0; // Live bet count — broadcast to all clients
     // No bet tracking - bets are handled independently via WebSocket
   }
 
@@ -105,11 +106,11 @@ class GameStateManager {
   }
 
   /**
-   * Countdown phase (5 seconds)
+   * Countdown phase (2.5 seconds)
    */
   async startCountdown() {
     this.currentState = 'countdown';
-    this.countdownSeconds = 5;
+    this.countdownSeconds = 2.5;
 
     // ❌ REMOVED: Countdown log - frontend handles display
     this.broadcastState();
@@ -138,6 +139,7 @@ class GameStateManager {
     this.currentState = 'flying';
     this.currentMultiplier = 1.00;
     this.startTime = Date.now();
+    this.activeBets = 0; // Reset bet count for new round
 
     // ❌ REMOVED: Flying log - frontend handles display
     this.broadcastState();
@@ -146,8 +148,8 @@ class GameStateManager {
     const flyingInterval = setInterval(() => {
       const elapsed = (Date.now() - this.startTime) / 1000;
       
-      // Calculate multiplier based on time (exponential growth)
-      this.currentMultiplier = Math.pow(1.0024, elapsed * 100);
+      // Calculate multiplier based on time (more gradual growth: 1.0012 base)
+      this.currentMultiplier = Math.pow(1.0012, elapsed * 100);
 
       // Check if we've reached crash point
       if (this.currentMultiplier >= this.crashMultiplier) {
@@ -166,25 +168,40 @@ class GameStateManager {
     this.currentState = 'crashed';
     this.currentMultiplier = this.crashMultiplier;
 
-    // ❌ REMOVED: Crash log - frontend handles display
+    // Broadcast crash state immediately
     this.broadcastState();
 
-    // Mark round as complete in database
-    if (this.currentRound) {
-      await RoundSchedule.updateOne(
-        { roundId: this.currentRound.roundId },
-        { status: 'complete' }
-      ).catch(err => console.error('Failed to mark round complete:', err));
-    }
-
-    // Process all remaining bets as losses
-    await this.processRoundEnd();
-
-    // Wait 2 seconds, then start next round
+    // Start countdown after 2500ms (2.5 seconds to show "FLEW AWAY")
     setTimeout(async () => {
-      await this.prepareNextRound();
       await this.startCountdown();
-    }, 2000);
+    }, 2500);
+
+    // Process round end in background during countdown
+    this.processRoundEndAsync();
+  }
+
+  /**
+   * Process round end asynchronously (runs during countdown)
+   */
+  async processRoundEndAsync() {
+    try {
+      // Mark round as complete in database
+      if (this.currentRound) {
+        await RoundSchedule.updateOne(
+          { roundId: this.currentRound.roundId },
+          { status: 'complete' }
+        ).catch(err => console.error('Failed to mark round complete:', err));
+      }
+
+      // Process all remaining bets as losses
+      await this.processRoundEnd();
+
+      // Prepare next round (should complete during 5-second countdown)
+      await this.prepareNextRound();
+
+    } catch (error) {
+      console.error('❌ Error processing round end:', error);
+    }
   }
 
   /**
@@ -210,6 +227,9 @@ class GameStateManager {
         }
       );
 
+      // Reset active bets counter for the round
+      this.activeBets = 0;
+
       // ❌ REMOVED: Log - silent processing
     } catch (error) {
       console.error('❌ Error processing round end:', error);
@@ -228,6 +248,10 @@ class GameStateManager {
       multiplier: this.currentMultiplier,
       countdown: this.countdownSeconds,
       crashMultiplier: this.currentState === 'crashed' ? this.crashMultiplier : null,
+      // startTime lets the frontend reproduce multiplier using the exact same formula:
+      // Math.pow(1.0012, elapsed * 100) where elapsed = (Date.now() - startTime) / 1000
+      startTime: this.startTime,
+      activeBets: this.activeBets,
       timestamp: Date.now()
     };
 
@@ -244,8 +268,21 @@ class GameStateManager {
       multiplier: this.currentMultiplier,
       countdown: this.countdownSeconds,
       crashMultiplier: this.currentState === 'crashed' ? this.crashMultiplier : null,
+      startTime: this.startTime,
+      activeBets: this.activeBets,
       timestamp: Date.now()
     };
+  }
+
+  /** Call from server.js when a bet is successfully placed */
+  incrementActiveBets() {
+    this.activeBets++;
+    this.broadcastState();
+  }
+
+  /** Call from server.js when a bet is cashed out or crashes */
+  decrementActiveBets() {
+    this.activeBets = Math.max(0, this.activeBets - 1);
   }
 }
 

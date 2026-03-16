@@ -5,6 +5,7 @@ const {
   getRoundState,
   getRoundById,
   getRoundsInRange,
+  getRecentRounds,
   ROUND_INTERVAL_SECONDS,
   ROUND_DURATION_MS
 } = require('../utils/roundScheduler');
