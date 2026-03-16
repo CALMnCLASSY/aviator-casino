@@ -1,4 +1,4 @@
-require('dotenv').config();
+﻿require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -25,7 +25,7 @@ const jwt = require('jsonwebtoken');
 const app = express();
 
 // Trust proxy for rate limiting behind reverse proxies (Render, Heroku, etc.)
-  app.set('trust proxy', 1);
+app.set('trust proxy', 1);
 
 // Middleware
 // Capture raw body for Slack signature verification
@@ -48,10 +48,10 @@ const allowedOrigins = [
   'http://127.0.0.1:5000',
   'http://127.0.0.1:5500',
   'http://127.0.0.1:8080',
-  'https://classybet.netlify.app',
   'https://classybetaviator.com',
   'https://www.classybetaviator.com',
   'https://avisignalspredictor.netlify.app',
+
   'file://' // For local file access
 ];
 
@@ -422,7 +422,7 @@ io.on('connection', (socket) => {
 
       // Increment shared bet counter — triggers broadcast to all clients
       gameStateManager.incrementActiveBets();
-      
+
       socket.emit('bet-placed', {
         success: true,
         roundId: gameState.roundId,

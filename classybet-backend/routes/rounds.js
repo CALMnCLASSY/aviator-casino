@@ -27,6 +27,20 @@ router.get('/state', async (req, res) => {
   }
 });
 
+router.get('/history', async (req, res) => {
+  try {
+    const limit = req.query.limit ? parseInt(req.query.limit, 10) : 100;
+    const rounds = await getRecentRounds(limit);
+    res.json({
+      serverTime: new Date().toISOString(),
+      rounds
+    });
+  } catch (error) {
+    console.error('Round history fetch error:', error);
+    res.status(500).json({ error: 'Failed to fetch round history' });
+  }
+});
+
 router.get('/by-id/:roundId', async (req, res) => {
   try {
     const round = await getRoundById(req.params.roundId);

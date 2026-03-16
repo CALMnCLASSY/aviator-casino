@@ -1,6 +1,6 @@
-services:
+﻿services:
   - type: web
-    name: classybet-backend
+    name: ClassyBet-backend
     env: node
     region: oregon
     plan: free

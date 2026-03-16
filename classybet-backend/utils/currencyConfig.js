@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Currency Configuration Utility
  * Maps country codes to currencies and provides currency-specific settings
  */
@@ -152,7 +152,7 @@ const COUNTRY_CURRENCY_MAP = {
 
 // Minimum deposit amounts per currency (in smallest unit)
 const MIN_DEPOSIT = {
-    KES: 200,
+    KES: 999,
     NGN: 500,
     GHS: 10,
     ZAR: 50,
