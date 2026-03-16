@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ClassyBet Casino Game Logic
  * Handles generic bet placement and results for non-Aviator games.
  */

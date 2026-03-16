@@ -1,4 +1,4 @@
-// Authentication and registration system
+﻿// Authentication and registration system
 class AuthManager {
     constructor() {
         // Backend URL configuration

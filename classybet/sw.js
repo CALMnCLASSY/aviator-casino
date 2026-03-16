@@ -1,4 +1,4 @@
-const CACHE_NAME = 'aviator-cache-v3';
+﻿const CACHE_NAME = 'aviator-cache-v3';
 
 // Only pre-cache truly static/immutable assets (images, icons)
 const urlsToCache = [

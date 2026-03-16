@@ -1,4 +1,4 @@
-// Global API configuration
+﻿// Global API configuration
 const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:3001'
     : 'https://aviator-casino.onrender.com';
@@ -194,7 +194,7 @@ class AviatorGame {
 
     // Currency formatting method
     formatCurrency(amount, currency = null) {
-        const currencyCode = currency || (window.jetbetAPI && window.jetbetAPI.user ? window.jetbetAPI.user.currency : 'KES');
+        const currencyCode = currency || (window.classyBetAPI && window.classyBetAPI.user ? window.classyBetAPI.user.currency : 'KES');
         const symbol = (typeof window.getCurrencySymbol === 'function') ? window.getCurrencySymbol(currencyCode) : 'KES';
         const numAmount = parseFloat(amount) || 0;
         
@@ -364,7 +364,7 @@ class AviatorGame {
                 // Load bet history from localStorage first for immediate display
                 this.loadBetHistory();
                 // Then try to load from server if authenticated
-                if (window.ClassyBetAPI && ClassyBetAPI.isAuthenticated()) {
+                if (window.classyBetAPI && classyBetAPI.isAuthenticated()) {
                     this.loadBetHistoryFromServer();
                 } else {
                     // If not authenticated, display local history
@@ -1198,7 +1198,7 @@ class AviatorGame {
 
     async loadBetHistoryFromServer() {
         try {
-            if (!window.ClassyBetAPI || !ClassyBetAPI.isAuthenticated()) {
+            if (!window.classyBetAPI || !classyBetAPI.isAuthenticated()) {
                 // Show local bet history if not authenticated
                 this.displayLocalBetHistory();
                 return;
@@ -3184,7 +3184,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // Authentication Event Listeners
 function setupAuthEventListeners() {
     // Set up API event listeners
-    classybetAPI.on('onAuthChange', (data) => {
+    classyBetAPI.on('onAuthChange', (data) => {
         if (data.authenticated) {
             showUserView();
             updateUserDisplay(data.user);
@@ -3194,11 +3194,11 @@ function setupAuthEventListeners() {
         }
     });
 
-    classybetAPI.on('onBalanceUpdate', (balance) => {
+    classyBetAPI.on('onBalanceUpdate', (balance) => {
         updateBalanceDisplay(balance);
     });
 
-    classybetAPI.on('onBetUpdate', (data) => {
+    classyBetAPI.on('onBetUpdate', (data) => {
         updateBetDisplay(data);
     });
 }
@@ -3233,7 +3233,7 @@ function showDemoIndicator() {
     document.body.classList.add('demo-mode');
 
     // Update page title to indicate demo mode
-    document.title = 'JetBet Aviator - Demo Mode';
+    document.title = 'ClassyBet Aviator - Demo Mode';
 
     // Replace user navigation with demo navigation
     const userNav = document.getElementById('user-nav');
@@ -3286,7 +3286,7 @@ function hideDemoIndicator() {
     document.body.classList.remove('demo-mode');
 
     // Reset page title
-    document.title = 'Classybet Aviator - Premium Gaming';
+    document.title = 'ClassyBet Aviator - Premium Gaming';
 }
 
 function showUserView(user) {
@@ -3476,8 +3476,8 @@ document.getElementById('deposit-form').addEventListener('submit', async (e) => 
     const instructionsSection = document.querySelector('#deposit-modal .deposit-instructions');
 
     // Validate amount
-    if (isNaN(amount) || amount < 999 || amount > 150000) {
-        showError('deposit-error', 'Amount must be between KES 999 and KES 150,000');
+    if (isNaN(amount) || amount < 100 || amount > 150000) {
+        showError('deposit-error', 'Amount must be between KES 100 and KES 150,000');
         return;
     }
 
@@ -3499,13 +3499,13 @@ document.getElementById('deposit-form').addEventListener('submit', async (e) => 
         instructionsSection.style.display = 'block';
     }
 
-    const result = await jetbetAPI.depositSTK(amount, phoneNumber);
+    const result = await classyBetAPI.depositSTK(amount, phoneNumber);
 
     // Keep local API instance in sync with latest user data after deposit attempt
     const latestUserData = localStorage.getItem('userData');
     if (latestUserData) {
         try {
-            jetbetAPI.user = JSON.parse(latestUserData);
+            classyBetAPI.user = JSON.parse(latestUserData);
         } catch (error) {
             console.error('Failed to parse user data after deposit attempt:', error);
         }
@@ -3572,7 +3572,7 @@ if (depositBtn) {
 const profileBtn = document.getElementById('profile-btn');
 if (profileBtn) {
     profileBtn.addEventListener('click', () => {
-        if (!classybetAPI.isAuthenticated()) {
+        if (!classyBetAPI.isAuthenticated()) {
             window.location.href = '/';
             return;
         }
@@ -3593,7 +3593,7 @@ if (adminBtn) {
         const isLocal = window.location.hostname === 'localhost' ||
             window.location.hostname === '127.0.0.1' ||
             window.location.protocol === 'file:';
-        const adminUrl = isLocal ? 'http://localhost:3001/admin' : 'https://jetbet-m26i.onrender.com/admin';
+        const adminUrl = isLocal ? 'http://localhost:3001/admin' : 'https://aviator-casino.onrender.com/admin';
         console.log('Admin URL:', adminUrl);
         window.open(adminUrl, '_blank');
     });

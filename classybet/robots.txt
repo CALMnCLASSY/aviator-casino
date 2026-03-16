@@ -1,4 +1,4 @@
-# robots.txt for ClassyBet Aviator
+﻿# robots.txt for ClassyBet Aviator
 User-agent: *
 Allow: /
 Disallow: /private/

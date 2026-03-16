@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -8,7 +8,7 @@
     <meta name="description"
         content="ClassyBet Dashboard - Play Aviator, Jetx, Roulette, Blackjack and more casino  games. Instant withdrawals, 24/7 support. Start winning today!">
     <meta name="keywords"
-        content="classybet, classy bet, classybet aviator, aviator game, aviator betting, online casino Kenya, play classybet, crash games Kenya">
+        content="ClassyBet, classy bet, ClassyBet Aviator, aviator game, aviator betting, online casino Kenya, play ClassyBet, crash games Kenya">
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="https://classybetaviator.com/dashboard.html">
 
@@ -17,7 +17,7 @@
     <meta property="og:url" content="https://classybetaviator.com/dashboard.html">
     <meta property="og:title" content="ClassyBet Dashboard | Play Aviator & Casino Games">
     <meta property="og:description"
-        content="Access your ClassyBet dashboard. Play Aviator, manage deposits, track wins. Instant payouts to M-Pesa!">
+        content="Access your ClassyBet Dashboard. Play Aviator, manage deposits, track wins. Instant payouts to M-Pesa!">
     <meta property="og:image" content="https://classybetaviator.com/images/classybetcasino-logo.jpeg">
 
     <!-- Twitter Card -->
@@ -1130,6 +1130,9 @@
             return isLocalhost ? 'http://localhost:3001' : 'https://aviator-casino.onrender.com';
         })();
 
+        // Use global instance
+        const api = window.classyBetAPI;
+
         // Helper function to close modal
         function closeModal(modalId) {
             const modal = document.getElementById(modalId);
@@ -1280,11 +1283,9 @@
                         <div style="margin-bottom: 1.5rem;">
                             <h5 style="color: #fb024c; margin-bottom: 0.5rem;">How long do withdrawals take?</h5>
                             <p style="color: #ccc;">Withdrawals are processed within 24-48 hours. M-Pesa withdrawals are typically instant once approved.</p>
-                        </div>
-                        
                         <div style="margin-bottom: 1.5rem;">
                             <h5 style="color: #fb024c; margin-bottom: 0.5rem;">What is the minimum deposit?</h5>
-                            <p style="color: #ccc;">The minimum deposit is KES 350 for most payment methods.</p>
+                            <p style="color: #ccc;">The minimum deposit is KES 999 for most payment methods.</p>
                         </div>
                         
                         <div style="margin-bottom: 1.5rem;">
@@ -1429,7 +1430,7 @@
                         const balance = user.balance || 0;
                         const balanceText = (typeof formatCurrency === 'function' && user.currency)
                             ? formatCurrency(balance, user.currency)
-                            : `KES ${balance.toFixed(2)}`;
+                            : `KES ${balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
                         document.getElementById('headerBalance').textContent = balanceText;
                     } catch (error) {
                         console.error('Error loading user data:', error);

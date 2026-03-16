@@ -1,4 +1,4 @@
-// ClassyBet API Service
+﻿// ClassyBet API Service
 class ClassyBetAPI {
     constructor() {
         const productionURL = 'https://aviator-casino.onrender.com';
@@ -341,7 +341,7 @@ class ClassyBetAPI {
 
     // Utility methods
     formatBalance(balance) {
-        return `KES ${balance.toFixed(2)}`;
+        return `KES ${balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     }
 
     generateGameRound() {
@@ -349,5 +349,5 @@ class ClassyBetAPI {
     }
 }
 
-// Global API instance
+// Global API instance - use a different name to avoid conflict with class name
 window.classyBetAPI = new ClassyBetAPI();

@@ -1,5 +1,5 @@
-{
-  "name": "classybet-frontend",
+﻿{
+  "name": "ClassyBet-frontend",
   "version": "1.0.0",
   "description": "ClassyBet Aviator Frontend Server",
   "main": "server.js",

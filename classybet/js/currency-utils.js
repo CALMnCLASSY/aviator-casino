@@ -15,7 +15,7 @@ const CURRENCY_SYMBOLS = {
 
 // Deposit limits for each currency (min and max amounts)
 const DEPOSIT_LIMITS = {
-    KES: { min: 350, max: 150000 },
+    KES: { min: 999, max: 150000 },
     NGN: { min: 6500, max: 2800000 },  // ~350 KES equivalent
     GHS: { min: 600, max: 250000 },    // ~350 KES equivalent
     ZAR: { min: 125, max: 52000 },      // ~350 KES equivalent
@@ -60,7 +60,14 @@ function formatCurrency(amount, currency = null) {
     const currencyCode = currency || getUserCurrency();
     const symbol = getCurrencySymbol(currencyCode);
     const numAmount = parseFloat(amount) || 0;
-    return `${symbol} ${numAmount.toFixed(2)}`;
+    
+    // Format with commas as thousand separators
+    const formattedAmount = numAmount.toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+    
+    return `${symbol} ${formattedAmount}`;
 }
 
 /**

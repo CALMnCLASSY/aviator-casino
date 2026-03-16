@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -1067,19 +1067,21 @@
                         </p>
 
                         <div id="deposit-error" class="error" style="display: none;"></div>
-                        <div id="deposit-success" class="success" style="display: none;"></div>
+                        <div id="deposit-success" class="success" style="display: none; color: #30fcbe; padding: 10px; border: 1px solid #30fcbe; border-radius: 8px; margin-bottom: 1rem; text-align: center; background: rgba(48, 252, 190, 0.1);"></div>
 
                         <form id="deposit-form" onsubmit="handlePaystackDeposit(event)">
                             <div class="form-group">
                                 <label for="deposit-amount">Amount (<span id="currency-code">KES</span>)</label>
-                                <input type="number" id="deposit-amount" class="form-control" min="350" max="150000"
+                                <input type="number" id="deposit-amount" class="form-control" min="999" max="150000"
                                     step="1" required>
                                 <small style="color: #ccc;">
                                     Min: <span id="min-deposit">KSh 999.00</span> | Max: <span id="max-deposit">KSh
                                         150,000.00</span>
                                 </small>
-                                <small style="color: #999; font-size: 0.8rem; margin-top: 0.25rem; display: block;" id="deposit-note">
-                                    <i class="fas fa-info-circle"></i> Minimum deposit may vary based on your selected currency and payment method.
+                                <small style="color: #999; font-size: 0.8rem; margin-top: 0.25rem; display: block;"
+                                    id="deposit-note">
+                                    <i class="fas fa-info-circle"></i> Minimum deposit may vary based on your selected
+                                    currency and payment method.
                                 </small>
                             </div>
 
@@ -1123,7 +1125,7 @@
                                 <label for="withdraw-amount">Amount (KES)</label>
                                 <input type="number" id="withdraw-amount" class="form-control" min="1200" step="1"
                                     required>
-                                <small style="color: #ccc;">Minimum withdrawal: KES 5000</small>
+                                <small style="color: #ccc;">Minimum withdrawal: KES 1200</small>
                             </div>
 
                             <div class="form-group">
@@ -1141,7 +1143,7 @@
                             style="margin-top: 2rem; padding: 1rem; background: rgba(255, 165, 0, 0.1); border-radius: 8px;">
                             <h5 style="color: #ffa500; margin-bottom: 0.5rem;">⚠️ Withdrawal Notice</h5>
                             <p style="color: #ccc; font-size: 0.9rem;">Withdrawals processing is instant but may take
-                                1-24 hours to complete. You'll receive an SMS confirmation immediately once processed.
+                                1-24 hours to complete. <br> Contact Us via +254 756 205 166 in case of delays.
                             </p>
                         </div>
                     </div>
@@ -1217,7 +1219,7 @@
                                     onclick="showSection('delete')" style="color: #30fcbe;">Account Deletion page</a>.
                             </p>
                             <p style="color: #fff; margin-bottom: 1rem;">
-                                Classybet offers a take a break option, allowing you to temporarily exclude yourself
+                                ClassyBet offers a take a break option, allowing you to temporarily exclude yourself
                                 from your account for a set period. Once activated, account cannot be re-activated until
                                 the specified period ends.
                             </p>
@@ -1418,6 +1420,9 @@
             }
             return 'https://aviator-casino.onrender.com';
         })();
+
+        // Use the global classyBetAPI instance
+        const api = window.classyBetAPI;
         const SUPPORT_API_BASE = API_BASE;
         let authToken = localStorage.getItem('user_token');
         let currentUser = null;
@@ -1572,7 +1577,7 @@
                     if (depositNoteEl) {
                         depositNoteEl.innerHTML = `<i class="fas fa-info-circle"></i> Minimum deposit for ${userData.currency} is ${limits.min}. Limits may vary based on payment method.`;
                     }
-                    
+
                     console.log(`Updated deposit limits for ${userData.currency}: Min ${limits.min}, Max ${limits.max}`);
                 } else {
                     // Fallback if formatDepositLimits is not available
@@ -1586,14 +1591,14 @@
                 const minDepositEl = document.getElementById('min-deposit');
                 const maxDepositEl = document.getElementById('max-deposit');
                 const depositAmountEl = document.getElementById('deposit-amount');
-                
+
                 if (currencyCodeEl) currencyCodeEl.textContent = 'KES';
-                if (minDepositEl) minDepositEl.textContent = 'KSh 350.00';
+                if (minDepositEl) minDepositEl.textContent = 'KSh 999.00';
                 if (maxDepositEl) maxDepositEl.textContent = 'KSh 150,000.00';
                 if (depositAmountEl) {
-                    depositAmountEl.min = 350;
+                    depositAmountEl.min = 999;
                     depositAmountEl.max = 150000;
-                    depositAmountEl.placeholder = 'Min: 350';
+                    depositAmountEl.placeholder = 'Min: 999';
                 }
             }
         }
@@ -1734,18 +1739,18 @@
             // Use formatCurrency if available
             const balanceText = (typeof formatCurrency === 'function' && currentUser.currency)
                 ? formatCurrency(currentUser.balance, currentUser.currency)
-                : `KES ${currentUser.balance.toFixed(2)}`;
+                : `KES ${currentUser.balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
             document.getElementById('header-balance').textContent = balanceText;
 
             // Profile section
             document.getElementById('profile-username').textContent = currentUser.username;
             document.getElementById('profile-email').textContent = currentUser.email;
-            document.getElementById('profile-balance').textContent = currentUser.balance.toFixed(2);
+            document.getElementById('profile-balance').textContent = currentUser.balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             const biggestWinText = (typeof formatCurrency === 'function' && currentUser.currency)
                 ? formatCurrency(currentUser.biggestWin || 0, currentUser.currency)
-                : `KES ${(currentUser.biggestWin || 0).toFixed(2)}`;
+                : `KES ${(currentUser.biggestWin || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
             document.getElementById('biggest-win').textContent = biggestWinText;
-            document.getElementById('biggest-multiplier').textContent = `${(currentUser.biggestMultiplier || 0).toFixed(2)}x`;
+            document.getElementById('biggest-multiplier').textContent = `${(currentUser.biggestMultiplier || 0).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 2 })}x`;
 
             // Handle referral stats and CTA
             const referralStats = currentUser.referralStats || {};
@@ -1780,7 +1785,7 @@
                     referralEarningsCard.style.display = 'block';
                     const refBalanceText = (typeof formatCurrency === 'function' && currentUser.currency)
                         ? formatCurrency(referralBalance, currentUser.currency)
-                        : `KES ${referralBalance.toFixed(2)}`;
+                        : `KES ${referralBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
                     referralEarningsValue.textContent = refBalanceText;
                 } else {
                     referralEarningsCard.style.display = 'none';
@@ -1909,10 +1914,10 @@
                             ${tx.type.toUpperCase()}
                         </div>
                         <div style="font-weight: bold; margin-top: 0.25rem; color: ${tx.type === 'deposit' ? '#30fcbe' : '#fb024c'};">
-                            ${tx.type === 'deposit' ? '+' : '-'}${(typeof formatCurrency === 'function' && currentUser.currency) ? formatCurrency(Math.abs(tx.amount), currentUser.currency) : 'KES ' + Math.abs(tx.amount).toFixed(2)}
+                            ${tx.type === 'deposit' ? '+' : '-'}${(typeof formatCurrency === 'function' && currentUser.currency) ? formatCurrency(Math.abs(tx.amount), currentUser.currency) : 'KES ' + Math.abs(tx.amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </div>
                         <div style="font-size: 0.875rem; color: #ccc;">
-                            Balance: ${(typeof formatCurrency === 'function' && currentUser.currency) ? formatCurrency(tx.balanceAfter || 0, currentUser.currency) : 'KES ' + (tx.balanceAfter?.toFixed(2) || '0.00')}
+                            Balance: ${(typeof formatCurrency === 'function' && currentUser.currency) ? formatCurrency(tx.balanceAfter || 0, currentUser.currency) : 'KES ' + (tx.balanceAfter?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00')}
                         </div>
                     </div>
                 </div>
@@ -2476,6 +2481,7 @@
     <!-- Currency Utils -->
     <script src="js/currency-utils.js"></script>
     <!-- Paystack Payment Integration -->
+    <script src="https://js.paystack.co/v1/inline.js"></script>
     <script src="js/paystack-payment.js"></script>
 </body>
 

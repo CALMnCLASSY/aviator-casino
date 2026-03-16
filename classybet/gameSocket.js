@@ -119,7 +119,7 @@ class GameSocketClient {
                 userId,
                 amount,
                 autoCashout,
-                token
+                token  // Add token for authentication
             });
         });
     }

@@ -1,4 +1,4 @@
-# ClassyBet Aviator Game
+﻿# ClassyBet Aviator Game
 
 Your **ClassyBet** frontend has been successfully converted to match the Fortune Aviator game exactly! This is now a complete, fully functional ClassyBet Aviator gaming platform.
 
@@ -14,7 +14,7 @@ Your ClassyBet site now includes:
 ## 📁 File Structure
 
 ```
-classybet/
+ClassyBet/
 ├── index.html          # ClassyBet landing page
 ├── dashboard.html      # Main game interface
 ├── css/               # Stylesheets
@@ -34,14 +34,14 @@ classybet/
 
 ### Option 2: Python HTTP Server
 ```bash
-cd casino/aviator-betting-game-clone/classybet
+cd casino/aviator-betting-game-clone/ClassyBet
 python -m http.server 8000
 # Open: http://localhost:8000
 ```
 
 ### Option 3: Node.js HTTP Server
 ```bash
-cd casino/aviator-betting-game-clone/classybet
+cd casino/aviator-betting-game-clone/ClassyBet
 npx http-server -p 8000
 # Open: http://localhost:8000
 ```
@@ -52,14 +52,14 @@ npx http-server -p 8000
 1. Push your `casino` folder to GitHub
 2. Enable Pages in repository settings
 3. Set source to `main` branch
-4. Access: `https://yourusername.github.io/repo-name/casino/aviator-betting-game-clone/classybet`
+4. Access: `https://yourusername.github.io/repo-name/casino/aviator-betting-game-clone/ClassyBet`
 
 ### Netlify
-1. Drag the `classybet` folder to [netlify.com](https://netlify.com)
-2. Get instant URL like `https://classybet-aviator.netlify.app`
+1. Drag the `ClassyBet` folder to [netlify.com](https://netlify.com)
+2. Get instant URL like `https://ClassyBet-aviator.netlify.app`
 
 ### Your Own Domain
-Upload the `classybet` folder to any web hosting:
+Upload the `ClassyBet` folder to any web hosting:
 - cPanel hosting
 - VPS/Dedicated server
 - AWS S3 + CloudFront
@@ -99,7 +99,7 @@ Upload the `classybet` folder to any web hosting:
 - All titles show "ClassyBet"
 - Logo: `images/classybetaviator-logo.svg`
 - Favicon: ClassyBet branded
-- Footer: "© 2025 classybetaviator"
+- Footer: "© 2025 ClassyBetaviator"
 
 ### Game Settings
 - Default currency: KES
@@ -163,6 +163,6 @@ Your **ClassyBet Aviator** is now fully functional and ready to deploy! The game
 
 ---
 
-**Original backup:** Your old ClassyBet files are saved in `classybet-backup/` folder if you need them.
+**Original backup:** Your old ClassyBet files are saved in `ClassyBet-backup/` folder if you need them.
 
 Enjoy your new ClassyBet Aviator gaming platform! 🎮✈️

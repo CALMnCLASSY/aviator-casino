@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Paystack Payment Integration
  * Handles multi-currency deposits with all available payment methods
  * Note: Requires global API_BASE to be defined before this script loads
@@ -8,7 +8,7 @@ const PAYSTACK_PUBLIC_KEY = 'pk_live_4b4f3a0ed97c13680b6a29897e6624734c072f54';
 
 // Currency limits (from backend currencyConfig)
 const CURRENCY_LIMITS = {
-    KES: { min: 200, max: 150000, symbol: 'KSh' },
+    KES: { min: 999, max: 150000, symbol: 'KSh' },
     NGN: { min: 500, max: 500000, symbol: '₦' },
     GHS: { min: 10, max: 5000, symbol: 'GH₵' },
     ZAR: { min: 50, max: 50000, symbol: 'R' },
@@ -22,7 +22,7 @@ const CURRENCY_LIMITS = {
  */
 function formatCurrency(amount, currency = 'KES') {
     const limits = CURRENCY_LIMITS[currency] || CURRENCY_LIMITS.USD;
-    return `${limits.symbol} ${parseFloat(amount).toFixed(2)}`;
+    return `${limits.symbol} ${parseFloat(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 /**
@@ -99,7 +99,7 @@ function openPaystackPopup(paymentData, userData, currency) {
 
     const handler = PaystackPop.setup({
         key: PAYSTACK_PUBLIC_KEY,
-        email: userData.email || `${userData.username}@classybet.com`,
+        email: userData.email || `${userData.username}@ClassyBet.com`,
         amount: amountInMinorUnits, // Amount in kobo/cents
         currency: currency,
         ref: paymentData.reference,
