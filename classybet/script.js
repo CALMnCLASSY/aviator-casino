@@ -18,16 +18,13 @@ class AviatorGame {
         this.startX = 0;
         this.startY = this.canvas.height;
         this.dotPath = [];
-        this.counter = 1.0;
+        // Multiplier is now managed entirely by backend
         if (!localStorage.getItem('round_state_cleared')) {
             localStorage.removeItem('roundHistory');
             localStorage.removeItem('round_history');
             localStorage.setItem('round_state_cleared', 'true');
         }
-        // Load round history from localStorage or use default if not exists
-        this.counterDepo = JSON.parse(localStorage.getItem('roundHistory') || '[1.01, 18.45, 2.00, 5.21, 1.22, 1.25, 2.03, 4.55, 65.11, 1.03, 1.10, 3.01, 8.85, 6.95, 11.01, 2.07, 4.05, 1.51, 1.02, 1.95, 1.05, 3.99, 2.89, 4.09, 11.20, 2.55]');
-        this.randomStop = Math.random() * (10 - 0.8) + 0.8;
-        this.isFlying = true;
+        this.isFlying = false;
         this.hoverOffset = 0; // For vertical hovering animation
         this.animationId = null;
         this.pathX = 0; // Separate variable for path progression
@@ -35,7 +32,7 @@ class AviatorGame {
         this.isHovering = false; // Track if plane is in hovering mode
         this.gameState = 'waiting'; // 'waiting', 'flying', 'crashed'
         this.roundNumber = 12345;
-        this.lastUpdateTime = 0; // For controlling multiplier update frequency
+        // Multiplier timing is now backend-authoritative
 
         // Bet history arrays
         this.betHistory = []; // Personal bet history
@@ -45,8 +42,8 @@ class AviatorGame {
         // Betting state - will be set by authentication system
         this.playerBalance = 0;
         this.bets = {
-            bet1: { placed: false, pending: false, amount: 0, cashedOut: false, multiplier: 0, winnings: 0, apiId: null },
-            bet2: { placed: false, pending: false, amount: 0, cashedOut: false, multiplier: 0, winnings: 0, apiId: null }
+            bet1: { placed: false, pending: false, amount: 0, cashedOut: false, winnings: 0, apiId: null },
+            bet2: { placed: false, pending: false, amount: 0, cashedOut: false, winnings: 0, apiId: null }
         };
 
         // Auto-betting state
@@ -57,14 +54,6 @@ class AviatorGame {
 
         this.minBetAmount = 10;
         this.reservedBalance = 0;
-        this.activeRoundMeta = null;
-        this.nextRoundMeta = null;
-        this.roundQueue = []; // Queue of upcoming rounds from backend
-        this.roundSyncInProgress = false;
-        this._ensuringRound = false;
-        this.forcedCrashMultiplier = null;
-        this.backendControlled = true; // Always use backend multipliers
-        this.autoStartEnabled = true; // Auto-start game loop
 
         this.loadImage();
         this.initializeElements();
@@ -72,12 +61,6 @@ class AviatorGame {
         this.updateBalance();
         this.updateCounterDisplay();
 
-        // Auto-start game loop after initialization
-        if (this.autoStartEnabled && typeof this.initializeGameLoop === 'function') {
-            this.initializeGameLoop();
-        } else if (typeof this.startGame === 'function') {
-            this.startGame();
-        }
         this.initializeAllBets();
         this.setupGameMenu();
         this.setupResponsiveLayout();
@@ -210,15 +193,16 @@ class AviatorGame {
     }
 
     // Currency formatting method
-    formatCurrency(amount) {
+    formatCurrency(amount, currency = null) {
+        const currencyCode = currency || (window.jetbetAPI && window.jetbetAPI.user ? window.jetbetAPI.user.currency : 'KES');
+        const symbol = (typeof window.getCurrencySymbol === 'function') ? window.getCurrencySymbol(currencyCode) : 'KES';
         const numAmount = parseFloat(amount) || 0;
-        // Use global currency helper if available, otherwise fallback to KES
-        if (typeof window.getUserCurrency === 'function' && typeof window.getCurrencySymbol === 'function') {
-            const currency = window.getUserCurrency();
-            const symbol = window.getCurrencySymbol(currency);
-            return `${symbol} ${numAmount.toFixed(2)}`;
+        
+        // Format with commas as thousand separators
+        if (typeof numAmount.toLocaleString === 'function') {
+            return `${symbol} ${numAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
         }
-        return `KES ${numAmount.toFixed(2)}`; // Fallback
+        return `${symbol} ${numAmount.toFixed(2)}`; // Absolute fallback
     }
 
     updateBalance() {
@@ -380,7 +364,7 @@ class AviatorGame {
                 // Load bet history from localStorage first for immediate display
                 this.loadBetHistory();
                 // Then try to load from server if authenticated
-                if (window.classyBetAPI && classyBetAPI.isAuthenticated()) {
+                if (window.ClassyBetAPI && ClassyBetAPI.isAuthenticated()) {
                     this.loadBetHistoryFromServer();
                 } else {
                     // If not authenticated, display local history
@@ -541,7 +525,7 @@ class AviatorGame {
         claimButton.addEventListener('click', () => {
             if (statusMessage) {
                 statusMessage.classList.remove('success', 'error');
-                statusMessage.textContent = 'Deposit KES 200 or more to unlock your KES 250 free bet bonus.';
+                statusMessage.textContent = 'Deposit KES 999 or more to unlock your KES 250 free bet bonus.';
                 statusMessage.classList.add('pending');
             }
 
@@ -725,7 +709,33 @@ class AviatorGame {
         // Generate player name in format 'a***d'
         const playerName = this.generateRandomPlayerName();
         const avatar = this.pickRandomAvatar();
-        const betAmount = (Math.random() * 200 + 10).toFixed(2);
+        
+        // High bet amounts in descending order - most players bet high amounts
+        const betAmountRanges = [
+            { min: 8100, max: 10000, weight: 3 },    // 3% chance - 8100-10000
+            { min: 7600, max: 8000, weight: 7 },      // 7% chance - 7600-8000  
+            { min: 5100, max: 7500, weight: 15 },      // 15% chance - 5100-7500
+            { min: 3100, max: 5000, weight: 20 },      // 20% chance - 3100-5000
+            { min: 1000, max: 3000, weight: 25 },       // 25% chance - 1000-3000
+            { min: 999, max: 2500, weight: 30 }          // 30% chance - 999-2500
+        ];
+        
+        // Weighted random selection
+        const totalWeight = betAmountRanges.reduce((sum, range) => sum + range.weight, 0);
+        let random = Math.random() * totalWeight;
+        let selectedRange = betAmountRanges[0];
+        
+        for (const range of betAmountRanges) {
+            random -= range.weight;
+            if (random <= 0) {
+                selectedRange = range;
+                break;
+            }
+        }
+        
+        // Generate random amount within the selected range and round to nearest 100
+        const randomAmount = Math.random() * (selectedRange.max - selectedRange.min) + selectedRange.min;
+        const betAmount = Math.round(randomAmount / 100) * 100; // Round to nearest 100
 
         // Randomly decide if this bet will cash out or crash
         const willCashOut = Math.random() > 0.3; // 70% chance to cash out
@@ -738,29 +748,8 @@ class AviatorGame {
             crashed: false,
             multiplier: null,
             win: null,
-            status: '',
-            targetCashout: null // Store the target multiplier for this bet
+            status: ''
         };
-
-        // Assign a target cashout multiplier for bets that will cash out
-        // Only during waiting phase - they'll cash out when multiplier reaches target during flight
-        if (willCashOut) {
-            // Most players cash out early, some wait for higher multipliers
-            const rand = Math.random();
-            if (rand < 0.4) {
-                // 40% cash out very early (1.2x - 1.8x)
-                bet.targetCashout = 1.2 + Math.random() * 0.6;
-            } else if (rand < 0.7) {
-                // 30% cash out at low-medium (1.8x - 3.0x)
-                bet.targetCashout = 1.8 + Math.random() * 1.2;
-            } else if (rand < 0.9) {
-                // 20% cash out at medium (3.0x - 5.0x)
-                bet.targetCashout = 3.0 + Math.random() * 2.0;
-            } else {
-                // 10% wait for high multipliers (5.0x - 10.0x)
-                bet.targetCashout = 5.0 + Math.random() * 5.0;
-            }
-        }
 
         this.allBetsData.unshift(bet);
         this.allBetsHistory.unshift(bet);
@@ -885,7 +874,9 @@ class AviatorGame {
             }
 
             if (bet.placed && this.gameState === 'flying' && !bet.cashedOut) {
-                const potentialWin = bet.amount * this.counter;
+                // Use backend multiplier if available, otherwise show placeholder
+                const currentMultiplier = this.counter || 1.0;
+                const potentialWin = bet.amount * currentMultiplier;
                 button.textContent = `CASHOUT ${this.formatCurrency(potentialWin)}`;
                 button.className = 'bet-button cashout';
                 button.disabled = false;
@@ -965,8 +956,8 @@ class AviatorGame {
         bet.amount = amountToBet;
         bet.cashedOut = false;
         bet.winnings = 0;
-        bet.multiplier = 0;
 
+        // Reserve balance for bet (backend will handle actual deduction via WebSocket)
         this.reservedBalance += amountToBet;
         this.updateBalance();
 
@@ -991,10 +982,12 @@ class AviatorGame {
 
         if (!button || !bet.pending) return;
 
+        // Return reserved balance
         this.reservedBalance = Math.max(0, this.reservedBalance - bet.amount);
+        this.updateBalance();
+        
         bet.pending = false;
         bet.amount = 0;
-        bet.multiplier = 0;
         bet.winnings = 0;
         bet.apiId = null;
         bet.lastCashoutTime = null;
@@ -1016,18 +1009,19 @@ class AviatorGame {
 
         if (!button || !bet.placed || bet.cashedOut) return;
 
-        const winnings = bet.amount * this.counter;
+        // Use backend multiplier for calculations
+        const currentMultiplier = this.counter || 1.0;
+        const winnings = bet.amount * currentMultiplier;
 
         // Update bet state first
         bet.cashedOut = true;
         bet.winnings = winnings;
-        bet.multiplier = this.counter;
 
         // Add to bet history
         this.addBetToHistory({
             amount: bet.amount,
             cashedOut: true,
-            multiplier: this.counter,
+            multiplier: currentMultiplier,
             win: winnings,
             status: 'win'
         });
@@ -1036,63 +1030,78 @@ class AviatorGame {
         this.saveBetHistory();
 
         // Sync cashout with backend via WebSocket
-        if (window.gameSocket && gameSocket.connected && window.classyBetAPI && classyBetAPI.isAuthenticated() && bet.apiId) {
-            // Get userId from game.currentUser (where it's actually stored)
-            const userId = this.currentUser?.username || classyBetAPI.currentUser?.username;
-            if (userId) {
+        if (window.gameSocket && gameSocket.connected && bet.apiId) {
+            // Get userId and token for WebSocket authentication
+            const userId = this.currentUser?.username;
+            const token = localStorage.getItem('user_token');
+            
+            if (userId && token) {
                 console.log('[CASHOUT] Requesting cashout via WebSocket:', {
                     userId,
                     betId: bet.apiId,
-                    multiplier: this.counter
+                    multiplier: currentMultiplier
                 });
 
-                gameSocket.cashout(userId, bet.apiId, this.counter)
+                gameSocket.cashout(userId, bet.apiId, currentMultiplier)
                     .then(result => {
                         console.log('[CASHOUT] Response received:', result);
                         if (result && result.success) {
                             if (result.newBalance !== undefined) {
                                 this.playerBalance = result.newBalance;
-
-                                // Update localStorage to persist the balance
+                                this.updateBalance();
+                                
+                                // Update localStorage
                                 const userData = localStorage.getItem('userData');
                                 if (userData) {
                                     const user = JSON.parse(userData);
                                     user.balance = result.newBalance;
                                     localStorage.setItem('userData', JSON.stringify(user));
                                 }
-
-                                this.updateBalance();
+                                
                                 console.log('[CASHOUT] ✅ Balance updated from backend:', result.newBalance);
                             } else {
                                 console.warn('[CASHOUT] ⚠️ Success but no newBalance in response:', result);
                             }
                         } else {
                             console.error('[CASHOUT] ❌ Cashout failed:', result);
+                            // Fallback to local update if WebSocket fails
+                            this.playerBalance += winnings;
+                            this.updateBalance();
                         }
                     })
                     .catch(error => {
-                        console.error('[CASHOUT] ❌ Failed to sync with backend:', error);
+                        console.error('[CASHOUT] ❌ WebSocket failed, using local update:', error);
+                        // Fallback to local update
+                        this.playerBalance += winnings;
+                        this.updateBalance();
                     });
             } else {
-                console.error('[CASHOUT] No user ID available', {
-                    gameCurrentUser: this.currentUser,
-                    apiCurrentUser: classyBetAPI.currentUser
+                console.error('[CASHOUT] Missing userId or token for WebSocket', {
+                    userId,
+                    hasToken: !!token
                 });
+                // Fallback to local update
+                this.playerBalance += winnings;
+                this.updateBalance();
             }
+        } else {
+            console.warn('[CASHOUT] WebSocket not connected, using local update');
+            // Fallback to local update
+            this.playerBalance += winnings;
+            this.updateBalance();
         }
 
         this.addBetToHistory({
             amount: bet.amount,
-            multiplier: this.counter,
+            multiplier: currentMultiplier,
             cashedOut: true
         });
 
-        button.textContent = `Won ${this.formatCurrency(winnings)}`;
         button.className = 'bet-button won';
         button.disabled = true;
 
-        this.showGameMessage(`Cashed out: ${this.formatCurrency(winnings)} (${this.counter.toFixed(2)}x)`, 'success');
-        console.log(`[BET] Cashed out ${betType} at ${this.counter.toFixed(2)}x for ${this.formatCurrency(winnings)}`);
+        this.showGameMessage(`Cashed out: ${this.formatCurrency(winnings)} (${currentMultiplier.toFixed(2)}x)`, 'success');
+        console.log(`[BET] Cashed out ${betType} at ${currentMultiplier.toFixed(2)}x for ${this.formatCurrency(winnings)}`);
         this.updateBetButtons();
 
         setTimeout(() => {
@@ -1108,10 +1117,16 @@ class AviatorGame {
             const button = betType === 'bet1' ? this.betButton1 : this.betButton2;
 
             if (bet.pending && bet.amount >= this.minBetAmount) {
-                // Get userId
+                // Get userId and token for WebSocket authentication
                 const userId = this.currentUser?.username;
-                if (!userId || !window.gameSocket || !window.gameSocket.connected) {
-                    console.warn('[BET] Cannot activate - not connected or no user');
+                const token = localStorage.getItem('user_token');
+                
+                if (!userId || !token || !window.gameSocket || !window.gameSocket.connected) {
+                    console.warn('[BET] Cannot activate - missing credentials or not connected', {
+                        userId: !!userId,
+                        hasToken: !!token,
+                        connected: window.gameSocket?.connected
+                    });
                     continue;
                 }
 
@@ -1129,8 +1144,8 @@ class AviatorGame {
                         autoCashout: autoCashoutValue
                     });
 
-                    // Place bet via WebSocket
-                    const result = await gameSocket.placeBet(userId, bet.amount, autoCashoutValue);
+                    // Place bet via WebSocket with token
+                    const result = await gameSocket.placeBet(userId, bet.amount, autoCashoutValue, token);
 
                     if (result && result.success) {
                         // ✅ Bet activated successfully
@@ -1138,7 +1153,6 @@ class AviatorGame {
                         bet.placed = true;
                         bet.cashedOut = false;
                         bet.winnings = 0;
-                        bet.multiplier = 0;
                         bet.apiId = result.betId;
 
                         totalQueued += bet.amount;
@@ -1184,7 +1198,7 @@ class AviatorGame {
 
     async loadBetHistoryFromServer() {
         try {
-            if (!window.classyBetAPI || !classyBetAPI.isAuthenticated()) {
+            if (!window.ClassyBetAPI || !ClassyBetAPI.isAuthenticated()) {
                 // Show local bet history if not authenticated
                 this.displayLocalBetHistory();
                 return;
@@ -1531,38 +1545,58 @@ class AviatorGame {
     }
 
     addRoundToHistory(crashPoint) {
-        const roundRecord = {
-            roundNumber: this.roundNumber,
-            timestamp: new Date(),
-            crashPoint: crashPoint,
-            totalBets: this.allBetsData.length,
-            totalWinners: this.allBetsData.filter(bet => bet.cashedOut).length
-        };
-
-        this.roundHistory.unshift(roundRecord);
-
-        if (this.roundHistory.length > 100) {
-            this.roundHistory.pop();
+        // Add crashed round to the front of the history display
+        if (!this.counterDepo) {
+            this.counterDepo = [];
         }
-
-        // Add to counterDepo and save to localStorage
+        
+        // Add to front of array
         this.counterDepo.unshift(parseFloat(crashPoint));
+        
+        // Keep only last 100 rounds
         if (this.counterDepo.length > 100) {
             this.counterDepo.pop();
         }
-        localStorage.setItem('roundHistory', JSON.stringify(this.counterDepo));
-
-        this.saveRoundHistory();
+        
+        // Update the display immediately
+        this.updateCounterDisplay();
+        
+        // Fetch updated history from backend in background
+        this.fetchBackendHistory();
     }
 
     saveRoundHistory() {
-        localStorage.setItem('round_history', JSON.stringify(this.roundHistory));
+        // Backend handles round history persistence
     }
 
     loadRoundHistory() {
-        const history = localStorage.getItem('round_history');
-        if (history) {
-            this.roundHistory = JSON.parse(history);
+        // Load round history from backend
+        this.fetchBackendHistory();
+    }
+
+    async fetchBackendHistory() {
+        try {
+            const response = await fetch(`${API_BASE}/api/rounds/history?limit=100`);
+            if (response.ok) {
+                const data = await response.json();
+                if (data.rounds && Array.isArray(data.rounds)) {
+                    // Map backend rounds to multiplier array for top bar
+                    this.counterDepo = data.rounds.map(r => r.multiplier);
+                    
+                    // Also update the detailed roundHistory objects
+                    this.roundHistory = data.rounds.map(r => ({
+                        roundNumber: r.roundId,
+                        timestamp: r.startTime,
+                        crashPoint: r.multiplier,
+                        totalBets: 0, // Backend could provide this if we extended schema
+                        totalWinners: 0
+                    }));
+                    
+                    this.updateCounterDisplay();
+                }
+            }
+        } catch (error) {
+            console.warn('Failed to fetch official round history:', error);
         }
     }
 
@@ -1746,7 +1780,6 @@ class AviatorGame {
             bet.cashedOut = false;
             bet.pending = false;
             bet.amount = 0;
-            bet.multiplier = 0;
             bet.winnings = 0;
         });
     }
@@ -1771,6 +1804,12 @@ class AviatorGame {
     }
 
     updateCounterDisplay() {
+        if (!this.counterDepo || !Array.isArray(this.counterDepo)) {
+            this.counterDepo = [];
+            if (this.lastCounters) this.lastCounters.innerHTML = '';
+            return;
+        }
+
         const screenWidth = window.innerWidth;
         let visibleCount;
 
@@ -1787,17 +1826,19 @@ class AviatorGame {
         const visibleMultipliers = this.counterDepo.slice(0, visibleCount);
         const hiddenMultipliers = this.counterDepo.slice(visibleCount);
 
-        this.lastCounters.innerHTML = visibleMultipliers.map((i, index) => {
-            let classNameForCounter = '';
-            if (i < 2.00) {
-                classNameForCounter = 'blueBorder';
-            } else if (i >= 2 && i < 10) {
-                classNameForCounter = 'purpleBorder';
-            } else {
-                classNameForCounter = 'burgundyBorder';
-            }
-            return `<p class="${classNameForCounter}" data-round="${this.roundNumber - index}" data-multiplier="${i}" onclick="game.showRoundInfo(${this.roundNumber - index}, ${i})">${i.toFixed(2)}</p>`;
-        }).join('');
+        if (this.lastCounters) {
+            this.lastCounters.innerHTML = visibleMultipliers.map((i, index) => {
+                let classNameForCounter = '';
+                if (i < 2.00) {
+                    classNameForCounter = 'blueBorder';
+                } else if (i >= 2 && i < 10) {
+                    classNameForCounter = 'purpleBorder';
+                } else {
+                    classNameForCounter = 'burgundyBorder';
+                }
+                return `<p class="${classNameForCounter}" data-round="${this.roundNumber - index}" data-multiplier="${i}" onclick="game.showRoundInfo(${this.roundNumber - index}, ${i})">${i.toFixed(2)}</p>`;
+            }).join('');
+        }
 
         const hiddenRoundsContainer = document.getElementById('hidden-rounds');
         const showMoreBtn = document.getElementById('show-more-rounds');
@@ -1844,7 +1885,6 @@ class AviatorGame {
             bet.cashedOut = false;
             bet.pending = false;
             bet.amount = 0;
-            bet.multiplier = 0;
             bet.winnings = 0;
         });
     }
@@ -1868,63 +1908,6 @@ class AviatorGame {
         }
     }
 
-    updateCounterDisplay() {
-        const screenWidth = window.innerWidth;
-        let visibleCount;
-
-        if (screenWidth >= 1200) {
-            visibleCount = 16;
-        } else if (screenWidth >= 992) {
-            visibleCount = 12;
-        } else if (screenWidth >= 768) {
-            visibleCount = 10;
-        } else {
-            visibleCount = 8;
-        }
-
-        const visibleMultipliers = this.counterDepo.slice(0, visibleCount);
-        const hiddenMultipliers = this.counterDepo.slice(visibleCount);
-
-        this.lastCounters.innerHTML = visibleMultipliers.map((i, index) => {
-            let classNameForCounter = '';
-            if (i < 2.00) {
-                classNameForCounter = 'blueBorder';
-            } else if (i >= 2 && i < 10) {
-                classNameForCounter = 'purpleBorder';
-            } else {
-                classNameForCounter = 'burgundyBorder';
-            }
-            return `<p class="${classNameForCounter}" data-round="${this.roundNumber - index}" data-multiplier="${i}" onclick="game.showRoundInfo(${this.roundNumber - index}, ${i})">${i.toFixed(2)}</p>`;
-        }).join('');
-
-        const hiddenRoundsContainer = document.getElementById('hidden-rounds');
-        const showMoreBtn = document.getElementById('show-more-rounds');
-
-        if (hiddenRoundsContainer && showMoreBtn) {
-            if (hiddenMultipliers.length > 0) {
-                hiddenRoundsContainer.innerHTML = `
-                <div class="hidden-rounds-grid">
-                    ${hiddenMultipliers.map((i, index) => {
-                    let classNameForCounter = '';
-                    if (i < 2.00) {
-                        classNameForCounter = 'blueBorder';
-                    } else if (i >= 2 && i < 10) {
-                        classNameForCounter = 'purpleBorder';
-                    } else {
-                        classNameForCounter = 'burgundyBorder';
-                    }
-                    const roundNum = this.roundNumber - visibleCount - index;
-                    return `<p class="${classNameForCounter}" data-round="${roundNum}" data-multiplier="${i}" onclick="game.showRoundInfo(${roundNum}, ${i})">${i.toFixed(2)}</p>`;
-                }).join('')}
-                </div>
-            `;
-                showMoreBtn.style.display = 'flex';
-            } else {
-                hiddenRoundsContainer.innerHTML = '';
-                showMoreBtn.style.display = 'none';
-            }
-        }
-    }
 
     startGame() {
         this.gameState = 'flying';
@@ -1955,49 +1938,38 @@ class AviatorGame {
     }
 
     draw() {
-        const currentTime = Date.now();
+        // ─────────────────────────────────────────────────────────────────────
+        // MULTIPLIER IS NOW BACKEND-AUTHORITATIVE
+        // No local calculation - multiplier comes from server game state updates
+        // ─────────────────────────────────────────────────────────────────────
 
-        if (currentTime - this.lastUpdateTime > 100) {
-            this.lastUpdateTime = currentTime;
-
-            let increment;
-            if (this.counter < 1.5) {
-                increment = 0.01;
-            } else if (this.counter < 2.0) {
-                increment = 0.015;
-            } else if (this.counter < 5.0) {
-                increment = 0.02 + (this.counter - 2.0) * 0.005;
-            } else if (this.counter < 10.0) {
-                increment = 0.035 + (this.counter - 5.0) * 0.01;
-            } else {
-                increment = 0.085 + (this.counter - 10.0) * 0.015;
-            }
-
-            this.counter += increment;
-            const counterElement = document.getElementById('counter');
+        // Update counter display only when multiplier is available from backend
+        const counterElement = document.getElementById('counter');
+        if (counterElement && this.counter !== undefined && this.counter !== null) {
             counterElement.textContent = this.counter.toFixed(2) + 'x';
-
             this.updateCounterGlow(counterElement, this.counter);
         }
 
-        // Check for auto-cashout conditions
-        this.handleAutoCashout();
+        // NOTE: No local crash guard here — the backend 'crashed' event is the
+        // sole authoritative crash trigger. A local guard would use a stale
+        // randomStop from the PREVIOUS round and crash the animation immediately.
+
+        // NOTE: Auto-cashout is now handled by backend - no local checks needed
 
         // Update bet buttons with potential cashout amounts
         this.updateBetButtons();
 
-        // Process cashouts for bets that reached their target multiplier
-        // This will update display automatically when cashouts happen
-        this.processCashouts();
+        // NOTE: Cashout processing is now handled by backend WebSocket events
 
         // Clear canvas
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
         // Update position - plane flies from bottom left toward top right with realistic trajectory
 
-        if (this.counter < this.randomStop) {
+        if (this.gameState === 'flying') { // Plane flies during backend-controlled flying state
             // Check if plane should be in hovering mode (after 60% of canvas width)
             const hoverPoint = this.canvas.width * 0.6;
+            // ... (rest of movement logic)
 
             if (this.x < hoverPoint) {
                 // Phase 1: Horizontal movement for first 5px (more visible horizontal phase)
@@ -2070,33 +2042,7 @@ class AviatorGame {
         this.animationId = requestAnimationFrame(() => this.draw());
     }
 
-    processCashouts() {
-        // Check all bets and cash out those that reached their target multiplier
-        // Only works during flying phase - prevents premature cashouts
-        if (this.gameState !== 'flying') return;
-
-        let cashedOutThisFrame = false;
-
-        this.allBetsData.forEach(bet => {
-            // Only process bets that have a target, aren't cashed out yet, and have empty status
-            if (bet.targetCashout && !bet.cashedOut && !bet.crashed && bet.status === '') {
-                // Cash out ONLY when current multiplier reaches or exceeds target
-                // This ensures no one cashes out before the multiplier reaches that value
-                if (this.counter >= bet.targetCashout) {
-                    bet.cashedOut = true;
-                    bet.multiplier = parseFloat(this.counter.toFixed(2));
-                    bet.win = parseFloat((bet.amount * bet.multiplier).toFixed(2));
-                    bet.status = `${bet.multiplier}x`;
-                    cashedOutThisFrame = true;
-                }
-            }
-        });
-
-        // Update display if any cashouts happened this frame
-        if (cashedOutThisFrame) {
-            this.updateAllBetsDisplay();
-        }
-    }
+    // Cashout processing is now handled by backend WebSocket events
 
     drawPlaneShadow() {
         if (this.dotPath.length > 2) {
@@ -2177,28 +2123,12 @@ class AviatorGame {
         // Start crash animation - plane disappears upwards quickly
         this.animateCrash();
 
-        // Store the crash multiplier
-        const crashMultiplier = this.forcedCrashMultiplier || this.counter;
+        // Store the crash multiplier from backend
+        const crashMultiplier = this.counter || 1.0;
         const crashMultiplierStr = crashMultiplier.toFixed(2);
 
-        // Clear the active round BEFORE triggering async operations
-        this.activeRoundMeta = null;
-        this.forcedCrashMultiplier = null;
-
-        // End round on backend if authenticated and sync balance
-        if (window.classyBetAPI && typeof classyBetAPI.endRound === 'function' && classyBetAPI.isAuthenticated()) {
-            classyBetAPI.endRound(crashMultiplier)
-                .then(result => {
-                    if (result && result.success && result.data && result.data.newBalance !== undefined) {
-                        // Update game balance from backend
-                        this.playerBalance = result.data.newBalance;
-                        this.updateBalance();
-                    }
-                })
-                .catch(error => {
-                    console.warn('Failed to sync balance after round:', error);
-                });
-        }
+        // Backend round end is handled via WebSocket game state manager
+        // No need for explicit endRound API call
 
         // Add round to history
         this.addRoundToHistory(parseFloat(crashMultiplierStr));
@@ -2238,7 +2168,6 @@ class AviatorGame {
                 // Update the bet state
                 bet.crashed = true;
                 bet.status = 'loss';
-                bet.multiplier = currentMultiplier;
                 bet.winnings = 0;
             }
         });
@@ -2256,11 +2185,8 @@ class AviatorGame {
         this.updateCounterDisplay();
 
         this.messageElement.textContent = 'Round ended - Place your bet for the next round';
-
-        // Wait 2 seconds, then start countdown
-        setTimeout(() => {
-            this.startCountdown();
-        }, 2000);
+        
+        // NO LOCAL SETTIMEOUT HERE - game waits for server 'countdown' state
     }
 
     animateCrash() {
@@ -2338,245 +2264,7 @@ class AviatorGame {
         }, 3000);
     }
 
-    async startCountdown() {
-        this.gameState = 'waiting';
-
-        try {
-            await this.ensureRoundMeta();
-        } catch (error) {
-            console.warn('Failed to prepare next round:', error);
-            setTimeout(() => this.startCountdown(), 1000);
-            return;
-        }
-
-        // Reset and seed All Bets for the upcoming round during waiting only
-        this.allBetsData = [];
-        this.betCount = 0;
-
-        // Reset bet count display to 0 immediately
-        this.updateBetCount();
-        this.updateAllBetsDisplay();
-
-        // Generate bets gradually to simulate real-time betting
-        const targetBetCount = 500 + Math.floor(Math.random() * 200); // 500-700 target bets
-        const betsPerBatch = 25; // Generate 25 bets per batch
-        const batchInterval = 100; // Every 100ms
-
-        let betsGenerated = 0;
-        const generateBetsInterval = setInterval(() => {
-            const batchSize = Math.min(betsPerBatch, targetBetCount - betsGenerated);
-            for (let i = 0; i < batchSize; i++) {
-                this.generateRandomBet();
-            }
-            betsGenerated += batchSize;
-
-            // Update display to show growing bet list
-            this.updateAllBetsDisplay();
-            this.updateBetCount();
-
-            // Stop when we reach target or countdown ends
-            if (betsGenerated >= targetBetCount) {
-                clearInterval(generateBetsInterval);
-            }
-        }, batchInterval);
-
-        // Store interval ID so we can clear it if needed
-        this.betGenerationInterval = generateBetsInterval;
-
-        let countdown = 5; // Extended to 5 seconds
-
-        // Clear the main counter display
-        const counterElement = document.getElementById('counter');
-        counterElement.innerHTML = '';
-        counterElement.className = 'waiting';
-
-        // Create simple overlay on the game area
-        const gameArea = document.getElementById('counterWrapper');
-        const overlay = document.createElement('div');
-        overlay.className = 'countdown-overlay';
-        overlay.style.cssText = `
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 1000;
-            text-align: center;
-            pointer-events: none;
-        `;
-
-        overlay.innerHTML = `
-            <!-- UFC Logo above loading bar -->
-            <div style="
-                display: flex;
-                justify-content: center;
-                margin-bottom: 20px;
-            ">
-                <img src="ufc.svg" alt="UFC" height="100" style="opacity: 0.9;">
-            </div>
-            
-            <!-- Loading Bar -->
-            <div style="
-                width: 200px;
-                height: 6px;
-                background: rgba(255, 255, 255, 0.3);
-                border-radius: 3px;
-                margin: 0 auto;
-                overflow: hidden;
-                box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
-            ">
-                <div class="countdown-progress" style="
-                    height: 100%;
-                    background: linear-gradient(90deg, #ff4444, #ff6666);
-                    width: 0%;
-                    transition: width 0.3s ease;
-                    border-radius: 3px;
-                "></div>
-            </div>
-            
-            <!-- Spribe Logo below loading bar -->
-            <div style="
-                display: flex;
-                justify-content: center;
-                margin-top: 20px;
-            ">
-                <img src="spribe.svg" alt="Spribe" height="55" style="opacity: 0.8;">
-            </div>
-        `;
-
-        gameArea.appendChild(overlay);
-
-        // Enable betting immediately after crash
-        Object.keys(this.bets).forEach(betType => {
-            const bet = this.bets[betType];
-            const button = betType === 'bet1' ? this.betButton1 : this.betButton2;
-            if (!button) return;
-
-            if (bet.pending) {
-                button.textContent = `Cancel ${this.formatCurrency(bet.amount)} (Queued)`;
-                button.className = 'bet-button cancel';
-                button.style.animation = '';
-            } else if (!bet.placed) {
-                button.textContent = 'BET';
-                button.className = 'bet-button';
-                button.style.animation = '';
-            }
-        });
-
-        const countdownInterval = setInterval(() => {
-            countdown--;
-
-            // Update loading bar progress
-            const progressBar = overlay.querySelector('.countdown-progress');
-            if (progressBar) {
-                const progress = ((5 - countdown) / 5) * 100;
-                progressBar.style.width = `${progress}%`;
-            }
-
-            if (countdown <= 0) {
-                clearInterval(countdownInterval);
-
-                // Clear bet generation interval if still running
-                if (this.betGenerationInterval) {
-                    clearInterval(this.betGenerationInterval);
-                    this.betGenerationInterval = null;
-                }
-
-                // Remove overlay
-                if (overlay.parentNode) {
-                    overlay.parentNode.removeChild(overlay);
-                }
-
-                // Reset counter appearance
-                counterElement.className = '';
-
-                // Update button states for placed bets when round starts
-                Object.keys(this.bets).forEach(betType => {
-                    const bet = this.bets[betType];
-                    const button = betType === 'bet1' ? this.betButton1 : this.betButton2;
-                    if (bet.placed) {
-                        button.textContent = `${this.formatCurrency(bet.amount)} ACTIVE`;
-                        button.className = 'bet-button placed';
-                    }
-                });
-
-                // Add 1 second wait before starting the game
-                setTimeout(() => {
-                    this.resetGame();
-                }, 1000);
-            }
-        }, 1000);
-    }
-
-    resetGame() {
-        // Always use backend multiplier - no random fallback
-        if (!this.forcedCrashMultiplier) {
-            console.error('No backend multiplier available! Game cannot start.');
-            this.randomStop = 1.5; // Emergency fallback
-        } else {
-            this.randomStop = this.forcedCrashMultiplier;
-        }
-        this.counter = 1.0;
-        this.x = this.startX; // Reset to starting position (bottom left)
-        this.y = this.startY; // Reset to starting position (bottom left)
-        this.pathX = 0; // Reset path X position
-        this.pathY = this.canvas.height; // Reset path Y position
-        this.isHovering = false; // Reset hovering state
-        this.hoverOffset = 0; // Reset hover animation
-        this.dotPath = [];
-        this.isFlying = true;
-        this.messageElement.textContent = '';
-
-        // Reset counter display
-        const counterElement = document.getElementById('counter');
-        counterElement.textContent = '1.00x';
-        counterElement.className = '';
-
-        // Set initial counter glow for reset (starts at 1.00x - blue glow)
-        this.updateCounterGlow(counterElement, 1.0);
-
-        // Reset ALL betting states for fresh round
-        Object.keys(this.bets).forEach(betType => {
-            const bet = this.bets[betType];
-            const button = betType === 'bet1' ? this.betButton1 : this.betButton2;
-
-            if (!button) {
-                return;
-            }
-
-            // Clear any cooldown timers and disabled states
-            bet.lastCashoutTime = null;
-            button.removeAttribute('data-disabled-until-reset');
-            button.disabled = false;
-
-            if (bet.pending && bet.amount >= this.minBetAmount) {
-                // Queue activation happens below after loop to adjust balances
-                return;
-            }
-
-            // Reset non-queued bets
-            bet.placed = false;
-            bet.cashedOut = false;
-            bet.pending = false;
-            bet.amount = 0;
-            bet.multiplier = 0;
-            bet.winnings = 0;
-            bet.apiId = null;
-
-            button.textContent = 'BET';
-            button.className = 'bet-button';
-        });
-
-        // Activate any bets that were queued during the previous round
-        this.activateQueuedBets();
-
-        // DON'T clear bets here - they remain visible during flight
-        // Bets will be cleared and repopulated during startCountdown (waiting phase)
-
-        // Execute auto-bets for new round ONLY if auto-betting is enabled
-        this.executeAutoBets();
-
-        this.startGame();
-    }
+    // startCountdown and resetGame REMOVED - everything is handled via server broadcasts in handleGameStateUpdate
 
     setupBetsTabs() {
         // Setup profile and deposit buttons
@@ -2677,11 +2365,39 @@ class AviatorGame {
         this.previousBetsData = [];
         this.topResultsData = [];
 
+        // Helper function to get high bet amount (same as generateRandomBet)
+        const getHighBetAmount = () => {
+            const betAmountRanges = [
+                { min: 8100, max: 10000, weight: 3 },    // 3% chance - 8100-10000
+                { min: 7600, max: 8000, weight: 7 },      // 7% chance - 7600-8000  
+                { min: 5100, max: 7500, weight: 15 },      // 15% chance - 5100-7500
+                { min: 3100, max: 5000, weight: 20 },      // 20% chance - 3100-5000
+                { min: 1000, max: 3000, weight: 25 },       // 25% chance - 1000-3000
+                { min: 999, max: 2500, weight: 30 }          // 30% chance - 999-2500
+            ];
+            
+            const totalWeight = betAmountRanges.reduce((sum, range) => sum + range.weight, 0);
+            let random = Math.random() * totalWeight;
+            let selectedRange = betAmountRanges[0];
+            
+            for (const range of betAmountRanges) {
+                random -= range.weight;
+                if (random <= 0) {
+                    selectedRange = range;
+                    break;
+                }
+            }
+            
+            // Generate random amount within the selected range and round to nearest 100
+            const randomAmount = Math.random() * (selectedRange.max - selectedRange.min) + selectedRange.min;
+            return Math.round(randomAmount / 100) * 100; // Round to nearest 100
+        };
+
         // Ensure 600+ bets per round
         const betCount = 600 + Math.floor(Math.random() * 250);
         for (let i = 0; i < betCount; i++) {
             const playerName = this.generateRandomPlayerName();
-            const amount = parseFloat((Math.random() * 500 + 5).toFixed(2));
+            const amount = getHighBetAmount();
             const didCashOut = Math.random() < 0.35; // ~35% cash out
             const multiplier = didCashOut ? parseFloat((Math.random() * 5 + 1).toFixed(2)) : null;
             const win = multiplier ? parseFloat((amount * multiplier).toFixed(2)) : null;
@@ -2700,7 +2416,7 @@ class AviatorGame {
         const prevCount = 600 + Math.floor(Math.random() * 250);
         for (let i = 0; i < prevCount; i++) {
             const playerName = this.generateRandomPlayerName();
-            const amount = parseFloat((Math.random() * 500 + 5).toFixed(2));
+            const amount = getHighBetAmount();
             const multiplier = parseFloat((Math.random() * 5 + 1).toFixed(2));
             const win = parseFloat((amount * multiplier).toFixed(2));
             this.previousBetsData.push({
@@ -2716,7 +2432,7 @@ class AviatorGame {
         // Top results: randomize by current filter later
         for (let i = 0; i < 50; i++) {
             const playerName = this.generateRandomPlayerName();
-            const amount = parseFloat((Math.random() * 700 + 20).toFixed(2));
+            const amount = getHighBetAmount(); // Use same high amounts
             const multiplier = parseFloat((Math.random() * 90 + 10).toFixed(2));
             const win = parseFloat((amount * Math.max(1.1, multiplier)).toFixed(2));
             this.topResultsData.push({
@@ -3007,60 +2723,187 @@ class AviatorGame {
         document.getElementById(`auto-profit-${betNumber}`).textContent = this.formatCurrency(state.profit);
     }
 
-    handleAutoCashout() {
-        // Check auto-cashout conditions during game
-        if (this.gameState !== 'flying') return;
-
-        ['bet1', 'bet2'].forEach(betType => {
-            const bet = this.bets[betType];
-            if (!bet.placed || bet.cashedOut) return;
-
-            const betNumber = betType === 'bet1' ? '1' : '2';
-
-            // Check if auto-cashout is enabled for this bet
-            const autoCashoutToggle = document.getElementById(`auto-cashout-toggle-${betNumber}`);
-            if (!autoCashoutToggle || !autoCashoutToggle.checked) {
-                return; // Auto-cashout is not enabled for this bet
-            }
-
-            const autoCashoutValue = parseFloat(document.getElementById(`auto-cashout-value-${betNumber}`).value);
-
-            // Only auto-cashout if the value is valid and the multiplier has reached it
-            if (autoCashoutValue > 1.0 && this.counter >= autoCashoutValue) {
-                this.cashOut(betType);
-
-                // Update auto-bet stats if auto-betting is active
-                const state = this.autoBetState[betType];
-                if (state && state.active) {
-                    state.wins++;
-                    const winAmount = bet.amount * autoCashoutValue - bet.amount;
-                    state.profit += winAmount;
-                    this.updateAutoBetStats(betType);
-                }
-            }
-        });
-    }
+    // Auto-cashout is now handled by backend WebSocket events
 
     handleGameStateUpdate(state) {
-        // Handle game state updates from WebSocket
         if (!state) return;
 
-        // ❌ REMOVED: Game state console log (security)
+        const incomingState = state.state; // 'waiting' | 'countdown' | 'flying' | 'crashed'
+        
+        // Sync round numbering if provided by server
+        if (state.roundId) {
+            this.roundNumber = state.roundId;
+        }
 
-        // When round starts flying, check if any bets should be activated
-        if (state.state === 'flying') {
+        // ── FLYING ────────────────────────────────────────────────────────────
+        if (incomingState === 'flying') {
+            // Remove countdown overlay
+            const existingOverlay = document.querySelector('.countdown-overlay');
+            if (existingOverlay && existingOverlay.parentNode) {
+                existingOverlay.parentNode.removeChild(existingOverlay);
+            }
+
+            // Sync backend bet count
+            if (typeof state.activeBets === 'number') {
+                const betCountEl = document.getElementById('bet-count');
+                const mobileBetCountEl = document.getElementById('mobile-bet-count');
+                if (betCountEl) betCountEl.textContent = state.activeBets;
+                if (mobileBetCountEl) mobileBetCountEl.textContent = state.activeBets;
+            }
+
+            // Update multiplier from backend
+            if (state.multiplier !== undefined) {
+                this.counter = state.multiplier;
+            }
+
+            // Start animation loop if not flying
+            if (this.gameState !== 'flying') {
+                this._serverDrivenStart();
+            }
+
+            // Update bet buttons to 'Cash Out' if properly placed
             Object.keys(this.bets).forEach(betType => {
                 const bet = this.bets[betType];
                 const button = betType === 'bet1' ? this.betButton1 : this.betButton2;
-
-                // If bet is placed and has an apiId, make sure button shows "Cash Out"
                 if (bet.placed && bet.apiId && !bet.cashedOut && button) {
                     button.textContent = 'Cash Out';
                     button.className = 'bet-button active';
                     button.disabled = false;
-                    // ❌ REMOVED: Bet activation console log (security)
                 }
             });
+        }
+
+        // ── CRASHED ───────────────────────────────────────────────────────────
+        else if (incomingState === 'crashed' && this.gameState === 'flying') {
+            // Update crash multiplier from backend
+            if (state.crashMultiplier !== undefined) {
+                this.counter = state.crashMultiplier;
+            }
+            cancelAnimationFrame(this.animationId);
+            this.animationId = null;
+            this.isFlying = false;
+            this.handleCrash();
+        }
+
+        // ── COUNTDOWN ─────────────────────────────────────────────────────────
+        else if (incomingState === 'countdown') {
+            this.gameState = 'countdown';
+            
+            // Clear "FLEW AWAY" if it was showing
+            const counterElement = document.getElementById('counter');
+            if (counterElement) {
+                counterElement.innerHTML = '';
+                counterElement.className = 'waiting';
+            }
+
+            this.renderCountdownOverlay(state.countdown);
+            
+            // Sync current bet count during countdown if provided
+            if (typeof state.activeBets === 'number') {
+                const betCountEl = document.getElementById('bet-count');
+                const mobileBetCountEl = document.getElementById('mobile-bet-count');
+                if (betCountEl) betCountEl.textContent = state.activeBets;
+                if (mobileBetCountEl) mobileBetCountEl.textContent = state.activeBets;
+            }
+        }
+
+        // ── WAITING ───────────────────────────────────────────────────────────
+        else if (incomingState === 'waiting') {
+            if (this.gameState !== 'waiting') {
+                this.gameState = 'waiting';
+                this.resetForNewRound();
+            }
+        }
+    }
+
+    _serverDrivenStart() {
+        this.gameState = 'flying';
+        this.isFlying = true;
+        // Counter is set by backend game state updates
+        
+        // Reset canvas
+        this.x = this.startX;
+        this.y = this.startY;
+        this.pathX = 0;
+        this.pathY = this.canvas.height;
+        this.isHovering = false;
+        this.hoverOffset = 0;
+        this.dotPath = [];
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+        const bgImage = document.getElementById('bg-image');
+        if (bgImage) bgImage.classList.add('rotating');
+
+        // Counter display will be updated by backend game state
+        
+        // Activate queued bets for the new round
+        this.activateQueuedBets();
+        this.executeAutoBets();
+
+        // Start local animation loop
+        cancelAnimationFrame(this.animationId);
+        this.animationId = requestAnimationFrame(() => this.draw());
+    }
+
+    resetForNewRound() {
+        // Clear old round artifacts - counter will be set by backend
+        const counterElement = document.getElementById('counter');
+        if (counterElement) {
+            counterElement.textContent = '';
+            counterElement.className = 'waiting';
+        }
+        
+        // Reset betting buttons for those not in auto-bet
+        Object.keys(this.bets).forEach(betType => {
+            const bet = this.bets[betType];
+            const button = betType === 'bet1' ? this.betButton1 : this.betButton2;
+            if (button && !bet.pending) {
+                button.textContent = 'BET';
+                button.className = 'bet-button';
+                button.disabled = false;
+            }
+        });
+    }
+
+    renderCountdownOverlay(countdown) {
+        let overlay = document.querySelector('.countdown-overlay');
+        if (!overlay) {
+            const gameArea = document.getElementById('counterWrapper');
+            overlay = document.createElement('div');
+            overlay.className = 'countdown-overlay';
+            overlay.style.cssText = `
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                z-index: 1000;
+                text-align: center;
+                pointer-events: none;
+            `;
+            overlay.innerHTML = `
+                <div style="display: flex; justify-content: center; margin-bottom: 20px;">
+                    <img src="ufc.svg" alt="UFC" height="100" style="opacity: 0.9;">
+                </div>
+                <div style="width: 200px; height: 6px; background: rgba(255, 255, 255, 0.3); border-radius: 3px; margin: 0 auto; overflow: hidden; box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);">
+                    <div class="countdown-progress" style="height: 100%; background: linear-gradient(90deg, #ff4444, #ff6666); width: 0%; transition: width 0.3s ease; border-radius: 3px;"></div>
+                </div>
+                <div style="display: flex; justify-content: center; margin-top: 20px;">
+                    <img src="spribe.svg" alt="Spribe" height="55" style="opacity: 0.8;">
+                </div>
+            `;
+            gameArea.appendChild(overlay);
+        }
+
+        const progressBar = overlay.querySelector('.countdown-progress');
+        if (progressBar) {
+            const progress = ((2.5 - countdown) / 2.5) * 100;
+            progressBar.style.width = `${Math.max(0, Math.min(100, progress))}%`;
+        }
+
+        const counterElement = document.getElementById('counter');
+        if (counterElement) {
+            counterElement.innerHTML = '';
+            counterElement.className = 'waiting';
         }
     }
 
@@ -3114,7 +2957,8 @@ let game;
 
 // WebSocket Initialization
 async function initializeWebSocket() {
-    const API_BASE_URL = window.location.hostname === 'localhost'
+    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    const API_BASE_URL = isLocal
         ? 'http://localhost:3001'
         : 'https://aviator-casino.onrender.com';
 
@@ -3312,7 +3156,7 @@ document.addEventListener('DOMContentLoaded', () => {
             };
 
             // Initialize authentication system
-            window.classyBetAPI = new ClassyBetAPI();
+            // Use the global instance created in api.js
             setupAuthEventListeners();
 
             // Initialize WebSocket connection
@@ -3340,7 +3184,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // Authentication Event Listeners
 function setupAuthEventListeners() {
     // Set up API event listeners
-    classyBetAPI.on('onAuthChange', (data) => {
+    classybetAPI.on('onAuthChange', (data) => {
         if (data.authenticated) {
             showUserView();
             updateUserDisplay(data.user);
@@ -3350,11 +3194,11 @@ function setupAuthEventListeners() {
         }
     });
 
-    classyBetAPI.on('onBalanceUpdate', (balance) => {
+    classybetAPI.on('onBalanceUpdate', (balance) => {
         updateBalanceDisplay(balance);
     });
 
-    classyBetAPI.on('onBetUpdate', (data) => {
+    classybetAPI.on('onBetUpdate', (data) => {
         updateBetDisplay(data);
     });
 }
@@ -3389,7 +3233,7 @@ function showDemoIndicator() {
     document.body.classList.add('demo-mode');
 
     // Update page title to indicate demo mode
-    document.title = 'ClassyBet Aviator - Demo Mode';
+    document.title = 'JetBet Aviator - Demo Mode';
 
     // Replace user navigation with demo navigation
     const userNav = document.getElementById('user-nav');
@@ -3442,7 +3286,7 @@ function hideDemoIndicator() {
     document.body.classList.remove('demo-mode');
 
     // Reset page title
-    document.title = 'ClassyBet Aviator - Premium Gaming';
+    document.title = 'Classybet Aviator - Premium Gaming';
 }
 
 function showUserView(user) {
@@ -3538,26 +3382,32 @@ function updateUserDisplay(user) {
 function updateBalanceDisplay(balance) {
     // Get user currency for formatting
     const currency = (typeof window.getUserCurrency === 'function') ? window.getUserCurrency() : 'KES';
-    const formattedBalance = (typeof window.formatCurrency === 'function')
-        ? window.formatCurrency(balance, currency)
-        : `KES ${balance.toFixed(2)}`;
-
-    // Update navigation balance
-    const navBalance = document.getElementById('nav-balance');
-    if (navBalance) {
-        navBalance.textContent = formattedBalance;
+    
+    // Robust formatting that handles commas regardless of helper availability
+    let formattedBalance;
+    if (typeof window.formatCurrency === 'function') {
+        formattedBalance = window.formatCurrency(balance, currency);
+    } else {
+        const symbol = (typeof window.getCurrencySymbol === 'function') ? window.getCurrencySymbol(currency) : currency;
+        const num = parseFloat(balance) || 0;
+        formattedBalance = `${symbol} ${num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     }
 
-    // Update game header balance
-    const gameHeaderBalance = document.getElementById('balance-amount');
-    if (gameHeaderBalance) {
-        gameHeaderBalance.textContent = formattedBalance;
-    }
+    // Update all potential balance elements across different pages
+    const balanceIds = ['nav-balance', 'balance-amount', 'headerBalance', 'header-balance', 'profile-balance', 'biggest-win'];
+    
+    balanceIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            // Some elements might have "KES " prefix hardcoded in HTML before the span, 
+            // but updateBalanceDisplay usually sets the full text including symbol.
+            el.textContent = formattedBalance;
+        }
+    });
 
     // Update game instance balance
     if (window.game) {
         window.game.playerBalance = balance;
-        // The game's updateBalance will also update navigation, but we already did it above
     }
 }
 
@@ -3626,8 +3476,8 @@ document.getElementById('deposit-form').addEventListener('submit', async (e) => 
     const instructionsSection = document.querySelector('#deposit-modal .deposit-instructions');
 
     // Validate amount
-    if (isNaN(amount) || amount < 100 || amount > 150000) {
-        showError('deposit-error', 'Amount must be between KES 100 and KES 150,000');
+    if (isNaN(amount) || amount < 999 || amount > 150000) {
+        showError('deposit-error', 'Amount must be between KES 999 and KES 150,000');
         return;
     }
 
@@ -3649,13 +3499,13 @@ document.getElementById('deposit-form').addEventListener('submit', async (e) => 
         instructionsSection.style.display = 'block';
     }
 
-    const result = await classyBetAPI.depositSTK(amount, phoneNumber);
+    const result = await jetbetAPI.depositSTK(amount, phoneNumber);
 
     // Keep local API instance in sync with latest user data after deposit attempt
     const latestUserData = localStorage.getItem('userData');
     if (latestUserData) {
         try {
-            classyBetAPI.user = JSON.parse(latestUserData);
+            jetbetAPI.user = JSON.parse(latestUserData);
         } catch (error) {
             console.error('Failed to parse user data after deposit attempt:', error);
         }
@@ -3722,7 +3572,7 @@ if (depositBtn) {
 const profileBtn = document.getElementById('profile-btn');
 if (profileBtn) {
     profileBtn.addEventListener('click', () => {
-        if (!classyBetAPI.isAuthenticated()) {
+        if (!classybetAPI.isAuthenticated()) {
             window.location.href = '/';
             return;
         }
@@ -3743,7 +3593,7 @@ if (adminBtn) {
         const isLocal = window.location.hostname === 'localhost' ||
             window.location.hostname === '127.0.0.1' ||
             window.location.protocol === 'file:';
-        const adminUrl = isLocal ? 'http://localhost:3001/admin' : 'https://aviator-casino.onrender.com/admin';
+        const adminUrl = isLocal ? 'http://localhost:3001/admin' : 'https://jetbet-m26i.onrender.com/admin';
         console.log('Admin URL:', adminUrl);
         window.open(adminUrl, '_blank');
     });
@@ -3807,16 +3657,7 @@ let integrateGameRetries = 0;
 // OLD INTEGRATION REMOVED - Now using syncBetWithBackend for all bet/cashout operations
 // This prevents duplicate balance deductions and ensures backend is source of truth
 
-// Initialize game loop with backend round synchronization
-AviatorGame.prototype.initializeGameLoop = async function () {
-    console.log('Initializing backend-controlled game loop...');
-
-    // Fetch initial round schedule
-    await this.fetchRoundSchedule();
-
-    // Start the countdown for first round
-    this.startCountdown();
-};
+// initializeGameLoop REMOVED - everything is server-driven
 
 // Initialize everything when page loads
 document.addEventListener('DOMContentLoaded', () => {
