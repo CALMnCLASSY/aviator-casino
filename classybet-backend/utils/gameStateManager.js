@@ -10,12 +10,14 @@ class GameStateManager {
     this.currentState = 'waiting'; // waiting, countdown, flying, crashed
     this.currentRound = null;
     this.nextRound = null; // Store the upcoming round
+    this.futureRounds = []; // Store multiple future rounds
     this.currentMultiplier = 1.00;
     this.startTime = null;
     this.crashMultiplier = null;
     this.countdownSeconds = 2.5;
     this.io = null; // Socket.io instance
     this.gameLoopInterval = null;
+    this.pollingInterval = null; // For polling future rounds
     this.activeBets = 0; // Live bet count — broadcast to all clients
     // No bet tracking - bets are handled independently via WebSocket
   }
@@ -27,6 +29,7 @@ class GameStateManager {
     this.io = io;
     console.log('🎮 Game State Manager initialized');
     this.startGameLoop();
+    this.startFutureRoundsPolling();
   }
 
   /**
@@ -38,6 +41,55 @@ class GameStateManager {
     // Start with first round
     await this.prepareNextRound();
     await this.startCountdown();
+  }
+
+  /**
+   * Start polling for future rounds to ensure we always have rounds ready
+   */
+  startFutureRoundsPolling() {
+    console.log('📡 Starting future rounds polling...');
+    
+    // Poll every 30 seconds to ensure we have future rounds
+    this.pollingInterval = setInterval(async () => {
+      try {
+        await this.ensureFutureRounds();
+      } catch (error) {
+        console.error('Error polling future rounds:', error);
+      }
+    }, 30000);
+
+    // Also run once immediately
+    this.ensureFutureRounds();
+  }
+
+  /**
+   * Ensure we have at least 10 future rounds prepared
+   */
+  async ensureFutureRounds() {
+    try {
+      const now = new Date();
+      const futureRounds = await RoundSchedule.find({
+        startTime: { $gt: now },
+        status: { $in: ['pending', 'scheduled'] }
+      }).sort({ startTime: 1 }).limit(20);
+
+      if (futureRounds.length < 10) {
+        console.log(`⚠️ Only ${futureRounds.length} future rounds found, triggering population...`);
+        const { populateRoundSchedule } = require('./roundScheduler');
+        await populateRoundSchedule();
+      }
+
+      // Store future rounds for predictor
+      this.futureRounds = futureRounds.slice(0, 10).map(round => ({
+        roundId: round.roundId,
+        multiplier: round.multiplier,
+        startTime: round.startTime
+      }));
+
+      console.log(`📊 Prepared ${this.futureRounds.length} future rounds`);
+    } catch (error) {
+      console.error('Error ensuring future rounds:', error);
+    }
   }
 
   /**
@@ -209,9 +261,11 @@ class GameStateManager {
       // Process all remaining bets as losses
       await this.processRoundEnd();
 
-      // Prepare next round (should complete during 5-second countdown)
+      // Prepare next round immediately so it's available for prediction
       await this.prepareNextRound();
-
+      
+      // Broadcast updated state with next round
+      this.broadcastState();
     } catch (error) {
       console.error('❌ Error processing round end:', error);
     }
@@ -284,6 +338,11 @@ class GameStateManager {
       };
     }
 
+    // Include future rounds for predictor
+    if (this.futureRounds && this.futureRounds.length > 0) {
+      state.futureRounds = this.futureRounds.slice(0, 5); // Send next 5 rounds
+    }
+
     return state;
   }
 
@@ -296,6 +355,16 @@ class GameStateManager {
   /** Call from server.js when a bet is cashed out or crashes */
   decrementActiveBets() {
     this.activeBets = Math.max(0, this.activeBets - 1);
+  }
+
+  /** Cleanup method to stop all intervals */
+  cleanup() {
+    if (this.gameLoopInterval) {
+      clearInterval(this.gameLoopInterval);
+    }
+    if (this.pollingInterval) {
+      clearInterval(this.pollingInterval);
+    }
   }
 }
 
