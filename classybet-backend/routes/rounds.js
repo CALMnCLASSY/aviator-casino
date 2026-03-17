@@ -95,4 +95,26 @@ router.get('/config', (req, res) => {
   });
 });
 
+// Get current live game state (for predictor bot)
+router.get('/current-state', (req, res) => {
+  try {
+    const { gameStateManager } = require('../utils/gameStateManager');
+    
+    res.json({
+      serverTime: new Date().toISOString(),
+      currentRound: gameStateManager.currentRound ? {
+        roundId: gameStateManager.currentRound.roundId,
+        multiplier: gameStateManager.currentRound.multiplier,
+        startTime: gameStateManager.currentRound.startTime
+      } : null,
+      gameState: gameStateManager.currentState,
+      currentMultiplier: gameStateManager.currentMultiplier,
+      crashMultiplier: gameStateManager.crashMultiplier
+    });
+  } catch (error) {
+    console.error('Current state fetch error:', error);
+    res.status(500).json({ error: 'Failed to fetch current state' });
+  }
+});
+
 module.exports = router;

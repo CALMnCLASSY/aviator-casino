@@ -51,12 +51,12 @@ function generateMultiplier(roundId, startTime) {
     // 45% chance: 1.00x - 1.99x (VERY LOW)
     const range = 0.99; // 1.99 - 1.00
     multiplier = 1.00 + (random / 0.45) * range;
-  } else if (random < 0.92) {
+  } else if (random < 0.80) {
     // 35% chance: 2.00x - 4.99x (LOW-MEDIUM)
     const range = 2.99; // 4.99 - 2.00
     const normalized = (random - 0.45) / 0.35;
     multiplier = 2.00 + normalized * range;
-  } else if (random < 0.98) {
+  } else if (random < 0.96) {
     // 16% chance: 5.00x - 9.99x (MEDIUM)
     const range = 4.99; // 9.99 - 5.00
     const normalized = (random - 0.80) / 0.16;

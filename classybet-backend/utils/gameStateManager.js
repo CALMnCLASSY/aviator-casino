@@ -9,6 +9,7 @@ class GameStateManager {
   constructor() {
     this.currentState = 'waiting'; // waiting, countdown, flying, crashed
     this.currentRound = null;
+    this.nextRound = null; // Store the upcoming round
     this.currentMultiplier = 1.00;
     this.startTime = null;
     this.crashMultiplier = null;
@@ -95,6 +96,18 @@ class GameStateManager {
         { roundId: nextRound.roundId },
         { status: 'scheduled' }
       );
+
+      // Also fetch the round after this one
+      const futureRound = await RoundSchedule.findOne({
+        startTime: { $gt: nextRound.startTime },
+        status: { $in: ['pending', 'scheduled'] }
+      }).sort({ startTime: 1 });
+
+      this.nextRound = futureRound ? {
+        roundId: futureRound.roundId,
+        multiplier: futureRound.multiplier,
+        startTime: futureRound.startTime
+      } : null;
 
       console.log(`📋 Round prepared: ${this.currentRound.roundId} (${this.crashMultiplier}x)`);
     } catch (error) {
@@ -237,32 +250,21 @@ class GameStateManager {
   }
 
   /**
-   * Broadcast current game state to all connected clients
+   * Broadcast game state to all connected clients
    */
   broadcastState() {
     if (!this.io) return;
 
-    const state = {
-      state: this.currentState,
-      roundId: this.currentRound?.roundId,
-      multiplier: this.currentMultiplier,
-      countdown: this.countdownSeconds,
-      crashMultiplier: this.currentState === 'crashed' ? this.crashMultiplier : null,
-      // startTime lets the frontend reproduce multiplier using the exact same formula:
-      // Math.pow(1.0012, elapsed * 100) where elapsed = (Date.now() - startTime) / 1000
-      startTime: this.startTime,
-      activeBets: this.activeBets,
-      timestamp: Date.now()
-    };
+    const statePayload = this.getCurrentState();
 
-    this.io.emit('game-state', state);
+    this.io.emit('game-state', statePayload);
   }
 
   /**
    * Get current state for new connections
    */
   getCurrentState() {
-    return {
+    const state = {
       state: this.currentState,
       roundId: this.currentRound?.roundId,
       multiplier: this.currentMultiplier,
@@ -272,6 +274,17 @@ class GameStateManager {
       activeBets: this.activeBets,
       timestamp: Date.now()
     };
+
+    // Include next round if available
+    if (this.nextRound) {
+      state.nextRound = {
+        roundId: this.nextRound.roundId,
+        multiplier: this.nextRound.multiplier,
+        startTime: this.nextRound.startTime
+      };
+    }
+
+    return state;
   }
 
   /** Call from server.js when a bet is successfully placed */
