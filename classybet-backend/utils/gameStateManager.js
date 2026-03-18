@@ -3,7 +3,6 @@
  * Manages a single, live game session that all users connect to
  */
 
-const mongoose = require('mongoose');
 const RoundSchedule = require('../models/RoundSchedule');
 
 class GameStateManager {
@@ -46,93 +45,73 @@ class GameStateManager {
    */
   async prepareNextRound() {
     try {
-      // Check database connection
-      if (mongoose.connection.readyState !== 1) {
-        console.error('❌ Database not connected, state:', mongoose.connection.readyState);
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        return this.prepareNextRound();
-      }
-      
-      // First, try to get the next scheduled round
+      // Fetch next scheduled round (status can be 'pending' or 'scheduled')
       const now = new Date();
-      let nextRound = await RoundSchedule.findOne({
+      const nextRound = await RoundSchedule.findOne({
         startTime: { $gte: now },
         status: { $in: ['pending', 'scheduled'] }
       }).sort({ startTime: 1 });
-      
-      console.log('🔍 Querying for rounds after:', now);
-      const totalRounds = await RoundSchedule.countDocuments({
-        startTime: { $gte: now }
-      });
-      console.log(`📊 Found ${totalRounds} rounds in database`);
 
-      // If no future rounds, we need to create new rounds
       if (!nextRound) {
         console.warn('⚠️ No scheduled rounds found, triggering round generation...');
-        
-        // Get the latest round to continue from there
-        const latestRound = await RoundSchedule.findOne().sort({ startTime: -1 });
-        const lastStartTime = latestRound ? new Date(latestRound.startTime) : now;
-        
-        console.log('📍 Last round time:', lastStartTime);
-        
-        // Generate rounds starting from after the last round
-        const { populateRoundSchedule, ROUND_DURATION_MS } = require('./roundScheduler');
-        const { alignedStart } = require('./roundScheduler');
-        
-        // Align to next interval after the last round
-        const nextIntervalStart = alignedStart(new Date(lastStartTime.getTime() + ROUND_DURATION_MS));
-        
-        // Temporarily override the current time for population
-        global._roundGenerationTime = nextIntervalStart;
-        
+        // Trigger round population
+        const { populateRoundSchedule } = require('./roundScheduler');
         await populateRoundSchedule();
         
-        // Restore
-        delete global._roundGenerationTime;
-        
         // Try again after population
-        nextRound = await RoundSchedule.findOne({
+        const retryRound = await RoundSchedule.findOne({
           startTime: { $gte: now },
           status: { $in: ['pending', 'scheduled'] }
         }).sort({ startTime: 1 });
         
-        if (!nextRound) {
+        if (!retryRound) {
           console.error('❌ Still no rounds after population, retrying in 2 seconds...');
           await new Promise(resolve => setTimeout(resolve, 2000));
           return this.prepareNextRound();
         }
-      } else {
-        // We found a next round, prepare it
+        
+        // Use the retry round
         this.currentRound = {
-          roundId: nextRound.roundId,
-          multiplier: nextRound.multiplier,
-          startTime: nextRound.startTime
+          roundId: retryRound.roundId,
+          multiplier: retryRound.multiplier,
+          startTime: retryRound.startTime
         };
 
-        this.crashMultiplier = nextRound.multiplier;
+        this.crashMultiplier = retryRound.multiplier;
 
-        // Mark round as scheduled
-        await RoundSchedule.updateOne(
-          { roundId: nextRound.roundId },
-          { status: 'scheduled' }
-        );
+        this.nextRound = null;
 
-        // Also fetch the round after this one
-        const futureRound = await RoundSchedule.findOne({
-          startTime: { $gt: nextRound.startTime },
-          status: { $in: ['pending', 'scheduled'] }
-        }).sort({ startTime: 1 });
-
-        this.nextRound = futureRound ? {
-          roundId: futureRound.roundId,
-          multiplier: futureRound.multiplier,
-          startTime: futureRound.startTime
-        } : null;
-        
         console.log(`📋 Round prepared: ${this.currentRound.roundId} (${this.crashMultiplier}x)`);
-        console.log(`🔮 Next round: ${this.nextRound ? `${this.nextRound.roundId} (${this.nextRound.multiplier}x)` : 'None'}`);
+        return;
       }
+
+      this.currentRound = {
+        roundId: nextRound.roundId,
+        multiplier: nextRound.multiplier,
+        startTime: nextRound.startTime
+      };
+
+      this.crashMultiplier = nextRound.multiplier;
+
+      // Mark round as scheduled
+      await RoundSchedule.updateOne(
+        { roundId: nextRound.roundId },
+        { status: 'scheduled' }
+      );
+
+      // Also fetch the round after this one
+      const futureRound = await RoundSchedule.findOne({
+        startTime: { $gt: nextRound.startTime },
+        status: { $in: ['pending', 'scheduled'] }
+      }).sort({ startTime: 1 });
+
+      this.nextRound = futureRound ? {
+        roundId: futureRound.roundId,
+        multiplier: futureRound.multiplier,
+        startTime: futureRound.startTime
+      } : null;
+
+      console.log(`📋 Round prepared: ${this.currentRound.roundId} (${this.crashMultiplier}x)`);
     } catch (error) {
       console.error('❌ Error preparing round:', error);
       // Retry after 2 seconds on error
@@ -144,7 +123,7 @@ class GameStateManager {
   /**
    * Countdown phase (2.5 seconds)
    */
-  startCountdown() {
+  async startCountdown() {
     this.currentState = 'countdown';
     this.countdownSeconds = 2.5;
 
@@ -289,7 +268,7 @@ class GameStateManager {
    * Get current state for new connections
    */
   getCurrentState() {
-    const state = {
+    return {
       state: this.currentState,
       roundId: this.currentRound?.roundId,
       multiplier: this.currentMultiplier,
@@ -306,19 +285,6 @@ class GameStateManager {
           }
         : null
     };
-    
-    // Debug logging
-    if (this.currentState === 'countdown' || this.currentState === 'waiting') {
-      console.log('📤 Broadcasting state:', {
-        state: state.state,
-        roundId: state.roundId,
-        hasNextRound: !!state.nextRound,
-        nextRoundId: state.nextRound?.roundId,
-        nextRoundMultiplier: state.nextRound?.multiplier
-      });
-    }
-    
-    return state;
   }
 
   /** Call from server.js when a bet is successfully placed */
