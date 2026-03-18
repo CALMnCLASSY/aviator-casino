@@ -79,9 +79,19 @@ class GameStateManager {
 
         this.crashMultiplier = retryRound.multiplier;
 
-        this.nextRound = null;
+        // Try to get the future round after the retry round
+        const futureRoundAfterRetry = await RoundSchedule.findOne({
+          startTime: { $gt: retryRound.startTime },
+          status: { $in: ['pending', 'scheduled'] }
+        }).sort({ startTime: 1 });
 
-        console.log(`📋 Round prepared: ${this.currentRound.roundId} (${this.crashMultiplier}x)`);
+        this.nextRound = futureRoundAfterRetry ? {
+          roundId: futureRoundAfterRetry.roundId,
+          multiplier: futureRoundAfterRetry.multiplier,
+          startTime: futureRoundAfterRetry.startTime
+        } : null;
+
+        console.log(`📋 Round prepared: ${this.currentRound.roundId} (${this.crashMultiplier}x) - Next round: ${this.nextRound ? this.nextRound.roundId : 'None'}`);
         return;
       }
 
@@ -111,7 +121,29 @@ class GameStateManager {
         startTime: futureRound.startTime
       } : null;
 
-      console.log(`📋 Round prepared: ${this.currentRound.roundId} (${this.crashMultiplier}x)`);
+      // If no future round found, try to ensure we always have one
+      if (!this.nextRound) {
+        console.warn('⚠️ No future round found, attempting to generate more rounds...');
+        const { populateRoundSchedule } = require('./roundScheduler');
+        await populateRoundSchedule();
+        
+        // Try again to get the future round
+        const retryFutureRound = await RoundSchedule.findOne({
+          startTime: { $gt: nextRound.startTime },
+          status: { $in: ['pending', 'scheduled'] }
+        }).sort({ startTime: 1 });
+        
+        if (retryFutureRound) {
+          this.nextRound = {
+            roundId: retryFutureRound.roundId,
+            multiplier: retryFutureRound.multiplier,
+            startTime: retryFutureRound.startTime
+          };
+          console.log(`✅ Future round found after population: ${this.nextRound.roundId}`);
+        }
+      }
+
+      console.log(`📋 Round prepared: ${this.currentRound.roundId} (${this.crashMultiplier}x) - Next round: ${this.nextRound ? this.nextRound.roundId : 'None'}`);
     } catch (error) {
       console.error('❌ Error preparing round:', error);
       // Retry after 2 seconds on error
@@ -213,6 +245,30 @@ class GameStateManager {
 
       // Prepare next round immediately so it's available for prediction
       await this.prepareNextRound();
+      
+      // Ensure we have a next round after preparing the current one
+      if (!this.nextRound) {
+        console.warn('⚠️ No next round available after preparation, attempting to populate more...');
+        const { populateRoundSchedule } = require('./roundScheduler');
+        await populateRoundSchedule();
+        
+        // Try to get the future round again
+        if (this.currentRound) {
+          const futureRound = await RoundSchedule.findOne({
+            startTime: { $gt: this.currentRound.startTime },
+            status: { $in: ['pending', 'scheduled'] }
+          }).sort({ startTime: 1 });
+          
+          if (futureRound) {
+            this.nextRound = {
+              roundId: futureRound.roundId,
+              multiplier: futureRound.multiplier,
+              startTime: futureRound.startTime
+            };
+            console.log(`✅ Next round secured: ${this.nextRound.roundId}`);
+          }
+        }
+      }
       
       // Broadcast updated state with next round
       this.broadcastState();

@@ -75,7 +75,10 @@ async function populateRoundSchedule() {
   try {
     const now = new Date();
     const alignedStart = alignToInterval(now);
-    const targetEndTime = new Date(alignedStart.getTime() + ROUND_LOOKAHEAD * ROUND_DURATION_MS);
+    
+    // Ensure we have at least 10 minutes of future rounds (20 rounds at 30-second intervals)
+    const minLookahead = 20;
+    const targetEndTime = new Date(alignedStart.getTime() + Math.max(ROUND_LOOKAHEAD, minLookahead) * ROUND_DURATION_MS);
 
     const existing = await RoundSchedule.find({
       startTime: { $gte: alignedStart, $lte: targetEndTime }
