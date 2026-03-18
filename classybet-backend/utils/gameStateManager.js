@@ -84,7 +84,6 @@ class GameStateManager {
         const nextIntervalStart = alignedStart(new Date(lastStartTime.getTime() + ROUND_DURATION_MS));
         
         // Temporarily override the current time for population
-        const originalNow = now;
         global._roundGenerationTime = nextIntervalStart;
         
         await populateRoundSchedule();
@@ -103,35 +102,37 @@ class GameStateManager {
           await new Promise(resolve => setTimeout(resolve, 2000));
           return this.prepareNextRound();
         }
+      } else {
+        // We found a next round, prepare it
+        this.currentRound = {
+          roundId: nextRound.roundId,
+          multiplier: nextRound.multiplier,
+          startTime: nextRound.startTime
+        };
 
-      this.currentRound = {
-        roundId: nextRound.roundId,
-        multiplier: nextRound.multiplier,
-        startTime: nextRound.startTime
-      };
+        this.crashMultiplier = nextRound.multiplier;
 
-      this.crashMultiplier = nextRound.multiplier;
+        // Mark round as scheduled
+        await RoundSchedule.updateOne(
+          { roundId: nextRound.roundId },
+          { status: 'scheduled' }
+        );
 
-      // Mark round as scheduled
-      await RoundSchedule.updateOne(
-        { roundId: nextRound.roundId },
-        { status: 'scheduled' }
-      );
+        // Also fetch the round after this one
+        const futureRound = await RoundSchedule.findOne({
+          startTime: { $gt: nextRound.startTime },
+          status: { $in: ['pending', 'scheduled'] }
+        }).sort({ startTime: 1 });
 
-      // Also fetch the round after this one
-      const futureRound = await RoundSchedule.findOne({
-        startTime: { $gt: nextRound.startTime },
-        status: { $in: ['pending', 'scheduled'] }
-      }).sort({ startTime: 1 });
-
-      this.nextRound = futureRound ? {
-        roundId: futureRound.roundId,
-        multiplier: futureRound.multiplier,
-        startTime: futureRound.startTime
-      } : null;
-      
-      console.log(`📋 Round prepared: ${this.currentRound.roundId} (${this.crashMultiplier}x)`);
-      console.log(`🔮 Next round: ${this.nextRound ? `${this.nextRound.roundId} (${this.nextRound.multiplier}x)` : 'None'}`);
+        this.nextRound = futureRound ? {
+          roundId: futureRound.roundId,
+          multiplier: futureRound.multiplier,
+          startTime: futureRound.startTime
+        } : null;
+        
+        console.log(`📋 Round prepared: ${this.currentRound.roundId} (${this.crashMultiplier}x)`);
+        console.log(`🔮 Next round: ${this.nextRound ? `${this.nextRound.roundId} (${this.nextRound.multiplier}x)` : 'None'}`);
+      }
     } catch (error) {
       console.error('❌ Error preparing round:', error);
       // Retry after 2 seconds on error
