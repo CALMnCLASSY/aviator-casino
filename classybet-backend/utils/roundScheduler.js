@@ -73,7 +73,8 @@ function generateMultiplier(roundId, startTime) {
 
 async function populateRoundSchedule() {
   try {
-    const now = new Date();
+    // Use custom time if set (for continuing from past rounds)
+    const now = global._roundGenerationTime ? new Date(global._roundGenerationTime) : new Date();
     const alignedStart = alignToInterval(now);
     const targetEndTime = new Date(alignedStart.getTime() + ROUND_LOOKAHEAD * ROUND_DURATION_MS);
 

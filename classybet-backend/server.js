@@ -363,11 +363,11 @@ const io = new Server(server, {
 });
 
 // WebSocket connection handling
-io.on('connection', async (socket) => {
+io.on('connection', (socket) => {
   console.log(`🔌 Client connected: ${socket.id}`);
 
   // Send current game state immediately
-  socket.emit('game-state', await gameStateManager.getCurrentState());
+  socket.emit('game-state', gameStateManager.getCurrentState());
 
   // Handle bet placement
   socket.on('place-bet', async (data) => {
@@ -421,7 +421,7 @@ io.on('connection', async (socket) => {
       console.log(`💰 Bet placed: ${userId} - ${amount} KES | New balance: ${user.balance} | Round: ${gameState.roundId}`);
 
       // Increment shared bet counter — triggers broadcast to all clients
-      await gameStateManager.incrementActiveBets();
+      gameStateManager.incrementActiveBets();
 
       socket.emit('bet-placed', {
         success: true,

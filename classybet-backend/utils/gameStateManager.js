@@ -53,9 +53,9 @@ class GameStateManager {
         return this.prepareNextRound();
       }
       
-      // Fetch next scheduled round (status can be 'pending' or 'scheduled')
+      // First, try to get the next scheduled round
       const now = new Date();
-      const nextRound = await RoundSchedule.findOne({
+      let nextRound = await RoundSchedule.findOne({
         startTime: { $gte: now },
         status: { $in: ['pending', 'scheduled'] }
       }).sort({ startTime: 1 });
@@ -66,38 +66,43 @@ class GameStateManager {
       });
       console.log(`📊 Found ${totalRounds} rounds in database`);
 
+      // If no future rounds, we need to create new rounds
       if (!nextRound) {
         console.warn('⚠️ No scheduled rounds found, triggering round generation...');
-        // Trigger round population
-        const { populateRoundSchedule } = require('./roundScheduler');
+        
+        // Get the latest round to continue from there
+        const latestRound = await RoundSchedule.findOne().sort({ startTime: -1 });
+        const lastStartTime = latestRound ? new Date(latestRound.startTime) : now;
+        
+        console.log('📍 Last round time:', lastStartTime);
+        
+        // Generate rounds starting from after the last round
+        const { populateRoundSchedule, ROUND_DURATION_MS } = require('./roundScheduler');
+        const { alignedStart } = require('./roundScheduler');
+        
+        // Align to next interval after the last round
+        const nextIntervalStart = alignedStart(new Date(lastStartTime.getTime() + ROUND_DURATION_MS));
+        
+        // Temporarily override the current time for population
+        const originalNow = now;
+        global._roundGenerationTime = nextIntervalStart;
+        
         await populateRoundSchedule();
         
+        // Restore
+        delete global._roundGenerationTime;
+        
         // Try again after population
-        const retryRound = await RoundSchedule.findOne({
+        nextRound = await RoundSchedule.findOne({
           startTime: { $gte: now },
           status: { $in: ['pending', 'scheduled'] }
         }).sort({ startTime: 1 });
         
-        if (!retryRound) {
+        if (!nextRound) {
           console.error('❌ Still no rounds after population, retrying in 2 seconds...');
           await new Promise(resolve => setTimeout(resolve, 2000));
           return this.prepareNextRound();
         }
-        
-        // Use the retry round
-        this.currentRound = {
-          roundId: retryRound.roundId,
-          multiplier: retryRound.multiplier,
-          startTime: retryRound.startTime
-        };
-
-        this.crashMultiplier = retryRound.multiplier;
-
-        this.nextRound = null;
-
-        console.log(`📋 Round prepared: ${this.currentRound.roundId} (${this.crashMultiplier}x)`);
-        return;
-      }
 
       this.currentRound = {
         roundId: nextRound.roundId,
@@ -138,16 +143,16 @@ class GameStateManager {
   /**
    * Countdown phase (2.5 seconds)
    */
-  async startCountdown() {
+  startCountdown() {
     this.currentState = 'countdown';
     this.countdownSeconds = 2.5;
 
     // ❌ REMOVED: Countdown log - frontend handles display
-    await this.broadcastState();
+    this.broadcastState();
 
-    const countdownInterval = setInterval(async () => {
+    const countdownInterval = setInterval(() => {
       this.countdownSeconds--;
-      await this.broadcastState();
+      this.broadcastState();
 
       if (this.countdownSeconds <= 0) {
         clearInterval(countdownInterval);
@@ -175,7 +180,7 @@ class GameStateManager {
     this.broadcastState();
 
     // Update multiplier every 100ms
-    const flyingInterval = setInterval(async () => {
+    const flyingInterval = setInterval(() => {
       const elapsed = (Date.now() - this.startTime) / 1000;
       
       // Calculate multiplier based on time (more gradual growth: 1.0012 base)
@@ -186,7 +191,7 @@ class GameStateManager {
         clearInterval(flyingInterval);
         this.crash();
       } else {
-        await this.broadcastState();
+        this.broadcastState();
       }
     }, 100);
   }
@@ -199,7 +204,7 @@ class GameStateManager {
     this.currentMultiplier = this.crashMultiplier;
 
     // Broadcast crash state immediately
-    await this.broadcastState();
+    this.broadcastState();
 
     // Start countdown after 2500ms (2.5 seconds to show "FLEW AWAY")
     setTimeout(async () => {
@@ -230,7 +235,7 @@ class GameStateManager {
       await this.prepareNextRound();
       
       // Broadcast updated state with next round
-      await this.broadcastState();
+      this.broadcastState();
     } catch (error) {
       console.error('❌ Error processing round end:', error);
     }
@@ -271,10 +276,10 @@ class GameStateManager {
   /**
    * Broadcast game state to all connected clients
    */
-  async broadcastState() {
+  broadcastState() {
     if (!this.io) return;
 
-    const statePayload = await this.getCurrentState();
+    const statePayload = this.getCurrentState();
 
     this.io.emit('game-state', statePayload);
   }
@@ -282,13 +287,7 @@ class GameStateManager {
   /**
    * Get current state for new connections
    */
-  async getCurrentState() {
-    // Fetch future rounds for prediction
-    const futureRounds = await RoundSchedule.find({
-      startTime: { $gt: this.currentRound?.startTime || new Date() },
-      status: { $in: ['pending', 'scheduled'] }
-    }).sort({ startTime: 1 }).limit(5).lean();
-    
+  getCurrentState() {
     const state = {
       state: this.currentState,
       roundId: this.currentRound?.roundId,
@@ -304,12 +303,7 @@ class GameStateManager {
             multiplier: this.nextRound.multiplier,
             startTime: this.nextRound.startTime
           }
-        : null,
-      futureRounds: futureRounds.map(r => ({
-        roundId: r.roundId,
-        multiplier: r.multiplier,
-        startTime: r.startTime
-      }))
+        : null
     };
     
     // Debug logging
@@ -319,8 +313,7 @@ class GameStateManager {
         roundId: state.roundId,
         hasNextRound: !!state.nextRound,
         nextRoundId: state.nextRound?.roundId,
-        nextRoundMultiplier: state.nextRound?.multiplier,
-        futureRoundsCount: state.futureRounds.length
+        nextRoundMultiplier: state.nextRound?.multiplier
       });
     }
     
@@ -328,9 +321,9 @@ class GameStateManager {
   }
 
   /** Call from server.js when a bet is successfully placed */
-  async incrementActiveBets() {
+  incrementActiveBets() {
     this.activeBets++;
-    await this.broadcastState();
+    this.broadcastState();
   }
 
   /** Call from server.js when a bet is cashed out or crashes */
