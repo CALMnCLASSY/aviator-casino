@@ -3,6 +3,7 @@
  * Manages a single, live game session that all users connect to
  */
 
+const mongoose = require('mongoose');
 const RoundSchedule = require('../models/RoundSchedule');
 
 class GameStateManager {
@@ -45,12 +46,25 @@ class GameStateManager {
    */
   async prepareNextRound() {
     try {
+      // Check database connection
+      if (mongoose.connection.readyState !== 1) {
+        console.error('❌ Database not connected, state:', mongoose.connection.readyState);
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        return this.prepareNextRound();
+      }
+      
       // Fetch next scheduled round (status can be 'pending' or 'scheduled')
       const now = new Date();
       const nextRound = await RoundSchedule.findOne({
         startTime: { $gte: now },
         status: { $in: ['pending', 'scheduled'] }
       }).sort({ startTime: 1 });
+      
+      console.log('🔍 Querying for rounds after:', now);
+      const totalRounds = await RoundSchedule.countDocuments({
+        startTime: { $gte: now }
+      });
+      console.log(`📊 Found ${totalRounds} rounds in database`);
 
       if (!nextRound) {
         console.warn('⚠️ No scheduled rounds found, triggering round generation...');
@@ -110,8 +124,9 @@ class GameStateManager {
         multiplier: futureRound.multiplier,
         startTime: futureRound.startTime
       } : null;
-
+      
       console.log(`📋 Round prepared: ${this.currentRound.roundId} (${this.crashMultiplier}x)`);
+      console.log(`🔮 Next round: ${this.nextRound ? `${this.nextRound.roundId} (${this.nextRound.multiplier}x)` : 'None'}`);
     } catch (error) {
       console.error('❌ Error preparing round:', error);
       // Retry after 2 seconds on error
@@ -128,11 +143,11 @@ class GameStateManager {
     this.countdownSeconds = 2.5;
 
     // ❌ REMOVED: Countdown log - frontend handles display
-    this.broadcastState();
+    await this.broadcastState();
 
-    const countdownInterval = setInterval(() => {
+    const countdownInterval = setInterval(async () => {
       this.countdownSeconds--;
-      this.broadcastState();
+      await this.broadcastState();
 
       if (this.countdownSeconds <= 0) {
         clearInterval(countdownInterval);
@@ -160,7 +175,7 @@ class GameStateManager {
     this.broadcastState();
 
     // Update multiplier every 100ms
-    const flyingInterval = setInterval(() => {
+    const flyingInterval = setInterval(async () => {
       const elapsed = (Date.now() - this.startTime) / 1000;
       
       // Calculate multiplier based on time (more gradual growth: 1.0012 base)
@@ -171,7 +186,7 @@ class GameStateManager {
         clearInterval(flyingInterval);
         this.crash();
       } else {
-        this.broadcastState();
+        await this.broadcastState();
       }
     }, 100);
   }
@@ -184,7 +199,7 @@ class GameStateManager {
     this.currentMultiplier = this.crashMultiplier;
 
     // Broadcast crash state immediately
-    this.broadcastState();
+    await this.broadcastState();
 
     // Start countdown after 2500ms (2.5 seconds to show "FLEW AWAY")
     setTimeout(async () => {
@@ -215,7 +230,7 @@ class GameStateManager {
       await this.prepareNextRound();
       
       // Broadcast updated state with next round
-      this.broadcastState();
+      await this.broadcastState();
     } catch (error) {
       console.error('❌ Error processing round end:', error);
     }
@@ -256,10 +271,10 @@ class GameStateManager {
   /**
    * Broadcast game state to all connected clients
    */
-  broadcastState() {
+  async broadcastState() {
     if (!this.io) return;
 
-    const statePayload = this.getCurrentState();
+    const statePayload = await this.getCurrentState();
 
     this.io.emit('game-state', statePayload);
   }
@@ -267,8 +282,14 @@ class GameStateManager {
   /**
    * Get current state for new connections
    */
-  getCurrentState() {
-    return {
+  async getCurrentState() {
+    // Fetch future rounds for prediction
+    const futureRounds = await RoundSchedule.find({
+      startTime: { $gt: this.currentRound?.startTime || new Date() },
+      status: { $in: ['pending', 'scheduled'] }
+    }).sort({ startTime: 1 }).limit(5).lean();
+    
+    const state = {
       state: this.currentState,
       roundId: this.currentRound?.roundId,
       multiplier: this.currentMultiplier,
@@ -283,14 +304,33 @@ class GameStateManager {
             multiplier: this.nextRound.multiplier,
             startTime: this.nextRound.startTime
           }
-        : null
+        : null,
+      futureRounds: futureRounds.map(r => ({
+        roundId: r.roundId,
+        multiplier: r.multiplier,
+        startTime: r.startTime
+      }))
     };
+    
+    // Debug logging
+    if (this.currentState === 'countdown' || this.currentState === 'waiting') {
+      console.log('📤 Broadcasting state:', {
+        state: state.state,
+        roundId: state.roundId,
+        hasNextRound: !!state.nextRound,
+        nextRoundId: state.nextRound?.roundId,
+        nextRoundMultiplier: state.nextRound?.multiplier,
+        futureRoundsCount: state.futureRounds.length
+      });
+    }
+    
+    return state;
   }
 
   /** Call from server.js when a bet is successfully placed */
-  incrementActiveBets() {
+  async incrementActiveBets() {
     this.activeBets++;
-    this.broadcastState();
+    await this.broadcastState();
   }
 
   /** Call from server.js when a bet is cashed out or crashes */

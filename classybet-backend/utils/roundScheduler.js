@@ -114,6 +114,15 @@ async function populateRoundSchedule() {
     if (bulkOps.length > 0) {
       const result = await RoundSchedule.bulkWrite(bulkOps, { ordered: false });
       console.log(`✅ Populated ${bulkOps.length} rounds (${result.upsertedCount} new, ${result.modifiedCount} updated)`);
+      
+      // Log first few rounds for debugging
+      const sampleRounds = bulkOps.slice(0, 3).map(op => ({
+        roundId: op.updateOne.update.$set.roundId,
+        multiplier: op.updateOne.update.$set.multiplier,
+        startTime: op.updateOne.update.$set.startTime
+      }));
+      console.log('📝 Sample rounds:', sampleRounds);
+      
       return bulkOps.length;
     }
 
