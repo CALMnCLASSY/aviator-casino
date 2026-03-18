@@ -10,14 +10,12 @@ class GameStateManager {
     this.currentState = 'waiting'; // waiting, countdown, flying, crashed
     this.currentRound = null;
     this.nextRound = null; // Store the upcoming round
-    this.futureRounds = []; // Store multiple future rounds
     this.currentMultiplier = 1.00;
     this.startTime = null;
     this.crashMultiplier = null;
     this.countdownSeconds = 2.5;
     this.io = null; // Socket.io instance
     this.gameLoopInterval = null;
-    this.pollingInterval = null; // For polling future rounds
     this.activeBets = 0; // Live bet count — broadcast to all clients
     // No bet tracking - bets are handled independently via WebSocket
   }
@@ -29,7 +27,6 @@ class GameStateManager {
     this.io = io;
     console.log('🎮 Game State Manager initialized');
     this.startGameLoop();
-    this.startFutureRoundsPolling();
   }
 
   /**
@@ -41,55 +38,6 @@ class GameStateManager {
     // Start with first round
     await this.prepareNextRound();
     await this.startCountdown();
-  }
-
-  /**
-   * Start polling for future rounds to ensure we always have rounds ready
-   */
-  startFutureRoundsPolling() {
-    console.log('📡 Starting future rounds polling...');
-    
-    // Poll every 30 seconds to ensure we have future rounds
-    this.pollingInterval = setInterval(async () => {
-      try {
-        await this.ensureFutureRounds();
-      } catch (error) {
-        console.error('Error polling future rounds:', error);
-      }
-    }, 30000);
-
-    // Also run once immediately
-    this.ensureFutureRounds();
-  }
-
-  /**
-   * Ensure we have at least 10 future rounds prepared
-   */
-  async ensureFutureRounds() {
-    try {
-      const now = new Date();
-      const futureRounds = await RoundSchedule.find({
-        startTime: { $gt: now },
-        status: { $in: ['pending', 'scheduled'] }
-      }).sort({ startTime: 1 }).limit(20);
-
-      if (futureRounds.length < 10) {
-        console.log(`⚠️ Only ${futureRounds.length} future rounds found, triggering population...`);
-        const { populateRoundSchedule } = require('./roundScheduler');
-        await populateRoundSchedule();
-      }
-
-      // Store future rounds for predictor
-      this.futureRounds = futureRounds.slice(0, 10).map(round => ({
-        roundId: round.roundId,
-        multiplier: round.multiplier,
-        startTime: round.startTime
-      }));
-
-      console.log(`📊 Prepared ${this.futureRounds.length} future rounds`);
-    } catch (error) {
-      console.error('Error ensuring future rounds:', error);
-    }
   }
 
   /**
@@ -130,6 +78,8 @@ class GameStateManager {
         };
 
         this.crashMultiplier = retryRound.multiplier;
+
+        this.nextRound = null;
 
         console.log(`📋 Round prepared: ${this.currentRound.roundId} (${this.crashMultiplier}x)`);
         return;
@@ -318,7 +268,7 @@ class GameStateManager {
    * Get current state for new connections
    */
   getCurrentState() {
-    const state = {
+    return {
       state: this.currentState,
       roundId: this.currentRound?.roundId,
       multiplier: this.currentMultiplier,
@@ -326,24 +276,15 @@ class GameStateManager {
       crashMultiplier: this.currentState === 'crashed' ? this.crashMultiplier : null,
       startTime: this.startTime,
       activeBets: this.activeBets,
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      nextRound: this.nextRound
+        ? {
+            roundId: this.nextRound.roundId,
+            multiplier: this.nextRound.multiplier,
+            startTime: this.nextRound.startTime
+          }
+        : null
     };
-
-    // Include next round if available
-    if (this.nextRound) {
-      state.nextRound = {
-        roundId: this.nextRound.roundId,
-        multiplier: this.nextRound.multiplier,
-        startTime: this.nextRound.startTime
-      };
-    }
-
-    // Include future rounds for predictor
-    if (this.futureRounds && this.futureRounds.length > 0) {
-      state.futureRounds = this.futureRounds.slice(0, 5); // Send next 5 rounds
-    }
-
-    return state;
   }
 
   /** Call from server.js when a bet is successfully placed */
@@ -361,9 +302,6 @@ class GameStateManager {
   cleanup() {
     if (this.gameLoopInterval) {
       clearInterval(this.gameLoopInterval);
-    }
-    if (this.pollingInterval) {
-      clearInterval(this.pollingInterval);
     }
   }
 }
