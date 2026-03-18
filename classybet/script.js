@@ -1561,8 +1561,8 @@ class AviatorGame {
         // Update the display immediately
         this.updateCounterDisplay();
         
-        // Fetch updated history from backend in background
-        this.fetchBackendHistory();
+        // Don't immediately fetch from backend to avoid overwriting local update
+        // Backend sync will happen naturally with next state updates
     }
 
     saveRoundHistory() {
@@ -2783,6 +2783,11 @@ class AviatorGame {
             this.animationId = null;
             this.isFlying = false;
             this.handleCrash();
+            
+            // Add round to history with crash multiplier
+            if (state.crashMultiplier !== undefined) {
+                this.addRoundToHistory(parseFloat(state.crashMultiplier));
+            }
         }
 
         // ── COUNTDOWN ─────────────────────────────────────────────────────────
@@ -2964,6 +2969,10 @@ async function initializeWebSocket() {
 
     try {
         console.log('[WebSocket] Connecting to:', API_BASE_URL);
+        
+        // Show connecting status
+        updateConnectionStatus('connecting');
+        
         await gameSocket.connect(API_BASE_URL);
         console.log('[WebSocket] ✅ Connected to game server');
 
@@ -2974,8 +2983,48 @@ async function initializeWebSocket() {
             }
         };
 
+        // Listen for connection status changes
+        gameSocket.onConnectionStatusChange = (status) => {
+            updateConnectionStatus(status);
+        };
+
     } catch (error) {
         console.error('[WebSocket] ❌ Connection failed:', error);
+        updateConnectionStatus('disconnected');
+    }
+}
+
+// Connection Status Management
+function updateConnectionStatus(status) {
+    const badge = document.getElementById('connection-status');
+    const text = document.getElementById('connection-text');
+    
+    if (!badge || !text) return;
+    
+    // Remove all status classes
+    badge.classList.remove('connected', 'connecting', 'disconnected', 'auto-hide');
+    
+    // Update based on status
+    switch (status) {
+        case 'connected':
+            badge.classList.add('connected');
+            text.textContent = 'Connected';
+            // Auto-hide after 3 seconds when connected
+            badge.classList.add('auto-hide');
+            setTimeout(() => {
+                badge.style.display = 'none';
+            }, 3500);
+            break;
+        case 'connecting':
+            badge.classList.add('connecting');
+            text.textContent = 'Connecting...';
+            badge.style.display = 'flex';
+            break;
+        case 'disconnected':
+            badge.classList.add('disconnected');
+            text.textContent = 'Disconnected';
+            badge.style.display = 'flex';
+            break;
     }
 }
 

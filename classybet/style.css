@@ -5010,3 +5010,99 @@ input[type=number] {
         font-size: 11px;
     }
 }
+
+/* Connection Status Badge */
+.connection-status {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: rgba(0, 0, 0, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 25px;
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 10000;
+    font-size: 14px;
+    font-weight: 600;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.connection-status.connected {
+    border-color: #00ff00;
+    color: #00ff00;
+}
+
+.connection-status.connected i {
+    color: #00ff00;
+    animation: pulse-green 2s infinite;
+}
+
+.connection-status.connecting {
+    border-color: #ffaa00;
+    color: #ffaa00;
+}
+
+.connection-status.connecting i {
+    color: #ffaa00;
+    animation: pulse-orange 1s infinite;
+}
+
+.connection-status.disconnected {
+    border-color: #ff4444;
+    color: #ff4444;
+}
+
+.connection-status.disconnected i {
+    color: #ff4444;
+    animation: pulse-red 1s infinite;
+}
+
+.connection-status i {
+    font-size: 12px;
+}
+
+.connection-status span {
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+@keyframes pulse-green {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+@keyframes pulse-orange {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+@keyframes pulse-red {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* Auto-hide for connected status */
+.connection-status.auto-hide {
+    animation: fadeOut 0.5s ease 3s forwards;
+}
+
+@keyframes fadeOut {
+    to {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+}
+
+/* Mobile responsive for connection badge */
+@media (max-width: 768px) {
+    .connection-status {
+        top: 10px;
+        right: 10px;
+        padding: 6px 12px;
+        font-size: 12px;
+    }
+}

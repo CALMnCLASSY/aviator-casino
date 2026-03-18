@@ -11,6 +11,10 @@ class GameSocketClient {
         this.onStateUpdate = null;
         this.onBetPlaced = null;
         this.onCashoutResult = null;
+        this.onConnectionStatusChange = null;
+        this.pingInterval = null;
+        this.lagThreshold = 2000; // 2 seconds
+        this.lastPingTime = null;
     }
 
     /**
@@ -54,15 +58,25 @@ class GameSocketClient {
         this.socket.on('connect', () => {
             console.log('🔌 Connected to game server');
             this.connected = true;
+            this.emitConnectionStatus('connected');
+            this.startPing();
         });
 
         this.socket.on('disconnect', () => {
             console.log('🔌 Disconnected from game server');
             this.connected = false;
+            this.emitConnectionStatus('disconnected');
+            this.stopPing();
         });
 
         this.socket.on('connect_error', (error) => {
             console.error('🔌 Connection error:', error);
+            this.emitConnectionStatus('disconnected');
+        });
+
+        this.socket.on('reconnecting', () => {
+            console.log('🔌 Reconnecting to game server...');
+            this.emitConnectionStatus('connecting');
         });
 
         // Game state updates
@@ -102,6 +116,11 @@ class GameSocketClient {
                 this.onCashoutResult({ success: false, error: error.error });
                 this.onCashoutResult = null; // Clear callback after use
             }
+        });
+
+        // Ping/Pong for lag detection
+        this.socket.on('pong', () => {
+            this.handlePong();
         });
     }
 
@@ -152,6 +171,51 @@ class GameSocketClient {
         if (this.socket) {
             this.socket.disconnect();
             this.connected = false;
+            this.stopPing();
+        }
+    }
+
+    /**
+     * Emit connection status change
+     */
+    emitConnectionStatus(status) {
+        if (this.onConnectionStatusChange) {
+            this.onConnectionStatusChange(status);
+        }
+    }
+
+    /**
+     * Start ping interval to detect lag
+     */
+    startPing() {
+        this.stopPing();
+        this.pingInterval = setInterval(() => {
+            if (this.connected) {
+                this.lastPingTime = Date.now();
+                this.socket.emit('ping');
+            }
+        }, 5000);
+    }
+
+    /**
+     * Stop ping interval
+     */
+    stopPing() {
+        if (this.pingInterval) {
+            clearInterval(this.pingInterval);
+            this.pingInterval = null;
+        }
+    }
+
+    /**
+     * Handle pong response
+     */
+    handlePong() {
+        if (this.lastPingTime) {
+            const lag = Date.now() - this.lastPingTime;
+            if (lag > this.lagThreshold) {
+                this.emitConnectionStatus('connecting'); // Show as lagging
+            }
         }
     }
 }
