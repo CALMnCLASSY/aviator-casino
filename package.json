@@ -1,5 +1,5 @@
 {
-  "name": "ClassyBet-backend",
+  "name": "classybet-backend",
   "version": "1.0.0",
   "description": "ClassyBet Aviator Backend with MongoDB, Authentication & STK Push",
   "main": "server.js",
