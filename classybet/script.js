@@ -2129,9 +2129,8 @@ class AviatorGame {
 
         // Backend round end is handled via WebSocket game state manager
         // No need for explicit endRound API call
-
-        // Add round to history
-        this.addRoundToHistory(parseFloat(crashMultiplierStr));
+        // NOTE: addRoundToHistory is called in handleGameStateUpdate when state='crashed'
+        // DO NOT add it here to avoid duplicate entries in previous rounds
 
         // Update counter to show "FLEW AWAY" above the multiplier
         const counterElement = document.getElementById('counter');
@@ -2579,8 +2578,12 @@ class AviatorGame {
         const betCountElement = document.getElementById('bet-count');
         const mobileBetCountElement = document.getElementById('mobile-bet-count');
 
-        if (betCountElement) betCountElement.textContent = this.allBetsData.length;
-        if (mobileBetCountElement) mobileBetCountElement.textContent = this.allBetsData.length;
+        // Update based on allBetsData for local display consistency
+        let betCount = this.allBetsData ? this.allBetsData.length : 0;
+        
+        // Ensure we're showing the correct count
+        if (betCountElement) betCountElement.textContent = betCount;
+        if (mobileBetCountElement) mobileBetCountElement.textContent = betCount;
     }
 
     setupQuickAmountButtons() {
