@@ -2820,6 +2820,9 @@ class AviatorGame {
             if (this.gameState !== 'waiting') {
                 this.gameState = 'waiting';
                 this.resetForNewRound();
+                //Regenerate mock bets for the new round - in real implementation, this would be triggered by new data from server
+                this.generateMockBets();
+                this.updateBetCount();
             }
         }
     }
@@ -2904,7 +2907,7 @@ class AviatorGame {
 
         const progressBar = overlay.querySelector('.countdown-progress');
         if (progressBar) {
-            const progress = ((2.5 - countdown) / 2.5) * 100;
+            const progress = ((5 - countdown) / 5) * 100;
             progressBar.style.width = `${Math.max(0, Math.min(100, progress))}%`;
         }
 
