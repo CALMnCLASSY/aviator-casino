@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>European Roulette - ClassyBet Casino</title>
+    <link rel="icon" type="image/svg+xml" href="images/classybetcasino-logo.jpeg">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .game-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .game-layout {
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            gap: 20px;
+        }
+
+        .wheel-section {
+            background: linear-gradient(135deg, #1a4d1a 0%, #0d2d0d 100%);
+            padding: 30px;
+            border-radius: 16px;
+            border: 3px solid #2d6a2d;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .roulette-wheel {
+            width: 300px;
+            height: 300px;
+            margin: 0 auto;
+            position: relative;
+            border-radius: 50%;
+            background: radial-gradient(circle, #8b4513 0%, #654321 50%, #3d2817 100%);
+            border: 10px solid #ffd700;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
+        }
+
+        .wheel-inner {
+            position: absolute;
+            inset: 20px;
+            border-radius: 50%;
+            background: conic-gradient(from 0deg,
+                    #d32f2f 0deg, #d32f2f 9.73deg,
+                    #000 9.73deg, #000 19.46deg,
+                    #d32f2f 19.46deg, #d32f2f 29.19deg,
+                    #000 29.19deg, #000 38.92deg,
+                    #d32f2f 38.92deg, #d32f2f 48.65deg,
+                    #000 48.65deg, #000 58.38deg,
+                    #d32f2f 58.38deg, #d32f2f 68.11deg,
+                    #000 68.11deg, #000 77.84deg,
+                    #d32f2f 77.84deg, #d32f2f 87.57deg,
+                    #000 87.57deg, #000 97.3deg,
+                    #d32f2f 97.3deg, #d32f2f 107.03deg,
+                    #000 107.03deg, #000 116.76deg,
+                    #d32f2f 116.76deg, #d32f2f 126.49deg,
+                    #000 126.49deg, #000 136.22deg,
+                    #d32f2f 136.22deg, #d32f2f 145.95deg,
+                    #000 145.95deg, #000 155.68deg,
+                    #d32f2f 155.68deg, #d32f2f 165.41deg,
+                    #000 165.41deg, #000 175.14deg,
+                    #d32f2f 175.14deg, #d32f2f 184.87deg,
+                    #000 184.87deg, #000 194.6deg,
+                    #d32f2f 194.6deg, #d32f2f 204.33deg,
+                    #000 204.33deg, #000 214.06deg,
+                    #d32f2f 214.06deg, #d32f2f 223.79deg,
+                    #000 223.79deg, #000 233.52deg,
+                    #d32f2f 233.52deg, #d32f2f 243.25deg,
+                    #000 243.25deg, #000 252.98deg,
+                    #d32f2f 252.98deg, #d32f2f 262.71deg,
+                    #000 262.71deg, #000 272.44deg,
+                    #d32f2f 272.44deg, #d32f2f 282.17deg,
+                    #000 282.17deg, #000 291.9deg,
+                    #d32f2f 291.9deg, #d32f2f 301.63deg,
+                    #000 301.63deg, #000 311.36deg,
+                    #d32f2f 311.36deg, #d32f2f 321.09deg,
+                    #000 321.09deg, #000 330.82deg,
+                    #d32f2f 330.82deg, #d32f2f 340.55deg,
+                    #000 340.55deg, #000 350.28deg,
+                    #d32f2f 350.28deg, #d32f2f 360deg);
+            transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);
+        }
+
+        .wheel-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80px;
+            height: 80px;
+            background: radial-gradient(circle, #ffd700, #ffa000);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            font-weight: bold;
+            color: #000;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+        }
+
+        .wheel-spinning .wheel-inner {
+            animation: spin 2s linear infinite;
+        }
+
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .recent-numbers {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .recent-number {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 16px;
+            border: 2px solid #ffd700;
+        }
+
+        .recent-number.red {
+            background: #d32f2f;
+            color: white;
+        }
+
+        .recent-number.black {
+            background: #000;
+            color: white;
+        }
+
+        .recent-number.green {
+            background: #36cb12;
+            color: white;
+        }
+
+        .betting-section {
+            background: linear-gradient(135deg, #1a4d1a 0%, #0d2d0d 100%);
+            padding: 30px;
+            border-radius: 16px;
+            border: 3px solid #2d6a2d;
+        }
+
+        .betting-table {
+            display: grid;
+            gap: 15px;
+        }
+
+        .table-row {
+            display: grid;
+            grid-template-columns: 60px repeat(12, 1fr);
+            gap: 5px;
+        }
+
+        .bet-spot {
+            aspect-ratio: 1;
+            background: linear-gradient(135deg, #2d2d2d, #1a1a1a);
+            border: 2px solid #444;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            user-select: none;
+        }
+
+        .bet-spot:hover {
+            transform: scale(1.05);
+            border-color: #ffd700;
+        }
+
+        .bet-spot.red {
+            background: linear-gradient(135deg, #d32f2f, #8b0000);
+            color: white;
+        }
+
+        .bet-spot.black {
+            background: linear-gradient(135deg, #1a1a1a, #000);
+            color: white;
+        }
+
+        .bet-spot.green {
+            background: linear-gradient(135deg, #36cb12, #2d9a2d);
+            color: white;
+        }
+
+        .bet-spot.selected {
+            border-color: #ffd700;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
+        }
+
+        .bet-spot.winner {
+            animation: winPulse 1s ease-out;
+        }
+
+        @keyframes winPulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.2);
+                box-shadow: 0 0 25px rgba(255, 215, 0, 1);
+            }
+        }
+
+        .outside-bets {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .outside-bet {
+            padding: 20px;
+            background: linear-gradient(135deg, #2d2d2d, #1a1a1a);
+            border: 2px solid #444;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .outside-bet:hover {
+            transform: translateY(-2px);
+            border-color: #ffd700;
+        }
+
+        .outside-bet.selected {
+            border-color: #ffd700;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
+        }
+
+        .bet-controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .bet-input {
+            flex: 1;
+            padding: 15px;
+            background: #0d0d0d;
+            border: 2px solid #444;
+            color: white;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .bet-input:focus {
+            outline: none;
+            border-color: #36cb12;
+        }
+
+        .chip-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .chip-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 3px solid #ffd700;
+            background: linear-gradient(135deg, #1a4d1a, #0d2d0d);
+            color: #ffd700;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+        }
+
+        .chip-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
+        }
+
+        .action-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .action-btn {
+            padding: 18px;
+            background: linear-gradient(135deg, #2d6a2d, #1a4d1a);
+            border: 2px solid #36cb12;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+        }
+
+        .action-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(54, 203, 18, 0.4);
+        }
+
+        .action-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .action-btn.primary {
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, #d32f2f, #8b0000);
+            border-color: #d32f2f;
+            font-size: 24px;
+            padding: 22px;
+        }
+
+        .action-btn.primary:hover:not(:disabled) {
+            box-shadow: 0 6px 20px rgba(211, 47, 47, 0.4);
+        }
+
+        .total-bet-display {
+            text-align: center;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .total-bet-display .label {
+            font-size: 14px;
+            opacity: 0.7;
+            margin-bottom: 8px;
+        }
+
+        .total-bet-display .value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #ffd700;
+        }
+
+        @media (max-width: 1200px) {
+            .game-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .table-row {
+                grid-template-columns: 40px repeat(12, 1fr);
+            }
+
+            .outside-bets {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        .how-to-play-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.95);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .3s
+        }
+
+        .how-to-play-modal.active {
+            opacity: 1;
+            pointer-events: auto
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #1a1a1a, #0a0a0a);
+            border: 3px solid #d32f2f;
+            border-radius: 16px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+            animation: modalSlideIn .4s ease-out
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1
+            }
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: transparent;
+            border: none;
+            color: #fff;
+            font-size: 32px;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all .3s
+        }
+
+        .close-modal:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: rotate(90deg)
+        }
+
+        .modal-content h2 {
+            background: linear-gradient(135deg, #d32f2f, #8b0000);
+            color: #fff;
+            margin: 0;
+            padding: 25px 30px;
+            font-size: 28px;
+            text-align: center;
+            border-radius: 13px 13px 0 0
+        }
+
+        .modal-body {
+            padding: 30px;
+            color: #fff
+        }
+
+        .modal-body h3 {
+            color: #d32f2f;
+            font-size: 20px;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px
+        }
+
+        .modal-body p,
+        .modal-body ul,
+        .modal-body ol {
+            margin: 10px 0;
+            line-height: 1.6
+        }
+
+        .modal-body ul,
+        .modal-body ol {
+            padding-left: 20px
+        }
+
+        .modal-body li {
+            margin: 8px 0
+        }
+
+        .payout-table {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0
+        }
+
+        .payout-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1)
+        }
+
+        .payout-row:last-child {
+            border-bottom: none
+        }
+
+        .payout-row span:last-child {
+            color: #d32f2f;
+            font-weight: bold
+        }
+
+        .modal-footer {
+            padding: 20px 30px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 0 0 13px 13px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px
+        }
+
+        .modal-footer label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            color: #fff;
+            font-size: 14px
+        }
+
+        .modal-footer input[type=checkbox] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer
+        }
+
+        .btn-start-playing {
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #d32f2f, #8b0000);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all .3s
+        }
+
+        .btn-start-playing:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(211, 47, 47, 0.4)
+        }
+    </style>
+</head>
+
+<body>
+    <div class="dashboard-container">
+        <header class="dashboard-header">
+            <div class="header-logo">
+                <a href="dashboard.html"
+                    style="text-decoration:none; color:inherit; display:flex; gap:10px; align-items:center;">
+                    <img src="images/classybetaviator-logo.svg" alt="ClassyBet Logo">
+                    <span>European Roulette</span>
+                </a>
+            </div>
+            <div class="header-user-info">
+                <div class="user-balance">
+                    <div class="balance-label">Balance</div>
+                    <div class="balance-amount" id="headerBalance">Loading...</div>
+                </div>
+                <button class="btn btn-outline-light" onclick="window.location.href='dashboard.html'">
+                    <i class="fas fa-arrow-left"></i> Lobby
+                </button>
+            </div>
+        </header>
+
+        <main class="dashboard-main" style="display: block;">
+            <div class="game-container">
+                <div class="game-layout">
+                    <div class="wheel-section">
+                        <div class="roulette-wheel" id="rouletteWheel">
+                            <div class="wheel-inner" id="wheelInner"></div>
+                            <div class="wheel-center" id="wheelCenter">0</div>
+                        </div>
+
+                        <div class="total-bet-display">
+                            <div class="label">Total Bet</div>
+                            <div class="value" id="totalBetDisplay">KES 0</div>
+                        </div>
+
+                        <div class="recent-numbers" id="recentNumbers">
+                            <span style="opacity: 0.5; font-size: 14px;">Recent numbers</span>
+                        </div>
+                    </div>
+
+                    <div class="betting-section">
+                        <div class="bet-controls">
+                            <input type="number" id="chipValue" class="bet-input" value="10" min="10" step="10"
+                                placeholder="Chip Value">
+                            <div class="chip-buttons">
+                                <button class="chip-btn" data-value="10">10</button>
+                                <button class="chip-btn" data-value="50">50</button>
+                                <button class="chip-btn" data-value="100">100</button>
+                                <button class="chip-btn" data-value="500">500</button>
+                            </div>
+                        </div>
+
+                        <div class="betting-table" id="bettingTable">
+                            <!-- Zero -->
+                            <div class="table-row">
+                                <div class="bet-spot green" data-bet="0" data-type="straight">0</div>
+                            </div>
+
+                            <!-- Numbers 1-36 in rows of 12 -->
+                            <div class="table-row">
+                                <div class="outside-bet" data-bet="row1" data-type="row">1st 12</div>
+                                <div class="bet-spot red" data-bet="1" data-type="straight">1</div>
+                                <div class="bet-spot black" data-bet="2" data-type="straight">2</div>
+                                <div class="bet-spot red" data-bet="3" data-type="straight">3</div>
+                                <div class="bet-spot black" data-bet="4" data-type="straight">4</div>
+                                <div class="bet-spot red" data-bet="5" data-type="straight">5</div>
+                                <div class="bet-spot black" data-bet="6" data-type="straight">6</div>
+                                <div class="bet-spot red" data-bet="7" data-type="straight">7</div>
+                                <div class="bet-spot black" data-bet="8" data-type="straight">8</div>
+                                <div class="bet-spot red" data-bet="9" data-type="straight">9</div>
+                                <div class="bet-spot black" data-bet="10" data-type="straight">10</div>
+                                <div class="bet-spot black" data-bet="11" data-type="straight">11</div>
+                                <div class="bet-spot red" data-bet="12" data-type="straight">12</div>
+                            </div>
+
+                            <div class="table-row">
+                                <div class="outside-bet" data-bet="row2" data-type="row">2nd 12</div>
+                                <div class="bet-spot red" data-bet="13" data-type="straight">13</div>
+                                <div class="bet-spot black" data-bet="14" data-type="straight">14</div>
+                                <div class="bet-spot black" data-bet="15" data-type="straight">15</div>
+                                <div class="bet-spot red" data-bet="16" data-type="straight">16</div>
+                                <div class="bet-spot black" data-bet="17" data-type="straight">17</div>
+                                <div class="bet-spot red" data-bet="18" data-type="straight">18</div>
+                                <div class="bet-spot red" data-bet="19" data-type="straight">19</div>
+                                <div class="bet-spot black" data-bet="20" data-type="straight">20</div>
+                                <div class="bet-spot red" data-bet="21" data-type="straight">21</div>
+                                <div class="bet-spot black" data-bet="22" data-type="straight">22</div>
+                                <div class="bet-spot red" data-bet="23" data-type="straight">23</div>
+                                <div class="bet-spot black" data-bet="24" data-type="straight">24</div>
+                            </div>
+
+                            <div class="table-row">
+                                <div class="outside-bet" data-bet="row3" data-type="row">3rd 12</div>
+                                <div class="bet-spot red" data-bet="25" data-type="straight">25</div>
+                                <div class="bet-spot black" data-bet="26" data-type="straight">26</div>
+                                <div class="bet-spot red" data-bet="27" data-type="straight">27</div>
+                                <div class="bet-spot black" data-bet="28" data-type="straight">28</div>
+                                <div class="bet-spot black" data-bet="29" data-type="straight">29</div>
+                                <div class="bet-spot red" data-bet="30" data-type="straight">30</div>
+                                <div class="bet-spot black" data-bet="31" data-type="straight">31</div>
+                                <div class="bet-spot red" data-bet="32" data-type="straight">32</div>
+                                <div class="bet-spot black" data-bet="33" data-type="straight">33</div>
+                                <div class="bet-spot red" data-bet="34" data-type="straight">34</div>
+                                <div class="bet-spot black" data-bet="35" data-type="straight">35</div>
+                                <div class="bet-spot red" data-bet="36" data-type="straight">36</div>
+                            </div>
+                        </div>
+
+                        <div class="outside-bets">
+                            <div class="outside-bet" data-bet="red" data-type="color">Red</div>
+                            <div class="outside-bet" data-bet="black" data-type="color">Black</div>
+                            <div class="outside-bet" data-bet="even" data-type="parity">Even</div>
+                            <div class="outside-bet" data-bet="odd" data-type="parity">Odd</div>
+                            <div class="outside-bet" data-bet="low" data-type="range">1-18</div>
+                            <div class="outside-bet" data-bet="high" data-type="range">19-36</div>
+                        </div>
+
+                        <div class="action-buttons">
+                            <button id="spinBtn" class="action-btn primary">
+                                <i class="fas fa-play-circle"></i> Spin
+                            </button>
+                            <button id="clearBtn" class="action-btn">
+                                <i class="fas fa-eraser"></i> Clear Bets
+                            </button>
+                            <button id="repeatBtn" class="action-btn">
+                                <i class="fas fa-redo"></i> Repeat
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <div id="howToPlayModal" class="how-to-play-modal">
+        <div class="modal-content"><button class="close-modal">&times;</button>
+            <h2><i class="fas fa-graduation-cap"></i> How to Play Roulette</h2>
+            <div class="modal-body">
+                <h3><i class="fas fa-bullseye"></i> Objective</h3>
+                <p>Predict where the ball will land on the spinning wheel! European Roulette (single zero) for better
+                    odds.</p>
+                <h3><i class="fas fa-coins"></i> Bet Types & Payouts</h3>
+                <div class="payout-table">
+                    <div class="payout-row"><span>Straight (single number)</span><span>35:1</span></div>
+                    <div class="payout-row"><span>Red/Black, Odd/Even</span><span>1:1</span></div>
+                    <div class="payout-row"><span>Dozen (1-12, 13-24, 25-36)</span><span>2:1</span></div>
+                    <div class="payout-row"><span>High/Low (1-18, 19-36)</span><span>1:1</span></div>
+                </div>
+                <h3><i class="fas fa-circle-notch"></i> How it Works</h3>
+                <ul>
+                    <li>Choose your bet(s) on the table</li>
+                    <li>Multiple bets allowed per spin</li>
+                    <li>Wheel spins and ball lands on a number</li>
+                    <li>Win if your bet covers that number!</li>
+                </ul>
+                <h3><i class="fas fa-gamepad"></i> How to Play</h3>
+                <ol>
+                    <li>Click chips to select bet amount</li>
+                    <li>Click table positions to place bets</li>
+                    <li>You can place multiple bets per spin</li>
+                    <li>Click "Spin" to start the wheel</li>
+                    <li>Watch the wheel and collect winnings!</li>
+                </ol>
+                <p
+                    style="margin-top:20px;padding:15px;background:rgba(211,47,47,0.1);border-radius:8px;border-left:4px solid #d32f2f">
+                    <i class="fas fa-lightbulb"></i> <strong>Pro Tip:</strong> Spread bets across colors and dozens for
+                    more consistent wins!</p>
+            </div>
+            <div class="modal-footer"><label><input type="checkbox" id="dontShowAgain">Don't show this
+                    again</label><button class="btn-start-playing"><i class="fas fa-play"></i> Start Playing</button>
+            </div>
+        </div>
+    </div>
+    <script src="js/casino-game.js"></script>
+    <script src="js/roulette-game.js"></script>
+</body>
+
+</html>

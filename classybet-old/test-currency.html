@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Currency Format Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #1a2332; color: white; }
+        .test-section { margin: 20px 0; padding: 15px; background: rgba(255,255,255,0.1); border-radius: 8px; }
+        .result { color: #30fcbe; font-weight: bold; }
+        .error { color: #fb024c; }
+    </style>
+</head>
+<body>
+    <h1>Currency Formatting Test</h1>
+    
+    <div class="test-section">
+        <h2>Testing formatDepositLimits function</h2>
+        <div id="test-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Manual Currency Test</h2>
+        <label>Currency: </label>
+        <select id="currency-select">
+            <option value="KES">KES</option>
+            <option value="NGN">NGN</option>
+            <option value="GHS">GHS</option>
+            <option value="ZAR">ZAR</option>
+            <option value="USD">USD</option>
+            <option value="GBP">GBP</option>
+            <option value="EUR">EUR</option>
+        </select>
+        <button onclick="testCurrency()">Test Currency</button>
+        <div id="manual-result"></div>
+    </div>
+
+    <script src="js/currency-utils.js"></script>
+    <script>
+        function runTests() {
+            const results = document.getElementById('test-results');
+            results.innerHTML = '<h3>Test Results:</h3>';
+            
+            const currencies = ['KES', 'NGN', 'GHS', 'ZAR', 'USD', 'GBP', 'EUR'];
+            
+            currencies.forEach(currency => {
+                try {
+                    const limits = formatDepositLimits(currency);
+                    const result = document.createElement('div');
+                    result.className = 'result';
+                    result.innerHTML = `
+                        <strong>${currency}:</strong> 
+                        Min: ${limits.min} | 
+                        Max: ${limits.max} | 
+                        Values: ${limits.minValue} - ${limits.maxValue}
+                    `;
+                    results.appendChild(result);
+                } catch (error) {
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'error';
+                    errorDiv.innerHTML = `<strong>${currency}:</strong> Error - ${error.message}`;
+                    results.appendChild(errorDiv);
+                }
+            });
+        }
+
+        function testCurrency() {
+            const currency = document.getElementById('currency-select').value;
+            const resultDiv = document.getElementById('manual-result');
+            
+            try {
+                const limits = formatDepositLimits(currency);
+                resultDiv.innerHTML = `
+                    <div class="result">
+                        <h4>${currency} Results:</h4>
+                        <p>Formatted Min: ${limits.min}</p>
+                        <p>Formatted Max: ${limits.max}</p>
+                        <p>Raw Min Value: ${limits.minValue}</p>
+                        <p>Raw Max Value: ${limits.maxValue}</p>
+                    </div>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+            }
+        }
+
+        // Run tests on page load
+        window.addEventListener('load', runTests);
+    </script>
+</body>
+</html>

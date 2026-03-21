@@ -1,0 +1,1700 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aviator - Professional Gaming</title>
+
+    <!-- Preload critical resources -->
+    <link rel="preload" href="style.css" as="style">
+    <link rel="preload" href="script.js?v=2.4" as="script">
+    <link rel="preload" href="auth.js" as="script">
+
+    <!-- Preload critical images -->
+    <link rel="preload" href="images/classybetaviator-logo.svg" as="image" type="image/svg+xml">
+    <link rel="preload" href="images/logo.svg" as="image" type="image/svg+xml">
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="./style.css">
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <!-- Disable tracking prevention warnings -->
+    <meta http-equiv="origin-trial" content="*">
+</head>
+
+<body>
+    <!-- Main Content Wrapper -->
+    <div class="main-content-wrapper">
+
+        <div id="spribe-custom-preloader" class="spribe-preloader-container">
+            <div class="spribe-preloader-content">
+                <div class="spribe-preloader-powered-by">
+                    <img src="cbpoweredby.png" alt="Powered by Spribe" width="80" height="10" draggable="false">
+                </div>
+                <div class="spribe-preloader-logo">
+                    <img src="poweredbyspribe.png" alt="Logo" width="155" height="55" draggable="false">
+                </div>
+                <div class="spribe-preloader-spinner">
+                    <div class="spribe-bounce-1"></div>
+                    <div class="spribe-bounce-2"></div>
+                    <div class="spribe-bounce-3"></div>
+                </div>
+                <div class="spribe-connecting-text" style="display: none;">Connection...</div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div id="main-container">
+            <!-- Center Game Area -->
+            <div id="game-container">
+                <!-- Game Header spanning full width -->
+                <div id="game-header">
+                    <div class="game-logo">
+                        <img src="images/logo.svg" alt="Aviator" height="35" class="aviator-logo-image">
+                    </div>
+                    <div class="balance-info">
+                        <div id="balance-amount">KES 3,000.00</div>
+                        <div class="header-controls">
+                            <div class="game-menu-container">
+                                <button id="game-menu-btn" class="game-menu-btn">
+                                    <i class="fas fa-bars"></i>
+                                    <span class="menu-notification-dot"></span>
+                                </button>
+                                <div id="game-menu" class="game-menu">
+                                    <div class="menu-item" data-action="deposit">
+                                        <i class="fas fa-wallet"></i>
+                                        <span>Deposit</span>
+                                    </div>
+                                    <div class="menu-item" data-action="bet-history">
+                                        <i class="fas fa-history"></i>
+                                        <span>My Bet History</span>
+                                    </div>
+                                    <div class="menu-item" data-action="free-bets">
+                                        <i class="fas fa-gift"></i>
+                                        <span>Free Bets <span class="notification-badge">1</span></span>
+                                    </div>
+                                    <div class="menu-item" data-action="how-to-play">
+                                        <i class="fas fa-question-circle"></i>
+                                        <span>How to Play</span>
+                                    </div>
+                                    <div class="menu-item" data-action="game-rules">
+                                        <i class="fas fa-book"></i>
+                                        <span>Game Rules</span>
+                                    </div>
+                                    <div class="menu-item" data-action="game-limits">
+                                        <i class="fas fa-coins"></i>
+                                        <span>Game Limits</span>
+                                    </div>
+                                    <div class="menu-item" data-action="provably-fair">
+                                        <i class="fas fa-check-circle"></i>
+                                        <span>Provably Fair</span>
+                                    </div>
+                                    <div class="menu-divider"></div>
+                                    <div class="menu-item" data-action="exit-to-dashboard">
+                                        <i class="fas fa-sign-out-alt"></i>
+                                        <span>Exit to Dashboard</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <button id="players-chat-toggle" class="players-chat-toggle-btn" title="Players Chat">
+                                <i class="fas fa-comments"></i>
+                            </button>
+                        </div> <!-- End header-controls -->
+                    </div>
+                </div>
+
+
+
+                <!-- Game Content Area with Left Sidebar and Main Game -->
+                <div id="game-content">
+                    <!-- Left Sidebar - All Bets -->
+                    <div id="left-sidebar">
+                        <div class="sidebar-content">
+                            <div class="sidebar-section">
+                                <!-- Tabs Navigation -->
+                                <div class="bets-tabs">
+                                    <button class="tab-btn active" data-tab="all-bets">
+                                        All Bets
+                                    </button>
+                                    <button class="tab-btn" data-tab="previous-bets">
+                                        Previous
+                                    </button>
+                                    <button class="tab-btn" data-tab="top-results">
+                                        Top
+                                    </button>
+                                </div>
+
+                                <!-- All Bets Tab Content -->
+                                <div id="all-bets-content" class="tab-content active">
+                                    <div class="bet-count-info">
+                                        <span class="bet-count-label">Total Bets This Round:</span>
+                                        <span class="bet-count" id="bet-count">0</span>
+                                        <button class="show-all-toggle" id="show-all-bets">Show All</button>
+                                    </div>
+                                    <div class="bet-list-header">
+                                        <span class="bet-id-header">Player</span>
+                                        <span class="bet-amount-header">Bet (KES)</span>
+                                        <span class="bet-multiplier-header">x</span>
+                                        <span class="bet-win-header">Win (KES)</span>
+                                    </div>
+                                    <div id="all-bets" class="bet-list">
+                                        <!-- Live betting activity will be populated here -->
+                                    </div>
+                                </div>
+
+                                <!-- Previous Bets Tab Content -->
+                                <div id="previous-bets-content" class="tab-content">
+                                    <div class="bet-count-info">
+                                        <span class="bet-count-label">Previous Round Results:</span>
+                                        <span class="bet-count" id="previous-bet-count">0</span>
+                                    </div>
+                                    <div class="bet-list-header">
+                                        <span class="bet-id-header">Player</span>
+                                        <span class="bet-amount-header">Bet (KES)</span>
+                                        <span class="bet-multiplier-header">x</span>
+                                        <span class="bet-win-header">Win (KES)</span>
+                                    </div>
+                                    <div id="previous-bets" class="bet-list">
+                                        <!-- Previous round results will be populated here -->
+                                    </div>
+                                </div>
+
+                                <!-- Top Results Tab Content -->
+                                <div id="top-results-content" class="tab-content">
+                                    <div class="bet-count-info">
+                                        <span class="bet-count-label">Top Results</span>
+                                        <div class="top-submenu">
+                                            <div class="top-filters">
+                                                <button class="top-filter-btn active" data-view="multipliers">x</button>
+                                                <button class="top-filter-btn" data-view="wins">Win</button>
+                                                <button class="top-filter-btn" data-view="rounds">Rounds</button>
+                                            </div>
+                                            <select id="top-period" class="top-period">
+                                                <option value="day">Day</option>
+                                                <option value="month">Month</option>
+                                                <option value="year">Year</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="bet-list-header">
+                                        <span class="bet-id-header">Player</span>
+                                        <span class="bet-amount-header">Bet (KES)</span>
+                                        <span class="bet-multiplier-header">x</span>
+                                        <span class="bet-win-header">Win (KES)</span>
+                                    </div>
+                                    <div id="top-results" class="bet-list">
+                                        <!-- Top results will be populated here -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Sidebar Footer -->
+                        <div class="sidebar-footer">
+                            <div class="footer-item">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Provably Fair</span>
+                            </div>
+                            <div class="footer-item">
+                                <span>Powered by</span>
+                                <img src="poweredbyspribe.png" alt="Spribe" height="12">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Main Game Canvas Area -->
+                    <div id="game-main">
+                        <!-- Previous Rounds (positioned between header and game) -->
+                        <div id="previous-rounds-container">
+                            <div id="last-counters"></div>
+                            <div id="show-more-rounds" class="show-more-btn">
+                                <i class="fas fa-ellipsis-h"></i>
+                            </div>
+                            <div id="hidden-rounds" class="hidden-rounds">
+                                <!-- Hidden multipliers will be shown here -->
+                            </div>
+                        </div>
+
+                        <!-- Demo Mode Bar (hidden by default, shown for demo users) -->
+                        <div id="demo-mode-bar" class="demo-mode-bar" style="display: none;">
+                            <div class="demo-content">
+                                <i class="fas fa-play-circle"></i>
+                                <span>DEMO MODE</span>
+                                <small>Playing with virtual money</small>
+                            </div>
+                        </div>
+
+                        <div id="counterWrapper">
+                            <div id="bg-image"></div>
+                            <canvas id="canvas"></canvas>
+                            <div id="counter">1.00x</div>
+                        </div>
+
+                        <!-- Betting Controls -->
+                        <div id="betting-controls">
+                            <div class="bet-panel">
+                                <div class="bet-input-group">
+                                    <!-- Bet/Auto Mode Toggle -->
+                                    <div class="bet-mode-selector">
+                                        <label class="mode-toggle-label small-toggle">
+                                            <input type="checkbox" id="mode-toggle-1" class="mode-toggle-checkbox" />
+                                            <span class="mode-toggle-switch small-switch"></span>
+                                            <span class="mode-text small-text">
+                                                <span class="bet-text">Bet</span>
+                                                <span class="auto-text">Auto</span>
+                                            </span>
+                                        </label>
+                                    </div>
+
+                                    <label></label>
+                                    <div class="input-wrapper">
+                                        <input type="number" id="bet-input-1" min="0" max="10000" value="100" />
+                                        <span class="currency">KES</span>
+                                    </div>
+                                    <div class="quick-amounts">
+                                        <button class="quick-amount" data-amount="100">KES 100</button>
+                                        <button class="quick-amount" data-amount="200">KES 200</button>
+                                        <button class="quick-amount" data-amount="500">KES 500</button>
+                                        <button class="quick-amount" data-amount="5000">KES 5000</button>
+                                    </div>
+                                </div>
+
+                                <div class="bet-button-container">
+                                    <button id="bet-button-1" class="bet-button">BET</button>
+                                    <button id="add-bet-button" class="add-bet-btn-inline">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+
+                                <!-- Auto Features (hidden by default) -->
+                                <div class="auto-features" id="auto-features-1" style="display: none;">
+                                    <div class="auto-option">
+                                        <label class="auto-option-label">
+                                            <input type="checkbox" id="auto-bet-toggle-1"
+                                                class="auto-option-checkbox" />
+                                            <span class="auto-option-switch"></span>
+                                            <span class="auto-option-text">Auto Bet</span>
+                                        </label>
+                                    </div>
+
+                                    <div class="auto-option">
+                                        <label class="auto-option-label">
+                                            <input type="checkbox" id="auto-cashout-toggle-1"
+                                                class="auto-option-checkbox" />
+                                            <span class="auto-option-switch"></span>
+                                            <span class="auto-option-text">Auto Cashout at:</span>
+                                        </label>
+                                        <div class="input-wrapper cashout-input">
+                                            <input type="number" id="auto-cashout-value-1" min="1.01" max="1000"
+                                                value="2.00" step="0.01" />
+                                            <span class="currency">x</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="auto-bet-stats" id="auto-stats-1" style="display: none;">
+                                        <div class="stat-item">
+                                            <span class="stat-label">Bets:</span>
+                                            <span class="stat-value" id="auto-bet-count-1">0</span>
+                                        </div>
+                                        <div class="stat-item">
+                                            <span class="stat-label">Wins:</span>
+                                            <span class="stat-value" id="auto-win-count-1">0</span>
+                                        </div>
+                                        <div class="stat-item">
+                                            <span class="stat-label">Profit:</span>
+                                            <span class="stat-value" id="auto-profit-1">KES 0.00</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bet-panel" id="second-bet-panel" style="display: none;">
+                                <div class="bet-input-group">
+                                    <!-- Bet/Auto Mode Toggle -->
+                                    <div class="bet-mode-selector">
+                                        <label class="mode-toggle-label small-toggle">
+                                            <input type="checkbox" id="mode-toggle-2" class="mode-toggle-checkbox" />
+                                            <span class="mode-toggle-switch small-switch"></span>
+                                            <span class="mode-text small-text">
+                                                <span class="bet-text">Bet</span>
+                                                <span class="auto-text">Auto</span>
+                                            </span>
+                                        </label>
+                                    </div>
+
+                                    <label></label>
+                                    <div class="input-wrapper">
+                                        <input type="number" id="bet-input-2" min="0" max="10000" value="100" />
+                                        <span class="currency">KES</span>
+                                    </div>
+                                    <div class="quick-amounts">
+                                        <button class="quick-amount" data-amount="100">KES 100</button>
+                                        <button class="quick-amount" data-amount="200">KES 200</button>
+                                        <button class="quick-amount" data-amount="500">KES 500</button>
+                                        <button class="quick-amount" data-amount="5000">KES 5000</button>
+                                    </div>
+                                </div>
+
+                                <div class="bet-button-container">
+                                    <button id="bet-button-2" class="bet-button">BET</button>
+                                    <button id="remove-bet-button" class="remove-bet-btn-inline">
+                                        <i class="fas fa-minus"></i>
+                                    </button>
+                                </div>
+
+                                <!-- Auto Features (hidden by default) -->
+                                <div class="auto-features" id="auto-features-2" style="display: none;">
+                                    <div class="auto-option">
+                                        <label class="auto-option-label">
+                                            <input type="checkbox" id="auto-bet-toggle-2"
+                                                class="auto-option-checkbox" />
+                                            <span class="auto-option-switch"></span>
+                                            <span class="auto-option-text">Auto Bet</span>
+                                        </label>
+                                    </div>
+
+                                    <div class="auto-option">
+                                        <label class="auto-option-label">
+                                            <input type="checkbox" id="auto-cashout-toggle-2"
+                                                class="auto-option-checkbox" />
+                                            <span class="auto-option-switch"></span>
+                                            <span class="auto-option-text">Auto Cashout at:</span>
+                                        </label>
+                                        <div class="input-wrapper cashout-input">
+                                            <input type="number" id="auto-cashout-value-2" min="1.01" max="1000"
+                                                value="2.00" step="0.01" />
+                                            <span class="currency">x</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="auto-bet-stats" id="auto-stats-2" style="display: none;">
+                                        <div class="stat-item">
+                                            <span class="stat-label">Bets:</span>
+                                            <span class="stat-value" id="auto-bet-count-2">0</span>
+                                        </div>
+                                        <div class="stat-item">
+                                            <span class="stat-label">Wins:</span>
+                                            <span class="stat-value" id="auto-win-count-2">0</span>
+                                        </div>
+                                        <div class="stat-item">
+                                            <span class="stat-label">Profit:</span>
+                                            <span class="stat-value" id="auto-profit-2">KES 0.00</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div> <!-- End of betting-controls -->
+
+                        <div id="message-area">
+                            <p id="message"></p>
+                        </div>
+                    </div> <!-- End of game-main -->
+                </div> <!-- End of game-content -->
+            </div> <!-- End of game-container -->
+
+            <!-- Mobile Bets Section (visible only on mobile) -->
+            <div id="mobile-bets-section">
+                <div class="bets-tabs">
+                    <button class="tab-btn active" data-tab="mobile-all-bets">
+                        <i class="fas fa-users"></i>All Bets
+                    </button>
+                    <button class="tab-btn" data-tab="mobile-previous-bets">
+                        <i class="fas fa-history"></i> Previous
+                    </button>
+                    <button class="tab-btn" data-tab="mobile-top-results">
+                        <i class="fas fa-trophy"></i> Top
+                    </button>
+                </div>
+
+                <div id="mobile-all-bets-content" class="tab-content active">
+                    <div class="bet-count-info">
+                        <span class="bet-count-label">Total Bets:</span>
+                        <span class="bet-count" id="mobile-bet-count">0</span>
+                        <button class="show-all-toggle" id="mobile-show-all-bets">Show All</button>
+                    </div>
+                    <div id="mobile-all-bets" class="bet-list mobile-bet-list">
+                        <!-- Mobile betting activity will be populated here -->
+                    </div>
+                </div>
+
+                <div id="mobile-previous-bets-content" class="tab-content">
+                    <div id="mobile-previous-bets" class="bet-list mobile-bet-list">
+                        <!-- Mobile previous bets will be populated here -->
+                    </div>
+                </div>
+
+                <div id="mobile-top-results-content" class="tab-content">
+                    <div id="mobile-top-results" class="bet-list mobile-bet-list">
+                        <!-- Mobile top results will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Round Info Modal -->
+        <div id="round-info-modal" class="modal">
+            <div class="modal-content round-info-content">
+                <div class="modal-header round-info-header">
+                    <div class="round-title-section">
+                        <span class="round-label">ROUND</span>
+                        <span id="modal-round-number">2075265</span>
+                        <span id="modal-multiplier" class="multiplier-badge">1.64x</span>
+                        <span id="modal-time" class="round-time">14:00:20</span>
+                    </div>
+                    <span class="close-modal">&times;</span>
+                </div>
+                <div class="modal-body round-info-body">
+                    <!-- Server Seed Section -->
+                    <div class="seed-section">
+                        <div class="seed-header">
+                            <i class="fas fa-server"></i>
+                            <div class="seed-title">
+                                <strong>Server Seed:</strong>
+                                <span class="seed-subtitle">Generated on our side</span>
+                            </div>
+                        </div>
+                        <div class="seed-value" id="modal-server-seed">
+                            aUYyKcetscSXaKoj6PQvOqYT1YTQFNNwukjvRwb
+                        </div>
+                    </div>
+
+                    <!-- Client Seed Section -->
+                    <div class="seed-section">
+                        <div class="seed-header">
+                            <i class="fas fa-laptop"></i>
+                            <div class="seed-title">
+                                <strong>Client Seed:</strong>
+                                <span class="seed-subtitle">Generated on players side</span>
+                            </div>
+                        </div>
+                        <div class="player-seeds">
+                            <div class="player-seed-row">
+                                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='10' fill='%234A90E2'/%3E%3C/svg%3E"
+                                    alt="Player" class="player-avatar">
+                                <span class="player-label">Player N1:</span>
+                                <span class="player-id">2***3</span>
+                                <span class="seed-label">Seed:</span>
+                                <span class="seed-hash" id="modal-player1-seed">gZyhxHp2iYBylf g1KrWh</span>
+                            </div>
+                            <div class="player-seed-row">
+                                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='10' fill='%23888888'/%3E%3C/svg%3E"
+                                    alt="Player" class="player-avatar">
+                                <span class="player-label">Player N2:</span>
+                                <span class="player-id">2***3</span>
+                                <span class="seed-label">Seed:</span>
+                                <span class="seed-hash" id="modal-player2-seed">r1xqOgCh0HwWFnzF8rvB</span>
+                            </div>
+                            <div class="player-seed-row">
+                                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='10' fill='%23E8B923'/%3E%3C/svg%3E"
+                                    alt="Player" class="player-avatar">
+                                <span class="player-label">Player N3:</span>
+                                <span class="player-id">2***9</span>
+                                <span class="seed-label">Seed:</span>
+                                <span class="seed-hash" id="modal-player3-seed">aKVWnRcJnuknCbsdVVFW</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Combined Hash Section -->
+                    <div class="seed-section">
+                        <div class="seed-header">
+                            <i class="fas fa-shield-alt"></i>
+                            <div class="seed-title">
+                                <strong>Combined SHA512 Hash:</strong>
+                                <span class="seed-subtitle">Above seeds combined and converted to SHA512 Hash. This is
+                                    your game result</span>
+                            </div>
+                        </div>
+                        <div class="combined-hash" id="modal-combined-hash">
+                            6942d1e4242d4e789048e0153ec74f784413cf009667e31b3e7181d45e327f330aedf3b44fbe22c7e
+                        </div>
+
+                        <!-- Hash Result Table -->
+                        <div class="hash-result-table">
+                            <div class="hash-result-column">
+                                <div class="hash-result-label">Hex:</div>
+                                <div class="hash-result-value" id="modal-hex-value">6942d1e4242d4</div>
+                            </div>
+                            <div class="hash-result-column">
+                                <div class="hash-result-label">Decimal:</div>
+                                <div class="hash-result-value" id="modal-decimal-value">1851771362362068</div>
+                            </div>
+                            <div class="hash-result-column">
+                                <div class="hash-result-label">Result:</div>
+                                <div class="hash-result-value result-multiplier" id="modal-result-value">1.64</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="provably-fair-footer">
+                        <span>For instructions check</span>
+                        <a href="#" class="provably-fair-link">What is Provably Fair</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div> <!-- End Main Content Wrapper -->
+
+    <!-- Site Footer -->
+    <footer class="site-footer">
+        <div class="container py-4">
+            <div class="footer-content">
+
+                <div class="footer-logo" style="display: inline-block; padding: 10px; border-radius: 5px;">
+                    <img src="images/classybetcasino-logo.jpeg" class="footer-logo-img"
+                        style="max-width: 250px; height: auto;" alt="ClassyBet Aviator Logo" />
+                </div>
+
+                <div class="footer-legal">
+                    <div class="age-restriction">
+                        <span>18+</span>
+                    </div>
+                    <p class="copyright">Copyright © 2025 ClassyBet Aviator. All rights reserved.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+
+
+    <!-- Register Modal -->
+    <div id="register-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-user-plus"></i> Create Account</h3>
+                <span class="close" onclick="closeModal('register-modal')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="register-error" class="error-message" style="display: none;"></div>
+                <form id="register-form">
+                    <div class="form-group">
+                        <label for="register-username">Username</label>
+                        <input type="text" id="register-username" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="register-email">Email</label>
+                        <input type="email" id="register-email" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="register-phone">Phone (254XXXXXXXXX)</label>
+                        <input type="tel" id="register-phone" class="form-control" placeholder="254700000000" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="register-password">Password</label>
+                        <input type="password" id="register-password" class="form-control" minlength="6" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-user-plus"></i> Create Account
+                    </button>
+                </form>
+                <div class="modal-footer">
+                    <p>Already have an account? <a href="#" onclick="switchModal('register-modal', 'login-modal')">Login
+                            here</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Deposit Modal -->
+    <div id="deposit-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-plus-circle"></i> Deposit Funds</h3>
+                <span class="close" onclick="closeModal('deposit-modal')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="deposit-error" class="error-message" style="display: none;"></div>
+                <div id="deposit-success" class="success-message" style="display: none;"></div>
+
+                <h4 style="margin-bottom: 0.5rem; color: #30fcbe;">💳 Deposit Funds</h4>
+                <p style="color: #ccc; margin-bottom: 1.5rem; font-size: 0.95rem;">
+                    Choose from multiple payment methods: Cards, Bank Transfer, USSD, Mobile Money, and more!
+                </p>
+
+                <form id="deposit-form" onsubmit="handleDepositSubmit(event)">
+                    <div class="form-group">
+                        <label for="deposit-amount">Amount (<span id="deposit-currency-code">KES</span>)</label>
+                        <input type="number" id="deposit-amount" class="form-control" min="350" max="150000" step="1"
+                            required>
+                        <small>Minimum: <span id="deposit-min-formatted">KSh 999.00</span>, Maximum: <span
+                                id="deposit-max-formatted">KSh 150,000.00</span></small>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-credit-card"></i> DEPOSIT
+                    </button>
+
+                    <div
+                        style="margin-top: 1.5rem; padding: 1.25rem; background: rgba(48, 252, 190, 0.08); border: 1px solid rgba(48, 252, 190, 0.2); border-radius: 12px;">
+                        <h5 style="color: #30fcbe; margin-bottom: 0.75rem; font-size: 1rem;">
+                            <i class="fas fa-info-circle"></i> Available Payment Methods
+                        </h5>
+                        <ul style="color: #ccc; font-size: 0.9rem; padding-left: 1.5rem; margin: 0;">
+                            <li>💳 Credit/Debit Cards (Visa, Mastercard, Verve)</li>
+                            <li>🏦 Bank Transfer & EFT</li>
+                            <li>📱 Mobile Money (M-Pesa, MTN, Vodafone, etc.)</li>
+                            <li>💰 USSD Banking</li>
+                            <li>🔐 Secure & Instant Processing</li>
+                        </ul>
+                        <p style="color: #999; font-size: 0.85rem; margin-top: 0.75rem; margin-bottom: 0;">
+                            <i class="fas fa-shield-alt"></i> Powered by Paystack - Payment methods vary by country
+                        </p>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Menu Modals -->
+
+    <!-- How to Play Modal -->
+    <div class="modal-overlay" id="how-to-play-modal" style="display: none;">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <span class="text-uppercase">How to Play</span>
+                    <button type="button" class="close" data-modal="how-to-play-modal">
+                        <span>×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-grey">
+                        Aviator is a new generation of iGaming entertainment. You can win many times more, in seconds!
+                        Aviator is built on a provably fair system, which is currently the only real guarantee of
+                        honesty in the gambling industry.
+                    </p>
+                    <h6 class="mt-4 mb-2 text-uppercase">How to play</h6>
+                    <div class="youtube">
+                        <div class="embed-responsive embed-responsive-16by9">
+                            <iframe frameborder="0" allowfullscreen
+                                allow="accelerometer; encrypted-media; gyroscope; picture-in-picture"
+                                class="embed-responsive-item"
+                                src="https://www.youtube.com/embed/PZejs3XDCSY?playsinline=1&rel=0"></iframe>
+                        </div>
+                    </div>
+                    <div class="steps-wrapper">
+                        <h6 class="pl-2 pt-5">Aviator is as easy to play as 1-2-3:</h6>
+                        <div class="steps-container">
+                            <div class="step step-1">
+                                <h3>01</h3>
+                                <div class="step-text pt-2">
+                                    <span class="text-uppercase">Bet</span> before take-off
+                                </div>
+                            </div>
+                            <div class="step step-2">
+                                <h3>02</h3>
+                                <div class="step-text">
+                                    <span class="text-uppercase">Watch</span> as your Lucky Plane takes off and your
+                                    winnings increase.
+                                </div>
+                            </div>
+                            <div class="step step-3">
+                                <h3>03</h3>
+                                <div class="step-text">
+                                    <span class="text-uppercase">Cash out</span> before the plane disappears and wins X
+                                    times more!
+                                </div>
+                            </div>
+                        </div>
+                        <p class="mt-3 text-grey">
+                            But remember, if you did not have time to Cash Out before the Lucky Plane flies away, your
+                            bet will be lost.
+                            Aviator is pure excitement! Risk and win. It's all in your hands!
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Rules Modal -->
+    <div class="modal-overlay" id="game-rules-modal" style="display: none;">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <span class="text-uppercase">Game Rules</span>
+                    <button type="button" class="close" data-modal="game-rules-modal">
+                        <span>×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="rules-list pt-3">
+                        <div class="rules-list-title">More details</div>
+                        <ul class="list-group">
+                            <li class="list-group-item">The win multiplier starts at 1x and grows more and more as the
+                                Lucky Plane takes off.</li>
+                            <li class="list-group-item">Your winnings are calculated at the multiplier at which you made
+                                a Cash Out, multiplied by your bet.</li>
+                            <li class="list-group-item">Before the start of each round, our provably fair random number
+                                generator generates the multiplier at which the Lucky Plane will fly away.</li>
+                        </ul>
+                    </div>
+
+                    <h6 class="mt-4 mt-5">GAME FUNCTIONS</h6>
+                    <div class="rules-list pt-2">
+                        <div class="rules-list-title">Bet & Cash Out</div>
+                        <ul class="list-group">
+                            <li class="list-group-item">Select an amount and press the "Bet" button to make a bet.</li>
+                            <li class="list-group-item">You can cancel the bet by pressing the "Cancel" button if the
+                                round has not yet started.</li>
+                            <li class="list-group-item">Adjust the bet size using the "+" and "-" buttons to change the
+                                bet amount. Alternatively, you can select the bet size using the preset values or enter
+                                a value manually.</li>
+                            <li class="list-group-item">You can make two bets simultaneously, by adding a second bet
+                                panel. To add a second bet panel, press the plus icon, which is located on the top right
+                                corner of the first bet panel.</li>
+                            <li class="list-group-item">Press the "Cash Out" button to cash out your winnings. Your win
+                                is your bet multiplied by the Cash Out multiplier.</li>
+                            <li class="list-group-item">Your bet is lost, if you didn't cash out before the plane flies
+                                away.</li>
+                        </ul>
+                    </div>
+
+                    <div class="rules-list pt-2">
+                        <div class="rules-list-title">Auto Play & Auto Cash Out</div>
+                        <ul class="list-group">
+                            <li class="list-group-item">Before starting Auto Play, select the bet size you want to play
+                                with.</li>
+                            <li class="list-group-item">Auto Play is activated from the "Auto" tab in the Bet Panel, by
+                                checking the "Auto Bet" checkbox. After activation, bets will be placed automatically,
+                                but for Cash Out, you should press the "Cash Out" button in each round.</li>
+                            <li class="list-group-item">Auto Cash Out is available from the "Auto" tab on the Bet panel.
+                                After activation, your bet will be automatically cashed out when it reaches the
+                                multiplier entered.</li>
+                        </ul>
+                    </div>
+
+                    <div class="rules-list pt-2">
+                        <div class="rules-list-title">Live Bets & Statistics</div>
+                        <ul class="list-group">
+                            <li class="list-group-item">On the left side of the game interface (or under the Bet Panel
+                                on mobile), is located the Live Bets panel. Here you can see all bets that are being
+                                made in the current round.</li>
+                            <li class="list-group-item">In the "Top" panel, game statistics are located. You can browse
+                                wins by amount, or Cash Out multiplier, and see the biggest round multipliers.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Limits Modal -->
+    <div class="modal-overlay" id="game-limits-modal" style="display: none;">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <span class="text-uppercase">Game Limits</span>
+                    <button type="button" class="close" data-modal="game-limits-modal">
+                        <span>×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="limits-container">
+                        <div class="limit-item">
+                            <span class="limit-label">Minimum Bet:</span>
+                            <span class="limit-value">KES 10.00</span>
+                        </div>
+                        <div class="limit-item">
+                            <span class="limit-label">Maximum Bet:</span>
+                            <span class="limit-value">KES 10,000.00</span>
+                        </div>
+                        <div class="limit-item">
+                            <span class="limit-label">Maximum Win for One Bet:</span>
+                            <span class="limit-value">KES 1,500,000.00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Provably Fair Modal -->
+    <div class="modal-overlay" id="provably-fair-modal" style="display: none;">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div class="modal-title text-uppercase">Provably Fair Settings</div>
+                    <button type="button" class="close" data-modal="provably-fair-modal">
+                        <span>×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="info">
+                        <p>This game uses Provably Fair technology to determine game result. This tool gives you ability
+                            to change your seed and check fairness of the game.</p>
+                        <p class="info-link">
+                            <i class="question-icon"></i> What is Provably Fair
+                        </p>
+                    </div>
+
+                    <div class="client-seed">
+                        <div class="client-seed-title">
+                            <div class="client-seed-title-main">
+                                <i class="client-icon"></i>
+                                <span>Client (your) seed:</span>
+                            </div>
+                            <div class="client-seed-title-sub">
+                                <span>Round result is determined from combination of server seed and first 3 bets of the
+                                    round.</span>
+                            </div>
+                        </div>
+
+                        <div class="client-seed-type active">
+                            <label>
+                                <span class="radio">
+                                    <i class="dot"></i>
+                                </span>
+                                <span> Random on every new game </span>
+                            </label>
+                            <div class="block-key">
+                                <div class="key-container random">
+                                    <div class="key">
+                                        <p>
+                                            <span class="current">Current: </span>
+                                            <span id="random-seed">nDfaDX3u7OoflLQ5BDSs</span>
+                                        </p>
+                                    </div>
+                                    <i class="copy-icon"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="client-seed-type">
+                            <label>
+                                <span class="radio">
+                                    <i class="dot"></i>
+                                </span>
+                                <span> Enter manually </span>
+                            </label>
+                            <div class="block-key d-flex">
+                                <div class="key-container manual mr-lg-2 flex-grow-1">
+                                    <div class="key">
+                                        <p>
+                                            <span class="current">Current: </span>
+                                            <span id="manual-seed">er6ER3G20YHZRPYAEm57-0</span>
+                                        </p>
+                                    </div>
+                                    <i class="copy-icon"></i>
+                                </div>
+                                <button class="btn btn-success btn-change text-uppercase" disabled>
+                                    <span>Change</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="server-seed">
+                        <div class="server-seed-title">
+                            <i class="server-icon"></i>
+                            <span>Server seed SHA256:</span>
+                        </div>
+                        <div class="server-seed-value-block">
+                            <div class="key-container">
+                                <div class="key" id="server-seed">
+                                    037ccb1df2e15dd4d714c27785c3f0e5ab4efbfcc7cbe33fb8a1f27de02e70f7</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    You can check fairness of each bet from bets history
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Free Bets Modal -->
+    <div class="modal-overlay" id="free-bets-modal" style="display: none;">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <span class="text-uppercase">Free Bets Management</span>
+                    <button type="button" class="close" data-modal="free-bets-modal">
+                        <span>×</span>
+                    </button>
+                </div>
+                <div class="modal-body px-2">
+                    <div class="content-wrapper">
+                        <div class="content">
+                            <div class="free-bet-item">
+                                <div class="item-wrapper">
+                                    <div class="rounded-block cash-block selected" id="free-bet-card">
+                                        <div class="main-row">
+                                            <span class="radio">
+                                                <i class="dot"></i>
+                                            </span>
+                                            <div class="cash-block__text">
+                                                <div class="free-bet-title">KES 250 Free Bet</div>
+                                            </div>
+                                        </div>
+                                        <div class="free-bet-details">
+                                            <ul>
+                                                <li>Make your first deposit to unlock the bonus.</li>
+                                            </ul>
+                                        </div>
+                                        <button class="cta-button" id="free-bet-claim-button">Claim Free Bet</button>
+                                        <div class="free-bet-status" id="free-bet-status-message"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bet History Modal -->
+    <div class="modal-overlay" id="bet-history-modal" style="display: none;">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <span class="text-uppercase">My Bet History</span>
+                    <button type="button" class="close" data-modal="bet-history-modal">
+                        <span>×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="bet-history-filters"
+                        style="margin-bottom: 1rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                        <button class="filter-btn active" data-filter="all">All Bets</button>
+                        <button class="filter-btn" data-filter="won">Won</button>
+                        <button class="filter-btn" data-filter="lost">Lost</button>
+                    </div>
+                    <div id="bet-history-content" class="bet-history-content">
+                        <div style="text-align: center; padding: 2rem; color: #ccc;">
+                            <i class="fas fa-spinner fa-spin" style="font-size: 2rem; margin-bottom: 1rem;"></i>
+                            <p>Loading bet history...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .bet-history-content {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .bet-history-item {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .bet-history-item.won {
+            border-left: 3px solid #36cb12;
+        }
+
+        .bet-history-item.lost {
+            border-left: 3px solid #fb024c;
+        }
+
+        .bet-info {
+            flex: 1;
+        }
+
+        .bet-amount {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .bet-multiplier {
+            font-size: 1rem;
+            color: #36cb12;
+        }
+
+        .bet-result {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .bet-result.won {
+            color: #36cb12;
+        }
+
+        .bet-result.lost {
+            color: #fb024c;
+        }
+
+        .bet-date {
+            font-size: 0.85rem;
+            color: #999;
+        }
+
+        .filter-btn {
+            padding: 0.5rem 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .filter-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .filter-btn.active {
+            background: #fb024c;
+            color: #fff;
+            border-color: #fb024c;
+        }
+    </style>
+
+    <!-- Players Chat Styles -->
+    <style>
+        /* Chat Toggle Button */
+        .players-chat-toggle-btn {
+            background: none;
+            border: none;
+            color: #8a8aa0;
+            font-size: 1.1rem;
+            cursor: pointer;
+            padding: 6px 8px;
+            border-radius: 6px;
+            transition: all 0.25s ease;
+            position: relative;
+        }
+
+        .players-chat-toggle-btn:hover {
+            color: #30fcbe;
+            background: rgba(48, 252, 190, 0.1);
+        }
+
+        .players-chat-toggle-btn.active {
+            color: #30fcbe;
+        }
+
+        /* Chat Panel — Fixed Right Sidebar */
+        .players-chat-panel {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 340px;
+            height: 100vh;
+            height: 100dvh;
+            background: #101025;
+            border-left: 1px solid rgba(255, 255, 255, 0.07);
+            display: flex;
+            flex-direction: column;
+            z-index: 9999;
+            transform: translateX(100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: -4px 0 24px rgba(0, 0, 0, 0);
+        }
+
+        .players-chat-panel.open {
+            transform: translateX(0);
+            box-shadow: -4px 0 24px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Chat Backdrop */
+        .chat-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 9998;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .chat-backdrop.visible {
+            display: block;
+            opacity: 1;
+        }
+
+        /* Prevent body scroll when chat is open on mobile */
+        body.chat-panel-active {
+            overflow: hidden;
+        }
+
+        /* Chat Header */
+        .players-chat-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 16px;
+            background: #1a1a35;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            flex-shrink: 0;
+        }
+
+        .players-chat-title {
+            color: #ccc;
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+
+        .players-chat-title i {
+            color: #30fcbe;
+            margin-right: 6px;
+        }
+
+        .players-chat-online {
+            color: #5aff5a;
+            font-size: 0.72rem;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .players-chat-online i {
+            font-size: 0.45rem;
+            animation: pulse-dot 2s infinite;
+        }
+
+        @keyframes pulse-dot {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.3;
+            }
+        }
+
+        .players-chat-close-btn {
+            background: rgba(255, 255, 255, 0.06);
+            border: none;
+            color: #888;
+            font-size: 1.3rem;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 6px;
+            line-height: 1;
+            transition: all 0.2s;
+        }
+
+        .players-chat-close-btn:hover {
+            color: #fb024c;
+            background: rgba(251, 2, 76, 0.1);
+        }
+
+        /* Chat Messages */
+        .players-chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            scrollbar-width: thin;
+            scrollbar-color: #333 transparent;
+        }
+
+        .players-chat-messages::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .players-chat-messages::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 4px;
+        }
+
+        .pchat-msg {
+            display: flex;
+            align-items: flex-start;
+            gap: 6px;
+            font-size: 0.78rem;
+            line-height: 1.35;
+            padding: 3px 0;
+        }
+
+        .pchat-time {
+            color: #444;
+            font-size: 0.68rem;
+            flex-shrink: 0;
+            min-width: 38px;
+        }
+
+        .pchat-avatar {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            margin-top: 5px;
+        }
+
+        .pchat-name {
+            color: #5b8def;
+            font-weight: 600;
+            flex-shrink: 0;
+            margin-right: 4px;
+        }
+
+        .pchat-name.self {
+            color: #30fcbe;
+        }
+
+        .pchat-text {
+            color: #b0b0c8;
+            word-break: break-word;
+        }
+
+        .pchat-msg.system-msg .pchat-text {
+            color: #f0c040;
+            font-style: italic;
+        }
+
+        /* Chat Input */
+        .players-chat-input-area {
+            display: flex;
+            padding: 10px 14px;
+            background: #12122a;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        #players-chat-input {
+            flex: 1;
+            background: #1e1e3a;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 6px;
+            color: #ddd;
+            padding: 8px 12px;
+            font-size: 0.85rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        #players-chat-input:focus {
+            border-color: rgba(48, 252, 190, 0.4);
+        }
+
+        #players-chat-input::placeholder {
+            color: #555;
+        }
+
+        #players-chat-send {
+            background: #30fcbe;
+            border: none;
+            border-radius: 6px;
+            color: #0a0a1a;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: background 0.2s;
+        }
+
+        #players-chat-send:hover {
+            background: #26d9a2;
+        }
+
+        /* Mobile — full screen overlay */
+        @media (max-width: 768px) {
+            .players-chat-panel {
+                width: 100vw;
+            }
+        }
+    </style>
+
+    <!-- Paystack SDK -->
+    <script src="https://js.paystack.co/v1/inline.js"></script>
+    <!-- Currency Utils (must load first) -->
+    <script src="./js/currency-utils.js"></script>
+    <script src="./api.js?v=2.4"></script>
+    <script src="./gameSocket.js?v=2.5"></script>
+    <script src="./script.js?v=2.5"></script>
+    <script src="./script_helpers.js?v=2.4"></script>
+    <script src="./js/paystack-payment.js"></script>
+    <script>
+        // Update deposit modal with user's currency
+        function updateDepositModalCurrency() {
+            if (typeof formatDepositLimits === 'function' && typeof getUserCurrency === 'function') {
+                const currency = getUserCurrency();
+                const limits = formatDepositLimits(currency);
+
+                // Update currency code display
+                const currencyCodeEl = document.getElementById('deposit-currency-code');
+                if (currencyCodeEl) {
+                    currencyCodeEl.textContent = currency;
+                }
+
+                // Update min/max formatted displays
+                const minFormattedEl = document.getElementById('deposit-min-formatted');
+                const maxFormattedEl = document.getElementById('deposit-max-formatted');
+                if (minFormattedEl) minFormattedEl.textContent = limits.min;
+                if (maxFormattedEl) maxFormattedEl.textContent = limits.max;
+
+                // Update input constraints
+                const amountInput = document.getElementById('deposit-amount');
+                if (amountInput) {
+                    amountInput.min = limits.minValue;
+                    amountInput.max = limits.maxValue;
+                }
+            }
+        }
+
+        // Call on page load and when modal opens
+        document.addEventListener('DOMContentLoaded', updateDepositModalCurrency);
+
+        // Also update when opening deposit modal
+        const depositModal = document.getElementById('deposit-modal');
+        if (depositModal) {
+            const observer = new MutationObserver((mutations) => {
+                mutations.forEach((mutation) => {
+                    if (mutation.attributeName === 'style' && depositModal.style.display === 'block') {
+                        updateDepositModalCurrency();
+                    }
+                });
+            });
+            observer.observe(depositModal, { attributes: true });
+        }
+
+        // Deposit form handler for Paystack
+        function handleDepositSubmit(event) {
+            event.preventDefault();
+            const amount = document.getElementById('deposit-amount').value;
+
+            // Hide any previous errors/success messages
+            const errorEl = document.getElementById('deposit-error');
+            const successEl = document.getElementById('deposit-success');
+            if (errorEl) errorEl.style.display = 'none';
+            if (successEl) successEl.style.display = 'none';
+
+            // Get dynamic limits for validation
+            const limits = typeof getDepositLimits === 'function' ? getDepositLimits() : { min: 650, max: 150000 };
+            const currency = typeof getUserCurrency === 'function' ? getUserCurrency() : 'KES';
+            const symbol = typeof getCurrencySymbol === 'function' ? getCurrencySymbol(currency) : currency;
+
+            // Validate amount
+            if (!amount || parseFloat(amount) < limits.min) {
+                if (errorEl) {
+                    errorEl.textContent = `Please enter a valid amount (minimum ${symbol} ${limits.min})`;
+                    errorEl.style.display = 'block';
+                }
+                return;
+            }
+
+            // Call Paystack integration
+            if (typeof initiatePaystackDeposit === 'function') {
+                initiatePaystackDeposit(parseFloat(amount))
+                    .catch(error => {
+                        console.error('Deposit error:', error);
+                        if (errorEl) {
+                            errorEl.textContent = error.message || 'Deposit failed. Please try again.';
+                            errorEl.style.display = 'block';
+                        }
+                    });
+            } else {
+                if (errorEl) {
+                    errorEl.textContent = 'Payment system not loaded. Please refresh the page.';
+                    errorEl.style.display = 'block';
+                }
+            }
+        }
+
+        // Helper to close deposit modal
+        function closeDepositModal() {
+            const modal = document.getElementById('deposit-modal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                    }, err => {
+                        console.log('ServiceWorker registration failed: ', err);
+                    });
+            });
+        }
+    </script>
+
+    <!-- Chat Backdrop Overlay -->
+    <div id="chat-backdrop" class="chat-backdrop"></div>
+
+    <!-- Players Chat Panel (Right Sidebar) -->
+    <div id="players-chat-panel" class="players-chat-panel">
+        <div class="players-chat-header">
+            <span class="players-chat-title"><i class="fas fa-comments"></i> Chat</span>
+            <span class="players-chat-online"><i class="fas fa-circle"></i> <span
+                    id="chat-online-count">342</span></span>
+            <button id="players-chat-close" class="players-chat-close-btn">&times;</button>
+        </div>
+        <div class="players-chat-messages" id="players-chat-messages">
+            <!-- Simulated messages appear here -->
+        </div>
+        <div class="players-chat-input-area">
+            <input type="text" id="players-chat-input" placeholder="Say something..." maxlength="200" />
+            <button id="players-chat-send"><i class="fas fa-paper-plane"></i></button>
+        </div>
+    </div>
+
+    <!-- Players Chat Simulation -->
+    <script>
+        (function () {
+            'use strict';
+
+            // ─── Configuration ───
+            const MSG_INTERVAL_MIN = 2000;  // ms
+            const MSG_INTERVAL_MAX = 6000;
+            const ONLINE_UPDATE_INTERVAL = 20000;
+            const INITIAL_MSGS = 10;
+            const MAX_MSGS = 80;
+
+            // ─── Fake username initials (first***last) ───
+            const USERNAMES = [
+                'l***e', 'm***a', 'k***s', 'j***n', 'd***d', 's***h', 'a***i', 'p***r',
+                'r***o', 'c***a', 'f***k', 'b***y', 'w***e', 't***s', 'n***i', 'g***l',
+                'h***n', 'e***a', 'z***u', 'o***s', 'v***a', 'i***m', 'q***t', 'u***k',
+                'x***n', 'y***a', 'w***i', 'm***o', 'k***a', 'j***e', 'b***n', 's***a',
+                'r***k', 'l***n', 'd***a', 'p***e', 't***i', 'c***o', 'f***a', 'n***e'
+            ];
+
+            // ─── Avatar colors ───
+            const COLORS = [
+                '#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c',
+                '#e67e22', '#e91e63', '#00bcd4', '#8bc34a', '#ff5722', '#607d8b',
+                '#795548', '#ffeb3b', '#4caf50', '#03a9f4'
+            ];
+
+            // ─── Message pool ───
+            const MESSAGES = [
+                'Just cashed out at 3.2x 🔥', 'Going big this round 💰', 'Who else lost at 1.01x 😭',
+                'Nice win!', 'Let\'s goooo 🚀', 'That was close omg', 'I\'m on a streak today',
+                'Bet small win big 🎯', 'Anyone else scared to bet? 😂', '1.5x is safe enough for me',
+                'FLEW AWAY TOO FAST', 'Cash out early guys trust me', '5x coming soon I feel it',
+                'Lost 3 in a row smh', 'This game is addicting fr', 'Waiting for the right moment...',
+                'Who got the 10x?? 🤯', 'Small bets small wins 👌', 'My strategy is working today',
+                'Auto cashout at 2x is the way', 'RIP my balance 💀', 'Patience pays off 🙏',
+                'Just doubled up! 🎉', 'Don\'t get greedy guys', 'That 1.00x was brutal',
+                'How do you guys predict?', 'Going all in wish me luck 🍀', 'Legend says someone hit 100x',
+                'Cash out gang 💪', 'This round feels good', 'Trust the process',
+                'My heart is racing 😅', 'Slow and steady wins', '200 KES to 2000 today 📈',
+                'Who\'s playing safe?', 'That multiplier was insane!', 'I need to stop but I can\'t 😂',
+                'GG everyone', 'New here, any tips?', '3x minimum or bust',
+                'Late night grind 🌙', 'Morning bets hit different ☀️', 'Another day another cashout',
+                'Lucky number 7', 'The plane hates me today ✈️', 'Best game ever honestly',
+                'I\'m done for today... maybe', 'One more round then I stop 😤', 'Congrats to whoever cashed big'
+            ];
+
+            // ─── System messages ───
+            const SYSTEM_MSGS = [
+                '🏆 d***d won 12,450 KES at 5.2x!',
+                '🏆 k***a won 8,200 KES at 3.8x!',
+                '🎉 m***o hit a 7.5x multiplier!',
+                '🔥 Hot streak! 3 rounds above 3x',
+                '🏆 l***e won 15,000 KES at 6.1x!',
+                '🎉 j***n cashed out 22,000 KES!',
+                '🏆 s***a won 5,600 KES at 2.8x!'
+            ];
+
+            // ─── State ───
+            let chatOpen = false;
+            let chatInterval = null;
+            let onlineInterval = null;
+            let msgCount = 0;
+
+            // ─── DOM refs ───
+            const toggleBtn = document.getElementById('players-chat-toggle');
+            const panel = document.getElementById('players-chat-panel');
+            const closeBtn = document.getElementById('players-chat-close');
+            const msgsContainer = document.getElementById('players-chat-messages');
+            const chatInput = document.getElementById('players-chat-input');
+            const sendBtn = document.getElementById('players-chat-send');
+            const onlineCount = document.getElementById('chat-online-count');
+
+            if (!toggleBtn || !panel) return;
+
+            // ─── Helpers ───
+            function rand(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+            function pick(arr) { return arr[rand(0, arr.length - 1)]; }
+            function pickColor() { return pick(COLORS); }
+
+            function formatTime(date) {
+                const h = date.getHours().toString().padStart(2, '0');
+                const m = date.getMinutes().toString().padStart(2, '0');
+                return h + ':' + m;
+            }
+
+            function getUserInitials() {
+                try {
+                    const stored = localStorage.getItem('user') || sessionStorage.getItem('user');
+                    if (stored) {
+                        const user = JSON.parse(stored);
+                        const uname = user.username || user.name || '';
+                        if (uname.length >= 2) {
+                            return uname[0].toLowerCase() + '***' + uname[uname.length - 1].toLowerCase();
+                        }
+                    }
+                } catch (e) { }
+                return 'y***u';
+            }
+
+            // ─── Create message element ───
+            function createMsgEl(name, text, time, color, isSystem, isSelf) {
+                const div = document.createElement('div');
+                div.className = 'pchat-msg' + (isSystem ? ' system-msg' : '');
+
+                const timeSpan = document.createElement('span');
+                timeSpan.className = 'pchat-time';
+                timeSpan.textContent = time;
+
+                const avatar = document.createElement('span');
+                avatar.className = 'pchat-avatar';
+                avatar.style.background = color;
+
+                const nameSpan = document.createElement('span');
+                nameSpan.className = 'pchat-name' + (isSelf ? ' self' : '');
+                nameSpan.textContent = name + ':';
+
+                const textSpan = document.createElement('span');
+                textSpan.className = 'pchat-text';
+                textSpan.textContent = text;
+
+                div.appendChild(timeSpan);
+                if (!isSystem) div.appendChild(avatar);
+                div.appendChild(nameSpan);
+                div.appendChild(textSpan);
+                return div;
+            }
+
+            function addMessage(name, text, color, isSystem, isSelf) {
+                const now = new Date();
+                const el = createMsgEl(name, text, formatTime(now), color || pickColor(), isSystem || false, isSelf || false);
+                msgsContainer.appendChild(el);
+                msgCount++;
+
+                // Trim old messages
+                while (msgsContainer.children.length > MAX_MSGS) {
+                    msgsContainer.removeChild(msgsContainer.firstChild);
+                }
+
+                // Auto-scroll
+                msgsContainer.scrollTop = msgsContainer.scrollHeight;
+            }
+
+            function addRandomMessage() {
+                // 15% chance of system message
+                if (Math.random() < 0.15) {
+                    addMessage('🏆', pick(SYSTEM_MSGS), '#f0c040', true, false);
+                } else {
+                    addMessage(pick(USERNAMES), pick(MESSAGES), pickColor(), false, false);
+                }
+            }
+
+            // ─── Seed initial messages ───
+            function seedMessages() {
+                const now = new Date();
+                for (let i = 0; i < INITIAL_MSGS; i++) {
+                    const pastTime = new Date(now.getTime() - (INITIAL_MSGS - i) * rand(15000, 45000));
+                    const isSystem = Math.random() < 0.1;
+                    const name = isSystem ? '🏆' : pick(USERNAMES);
+                    const text = isSystem ? pick(SYSTEM_MSGS) : pick(MESSAGES);
+                    const el = createMsgEl(name, text, formatTime(pastTime), pickColor(), isSystem, false);
+                    msgsContainer.appendChild(el);
+                }
+                msgsContainer.scrollTop = msgsContainer.scrollHeight;
+            }
+
+            // ─── Auto message loop ───
+            function startAutoMessages() {
+                if (chatInterval) return;
+                function scheduleNext() {
+                    chatInterval = setTimeout(() => {
+                        addRandomMessage();
+                        scheduleNext();
+                    }, rand(MSG_INTERVAL_MIN, MSG_INTERVAL_MAX));
+                }
+                scheduleNext();
+            }
+
+            function stopAutoMessages() {
+                if (chatInterval) {
+                    clearTimeout(chatInterval);
+                    chatInterval = null;
+                }
+            }
+
+            // ─── Online count ───
+            function updateOnlineCount() {
+                const current = parseInt(onlineCount.textContent) || 342;
+                const delta = rand(-12, 15);
+                const newCount = Math.max(280, Math.min(500, current + delta));
+                onlineCount.textContent = newCount;
+            }
+
+            function startOnlineCounter() {
+                onlineInterval = setInterval(updateOnlineCount, ONLINE_UPDATE_INTERVAL);
+            }
+
+            // ─── Backdrop ref ───
+            const backdrop = document.getElementById('chat-backdrop');
+
+            // ─── Toggle ───
+            function openChat() {
+                chatOpen = true;
+                panel.classList.add('open');
+                toggleBtn.classList.add('active');
+                if (backdrop) backdrop.classList.add('visible');
+                document.body.classList.add('chat-panel-active');
+                if (msgsContainer.children.length === 0) {
+                    seedMessages();
+                }
+                startAutoMessages();
+                msgsContainer.scrollTop = msgsContainer.scrollHeight;
+            }
+
+            function closeChat() {
+                chatOpen = false;
+                panel.classList.remove('open');
+                toggleBtn.classList.remove('active');
+                if (backdrop) backdrop.classList.remove('visible');
+                document.body.classList.remove('chat-panel-active');
+                stopAutoMessages();
+            }
+
+            toggleBtn.addEventListener('click', () => {
+                chatOpen ? closeChat() : openChat();
+            });
+            closeBtn.addEventListener('click', closeChat);
+            if (backdrop) backdrop.addEventListener('click', closeChat);
+
+            // ─── User send ───
+            function sendUserMessage() {
+                const text = chatInput.value.trim();
+                if (!text) return;
+                chatInput.value = '';
+                const initials = getUserInitials();
+                addMessage(initials, text, '#30fcbe', false, true);
+            }
+
+            sendBtn.addEventListener('click', sendUserMessage);
+            chatInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    sendUserMessage();
+                }
+            });
+
+            // ─── Start online counter always ───
+            startOnlineCounter();
+            updateOnlineCount();
+
+        })();
+    </script>
+</body>
+
+</html>
