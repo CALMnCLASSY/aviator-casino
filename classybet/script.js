@@ -648,18 +648,38 @@ class AviatorGame {
         this.allBetsHistory = []; // Store all bets for the "show more" feature
         this.betCount = 0;
 
-        // Background timer: trickle in bets continuously during waiting phase
-        setInterval(() => {
+        // Bet generation will be controlled by startBetGeneration() method
+        this.betGenerationInterval = null;
+
+        // Setup show more rounds functionality
+        this.setupShowMoreRounds();
+    }
+
+    startBetGeneration() {
+        // Clear any existing interval
+        if (this.betGenerationInterval) {
+            clearInterval(this.betGenerationInterval);
+        }
+        
+        // Start generating bets to simulate users placing bets during waiting phase
+        this.betGenerationInterval = setInterval(() => {
             if (this.gameState === 'waiting') {
                 const bursts = Math.floor(Math.random() * 5) + 3; // 3-7 bets per tick during waiting
                 for (let i = 0; i < bursts; i++) {
                     this.generateRandomBet();
                 }
+            } else {
+                // Stop generation when game starts
+                this.stopBetGeneration();
             }
         }, 800); // More frequent updates during waiting
+    }
 
-        // Setup show more rounds functionality
-        this.setupShowMoreRounds();
+    stopBetGeneration() {
+        if (this.betGenerationInterval) {
+            clearInterval(this.betGenerationInterval);
+            this.betGenerationInterval = null;
+        }
     }
 
     setupShowMoreRounds() {
@@ -2171,9 +2191,6 @@ class AviatorGame {
             }
         });
 
-        // Update display to show final crashed state before countdown
-        this.updateAllBetsDisplay();
-
         // Save the updated bet history
         this.saveBetHistory();
 
@@ -2820,8 +2837,8 @@ class AviatorGame {
             if (this.gameState !== 'waiting') {
                 this.gameState = 'waiting';
                 this.resetForNewRound();
-                //Regenerate mock bets for the new round - in real implementation, this would be triggered by new data from server
-                this.generateMockBets();
+                // Start bet generation when waiting phase begins - users placing bets
+                this.startBetGeneration();
                 this.updateBetCount();
             }
         }
@@ -2831,6 +2848,9 @@ class AviatorGame {
         this.gameState = 'flying';
         this.isFlying = true;
         // Counter is set by backend game state updates
+        
+        // Stop bet generation when game starts
+        this.stopBetGeneration();
         
         // Reset canvas
         this.x = this.startX;
@@ -2863,6 +2883,15 @@ class AviatorGame {
             counterElement.textContent = '';
             counterElement.className = 'waiting';
         }
+        
+        // Clear all bets data for new round
+        this.allBetsData = [];
+        this.allBetsHistory = [];
+        this.betCount = 0;
+        
+        // Update displays to show cleared state
+        this.updateAllBetsDisplay();
+        this.updateBetCount();
         
         // Reset betting buttons for those not in auto-bet
         Object.keys(this.bets).forEach(betType => {
