@@ -4,7 +4,7 @@
 
 - **Frontend (Netlify)**: https://ClassyBet.netlify.app
 - **Frontend (Vercel)**: https://ClassyBet-aviator.vercel.app
-- **Backend API (Render)**: https://aviator-casino.onrender.com
+- **Backend API (VPS)**: https://back.classybetaviator.com
 
 ## 📁 Deployment Structure
 
@@ -21,8 +21,8 @@
 - MongoDB Atlas database
 - JWT authentication
 - Location: `/ClassyBet-backend` folder
-- Platform: Render.com
-- URL: aviator-casino.onrender.com
+- Platform: VPS
+- URL: back.classybetaviator.com
 
 ## 🚀 Netlify Deployment Steps
 
@@ -73,7 +73,7 @@
 After deployment, verify:
 
 - [ ] Frontend loads at https://ClassyBet.netlify.app
-- [ ] Backend API responds at https://aviator-casino.vercel.app/health
+- [ ] Backend API responds at https://back.classybetaviator.com/health
 - [ ] Login/Register forms work correctly
 - [ ] User authentication persists across page refreshes
 - [ ] Game functionality works
@@ -84,7 +84,7 @@ After deployment, verify:
 
 Your backend environment variables should be set in Render Dashboard:
 
-**Backend URL:** https://aviator-casino.onrender.com
+**Backend URL:** https://back.classybetaviator.com
 
 ```env
 MONGODB_URI=mongodb+srv://...
@@ -100,7 +100,7 @@ CLIENT_URL=https://ClassyBet.netlify.app
 ## 🐛 Troubleshooting
 
 ### Login Not Working
-- Check backend API is running: https://aviator-casino.onrender.com/health
+- Check backend API is running: https://back.classybetaviator.com/health
 - **Important:** First request may take 30-60 seconds (Render free tier wake-up)
 - Verify environment variables in Render dashboard
 - Check browser console for CORS errors
@@ -138,7 +138,7 @@ To update the backend:
 
 ## 📞 API Endpoints
 
-All API calls go to: `https://aviator-casino.onrender.com`
+All API calls go to: `https://back.classybetaviator.com`
 
 - `POST /api/auth/login` - User login
 - `POST /api/auth/register` - User registration
