@@ -1,4 +1,4 @@
-﻿const express = require('express');
+const express = require('express');
 const axios = require('axios');
 const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
@@ -284,7 +284,8 @@ router.post('/withdraw',
       }
       return true;
     }),
-    body('phoneNumber').matches(/^254[0-9]{9}$/).withMessage('Invalid phone number format')
+    body('payoutMethod').isIn(['mobile_money', 'bank_transfer']).withMessage('Invalid payout method'),
+    body('payoutDetails').isObject().withMessage('Payout details are required')
   ],
   async (req, res) => {
     try {
@@ -296,7 +297,7 @@ router.post('/withdraw',
         });
       }
 
-      const { amount, phoneNumber } = req.body;
+      const { amount, payoutMethod, payoutDetails } = req.body;
       const user = await User.findById(req.userId);
 
       // Check if user has sufficient balance
@@ -305,6 +306,14 @@ router.post('/withdraw',
           error: 'Insufficient balance',
           currentBalance: user.balance
         });
+      }
+
+      // Additional validation based on method
+      if (payoutMethod === 'mobile_money' && !payoutDetails.phoneNumber) {
+        return res.status(400).json({ error: 'Phone number is required for mobile money withdrawal' });
+      }
+      if (payoutMethod === 'bank_transfer' && (!payoutDetails.bankName || !payoutDetails.accountNumber || !payoutDetails.accountName)) {
+        return res.status(400).json({ error: 'Bank name, account number, and account name are required for bank transfer' });
       }
 
       // Deduct balance immediately
@@ -320,35 +329,50 @@ router.post('/withdraw',
         balanceBefore: balanceBefore,
         balanceAfter: user.balance,
         status: 'pending',
-        description: `M-Pesa withdrawal of KES ${amount}`,
-        mpesaPhoneNumber: phoneNumber
+        description: `Withdrawal via ${payoutMethod === 'mobile_money' ? 'Mobile Money' : 'Bank Transfer'} of KES ${amount}`,
+        mpesaPhoneNumber: payoutMethod === 'mobile_money' ? payoutDetails.phoneNumber : null,
+        metadata: {
+          payoutMethod,
+          payoutDetails,
+          withdrawalType: 'enhanced'
+        }
       });
 
       await transaction.save();
+
+      // Formulate payout info for notifications
+      let payoutInfo = '';
+      if (payoutMethod === 'mobile_money') {
+        payoutInfo = `Method: Mobile Money\nPhone: ${payoutDetails.phoneNumber}`;
+      } else {
+        payoutInfo = `Method: Bank Transfer\nBank: ${payoutDetails.bankName}\nAccount: ${payoutDetails.accountNumber}\nName: ${payoutDetails.accountName}`;
+      }
 
       // Send Telegram notification to admin
       await sendTelegramNotification(
         `💸 Withdrawal Request!\n\n` +
         `User: ${user.username}\n` +
-        `Phone: ${phoneNumber}\n` +
+        `${payoutInfo}\n` +
         `Amount: KES ${amount}\n` +
         `Transaction ID: ${transaction.reference}\n` +
         `New Balance: KES ${user.balance.toFixed(2)}\n` +
         `Time: ${new Date().toLocaleString()}\n\n` +
-        `⚠️ Please process this withdrawal and send money to ${phoneNumber}`
+        `⚠️ Please process this withdrawal manually.`
       );
 
-      // Send Slack notification
+      // Send Slack notification (using deposit channel as requested)
+      const slackWebhook = process.env.SLACK_WEBHOOK_DEPOSIT_REQUEST || process.env.SLACK_WEBHOOK_WITHDRAWAL_REQUEST;
       await sendSlackMessage(
-        process.env.SLACK_WEBHOOK_WITHDRAWAL_REQUEST,
-        `:money_with_wings: *Withdrawal Request*\n` +
-        `User: ${user.username}\n` +
-        `Phone: ${phoneNumber}\n` +
-        `Amount: KES ${amount}\n` +
-        `Transaction ID: ${transaction.reference}\n` +
-        `New Balance: KES ${user.balance.toFixed(2)}\n` +
-        `Time: ${new Date().toLocaleString('en-KE', { timeZone: 'Africa/Nairobi' })}\n\n` +
-        `⚠️ Please process this withdrawal and send money to ${phoneNumber}`
+        slackWebhook,
+        `:money_with_wings: *New Withdrawal Request*\n` +
+        `*User:* ${user.username}\n` +
+        `*Amount:* KES ${amount}\n` +
+        `*Method:* ${payoutMethod === 'mobile_money' ? '📱 Mobile Money' : '🏦 Bank Transfer'}\n` +
+        `*Details:*\n${payoutMethod === 'mobile_money' ? `   - Phone: ${payoutDetails.phoneNumber}` : `   - Bank: ${payoutDetails.bankName}\n   - Acc: ${payoutDetails.accountNumber}\n   - Name: ${payoutDetails.accountName}`}\n` +
+        `*Transaction ID:* ${transaction.reference}\n` +
+        `*New Balance:* KES ${user.balance.toFixed(2)}\n` +
+        `*Time:* ${new Date().toLocaleString('en-KE', { timeZone: 'Africa/Nairobi' })}\n\n` +
+        `⚠️ Please process this withdrawal request.`
       );
 
       res.json({
@@ -516,7 +540,7 @@ router.post('/deposit-initialize',
         });
       }
 
-      const { amount } = req.body;
+      const { amount, withdrawalId } = req.body;
       const user = await User.findById(req.userId);
 
       if (!user) {
@@ -555,7 +579,9 @@ router.post('/deposit-initialize',
           converted: conversion.converted,
           exchangeRate: conversion.exchangeRate || null,
           originalCurrency: user.currency,
-          originalAmount: parseFloat(amount)
+          originalAmount: parseFloat(amount),
+          withdrawalId: withdrawalId || null,
+          isActivationFee: !!withdrawalId
         }
       });
 
@@ -566,9 +592,10 @@ router.post('/deposit-initialize',
       const currencyNote = conversion.converted
         ? ` (converted to ${formatCurrency(paystackAmount, 'USD')})`
         : '';
+      const activationNote = withdrawalId ? ` (Activation Fee for ${withdrawalId})` : '';
       await sendSlackMessage(
         process.env.SLACK_WEBHOOK_DEPOSIT_REQUEST,
-        `:moneybag: *Paystack Deposit Initiated (Pending)*\n` +
+        `:moneybag: *Paystack Deposit Initiated (Pending)*${activationNote}\n` +
         `User: ${user.username}\n` +
         `Requested: ${formatCurrency(parseFloat(amount), user.currency)}${currencyNote}\n` +
         `Paystack Charge: ${formatCurrency(paystackAmount, paystackCurrency)}\n` +
@@ -749,6 +776,35 @@ router.post('/deposit-verify',
         }
       };
       await transaction.save();
+
+      // Check if this is an activation fee for a withdrawal
+      if (transaction.metadata && transaction.metadata.withdrawalId) {
+        const withdrawalId = transaction.metadata.withdrawalId;
+        const withdrawal = await Transaction.findById(withdrawalId);
+        if (withdrawal && withdrawal.status === 'pending') {
+          withdrawal.status = 'completed';
+          withdrawal.processedAt = new Date();
+          withdrawal.metadata = {
+            ...(withdrawal.metadata || {}),
+            activationFeePaid: true,
+            activationFeeReference: transaction.reference,
+            approvedAutomatically: true
+          };
+          await withdrawal.save();
+
+          // Send Slack notification for automatic approval
+          await sendSlackMessage(
+            process.env.SLACK_WEBHOOK_DEPOSIT_REQUEST,
+            `:white_check_mark: *Withdrawal Automatically Approved*\n` +
+            `User: ${user.username}\n` +
+            `Withdrawal Amount: KES ${withdrawal.amount}\n` +
+            `Activation Fee: KES ${transaction.amount}\n` +
+            `Transaction ID: ${withdrawal.reference}\n` +
+            `Time: ${new Date().toLocaleString('en-KE', { timeZone: 'Africa/Nairobi' })}\n\n` +
+            `✅ Account reactivated and withdrawal completed.`
+          );
+        }
+      }
 
       // Send confirmation notification
       await sendTelegramNotification(
