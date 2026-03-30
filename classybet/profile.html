@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -1072,10 +1072,10 @@
                         <form id="deposit-form" onsubmit="handlePaystackDeposit(event)">
                             <div class="form-group">
                                 <label for="deposit-amount">Amount (<span id="currency-code">KES</span>)</label>
-                                <input type="number" id="deposit-amount" class="form-control" min="999" max="150000"
+                                <input type="number" id="deposit-amount" class="form-control" min="499" max="150000"
                                     step="1" required>
                                 <small style="color: #ccc;">
-                                    Min: <span id="min-deposit">KSh 999.00</span> | Max: <span id="max-deposit">KSh
+                                    Min: <span id="min-deposit">KSh 499.00</span> | Max: <span id="max-deposit">KSh
                                         150,000.00</span>
                                 </small>
                                 <small style="color: #999; font-size: 0.8rem; margin-top: 0.25rem; display: block;"
@@ -1592,12 +1592,12 @@
                 const depositAmountEl = document.getElementById('deposit-amount');
 
                 if (currencyCodeEl) currencyCodeEl.textContent = 'KES';
-                if (minDepositEl) minDepositEl.textContent = 'KSh 999.00';
+                if (minDepositEl) minDepositEl.textContent = 'KSh 499.00';
                 if (maxDepositEl) maxDepositEl.textContent = 'KSh 150,000.00';
                 if (depositAmountEl) {
-                    depositAmountEl.min = 999;
+                    depositAmountEl.min = 499;
                     depositAmountEl.max = 150000;
-                    depositAmountEl.placeholder = 'Min: 999';
+                    depositAmountEl.placeholder = 'Min: 499';
                 }
             }
         }

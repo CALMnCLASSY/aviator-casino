@@ -15,7 +15,7 @@ const CURRENCY_SYMBOLS = {
 
 // Deposit limits for each currency (min and max amounts)
 const DEPOSIT_LIMITS = {
-    KES: { min: 999, max: 150000 },
+    KES: { min: 499, max: 150000 },
     NGN: { min: 6500, max: 2800000 },  // ~350 KES equivalent
     GHS: { min: 600, max: 250000 },    // ~350 KES equivalent
     ZAR: { min: 125, max: 52000 },      // ~350 KES equivalent
