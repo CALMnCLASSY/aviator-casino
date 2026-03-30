@@ -2596,11 +2596,42 @@ class AviatorGame {
         const mobileBetCountElement = document.getElementById('mobile-bet-count');
 
         // Update based on allBetsData for local display consistency
+        // This ensures the counter matches the visible list of simulated bets
         let betCount = this.allBetsData ? this.allBetsData.length : 0;
         
         // Ensure we're showing the correct count
         if (betCountElement) betCountElement.textContent = betCount;
         if (mobileBetCountElement) mobileBetCountElement.textContent = betCount;
+    }
+
+    // New method to simulate real-time cashouts in the sidebar during flying
+    simulateLiveCashouts() {
+        if (this.gameState !== 'flying' || !this.allBetsData || this.allBetsData.length === 0) return;
+
+        // Roughly 10% chance per update to have some simulated players cash out
+        if (Math.random() > 0.1) return;
+
+        const currentMultiplier = this.counter;
+        const numToCashOut = Math.floor(Math.random() * 3) + 1; // 1-3 players cash out
+        let updated = false;
+
+        // Find some active bets that haven't cashed out yet
+        const activeBets = this.allBetsData.filter(b => !b.cashedOut);
+        if (activeBets.length === 0) return;
+
+        for (let i = 0; i < Math.min(numToCashOut, activeBets.length); i++) {
+            const bet = activeBets[Math.floor(Math.random() * activeBets.length)];
+            if (bet && !bet.cashedOut) {
+                bet.cashedOut = true;
+                bet.multiplier = parseFloat(currentMultiplier.toFixed(2));
+                bet.win = parseFloat((bet.amount * bet.multiplier).toFixed(2));
+                updated = true;
+            }
+        }
+
+        if (updated) {
+            this.updateAllBetsDisplay();
+        }
     }
 
     setupQuickAmountButtons() {
@@ -2763,13 +2794,11 @@ class AviatorGame {
                 existingOverlay.parentNode.removeChild(existingOverlay);
             }
 
-            // Sync backend bet count
-            if (typeof state.activeBets === 'number') {
-                const betCountEl = document.getElementById('bet-count');
-                const mobileBetCountEl = document.getElementById('mobile-bet-count');
-                if (betCountEl) betCountEl.textContent = state.activeBets;
-                if (mobileBetCountEl) mobileBetCountEl.textContent = state.activeBets;
-            }
+            // Sync backend bet count (prioritizing local simulated count if higher)
+            this.updateBetCount();
+            
+            // Add live cashout simulation
+            this.simulateLiveCashouts();
 
             // Update multiplier from backend
             if (state.multiplier !== undefined) {
@@ -2823,13 +2852,8 @@ class AviatorGame {
 
             this.renderCountdownOverlay(state.countdown);
             
-            // Sync current bet count during countdown if provided
-            if (typeof state.activeBets === 'number') {
-                const betCountEl = document.getElementById('bet-count');
-                const mobileBetCountEl = document.getElementById('mobile-bet-count');
-                if (betCountEl) betCountEl.textContent = state.activeBets;
-                if (mobileBetCountEl) mobileBetCountEl.textContent = state.activeBets;
-            }
+            // Sync bet count during countdown
+            this.updateBetCount();
         }
 
         // ── WAITING ───────────────────────────────────────────────────────────
