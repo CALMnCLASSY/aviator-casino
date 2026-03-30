@@ -1415,7 +1415,7 @@
             const { hostname, protocol } = window.location;
             const isLocalHost = hostname === 'localhost' || hostname === '127.0.0.1';
             if (isLocalHost || protocol === 'file:' || hostname === '') {
-                return 'http://localhost:3001';
+                return 'http://localhost:4000';
             }
             return 'https://back.classybetaviator.com';
         })();

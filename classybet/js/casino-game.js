@@ -1,4 +1,4 @@
-﻿/**
+/**
  * ClassyBet Casino Game Logic
  * Handles generic bet placement and results for non-Aviator games.
  */
@@ -21,7 +21,7 @@ class CasinoGame {
 
     getApiBase() {
         const isLocalhost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
-        return isLocalhost ? 'http://localhost:3001' : 'https://back.classybetaviator.com';
+        return isLocalhost ? 'http://localhost:4000' : 'https://back.classybetaviator.com';
     }
 
     init() {

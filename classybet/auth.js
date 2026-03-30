@@ -1,9 +1,9 @@
-﻿// Authentication and registration system
+// Authentication and registration system
 class AuthManager {
     constructor() {
         // Backend URL configuration
         const isLocalhost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
-        this.apiBase = isLocalhost ? 'http://localhost:3001' : 'https://back.classybetaviator.com';
+        this.apiBase = isLocalhost ? 'http://localhost:4000' : 'https://back.classybetaviator.com';
 
         console.log('API Base URL:', this.apiBase);
         console.log('Frontend URL:', window.location.origin);

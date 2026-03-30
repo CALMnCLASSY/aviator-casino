@@ -1,9 +1,9 @@
-﻿// ClassyBet API Service
+// ClassyBet API Service
 class ClassyBetAPI {
     constructor() {
         const productionURL = 'https://back.classybetaviator.com';
         const isLocalhost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
-        this.baseURL = isLocalhost ? 'http://localhost:3001' : productionURL;
+        this.baseURL = isLocalhost ? 'http://localhost:4000' : productionURL;
         this.apiPath = '/api';
         this.token = localStorage.getItem('user_token');
         this.user = null;

@@ -1,6 +1,6 @@
 // Global API configuration
 const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? 'http://localhost:3001'
+    ? 'http://localhost:4000'
     : 'https://back.classybetaviator.com';
 
 // Game State Management
@@ -661,10 +661,10 @@ class AviatorGame {
             clearInterval(this.betGenerationInterval);
         }
         
-        // Start generating bets to simulate users placing bets during waiting phase
+        // Start generating bets to simulate users placing bets during waiting/countdown phase
         this.betGenerationInterval = setInterval(() => {
-            if (this.gameState === 'waiting') {
-                const bursts = Math.floor(Math.random() * 5) + 3; // 3-7 bets per tick during waiting
+            if (this.gameState === 'waiting' || this.gameState === 'countdown') {
+                const bursts = Math.floor(Math.random() * 20) + 30; // 30-50 bets per tick to fill ~600 in 3s
                 for (let i = 0; i < bursts; i++) {
                     this.generateRandomBet();
                 }
@@ -672,7 +672,7 @@ class AviatorGame {
                 // Stop generation when game starts
                 this.stopBetGeneration();
             }
-        }, 800); // More frequent updates during waiting
+        }, 200); // More frequent updates to populate quickly during short windows
     }
 
     stopBetGeneration() {
@@ -1228,7 +1228,7 @@ class AviatorGame {
             const isLocal = window.location.hostname === 'localhost' ||
                 window.location.hostname === '127.0.0.1' ||
                 window.location.protocol === 'file:';
-            const apiBase = isLocal ? 'http://localhost:3001' : 'https://back.classybetaviator.com';
+            const apiBase = isLocal ? 'http://localhost:4000' : 'https://back.classybetaviator.com';
 
             const response = await fetch(`${apiBase}/api/game/bet-history`, {
                 headers: {
@@ -1979,6 +1979,11 @@ class AviatorGame {
         // Update bet buttons with potential cashout amounts
         this.updateBetButtons();
 
+        // Integrate live sidebar simulation into the animation loop for smoother updates
+        if (this.gameState === 'flying') {
+            this.simulateLiveCashouts();
+        }
+
         // NOTE: Cashout processing is now handled by backend WebSocket events
 
         // Clear canvas
@@ -2203,6 +2208,7 @@ class AviatorGame {
         this.messageElement.textContent = 'Round ended - Place your bet for the next round';
         
         // NO LOCAL SETTIMEOUT HERE - game waits for server 'countdown' state
+        // and that's when we reset the sidebar for the new round.
     }
 
     animateCrash() {
@@ -2604,28 +2610,37 @@ class AviatorGame {
         if (mobileBetCountElement) mobileBetCountElement.textContent = betCount;
     }
 
-    // New method to simulate real-time cashouts in the sidebar during flying
+    // Improved method to simulate real-time cashouts in the sidebar during flying
     simulateLiveCashouts() {
         if (this.gameState !== 'flying' || !this.allBetsData || this.allBetsData.length === 0) return;
 
-        // Roughly 10% chance per update to have some simulated players cash out
-        if (Math.random() > 0.1) return;
+        // Roughly 15% chance per second of some simulated players cashing out
+        // Since this is called frequently, we use a smaller chance per call
+        if (Math.random() > 0.05) return;
 
         const currentMultiplier = this.counter;
-        const numToCashOut = Math.floor(Math.random() * 3) + 1; // 1-3 players cash out
+        // More players cash out at lower multipliers (standard Aviator behavior)
+        const densityFactor = currentMultiplier < 2 ? 5 : 2;
+        const numToCashOut = Math.floor(Math.random() * densityFactor) + 1;
         let updated = false;
 
-        // Find some active bets that haven't cashed out yet
+        // Find active bets that haven't cashed out yet
         const activeBets = this.allBetsData.filter(b => !b.cashedOut);
         if (activeBets.length === 0) return;
 
         for (let i = 0; i < Math.min(numToCashOut, activeBets.length); i++) {
-            const bet = activeBets[Math.floor(Math.random() * activeBets.length)];
-            if (bet && !bet.cashedOut) {
-                bet.cashedOut = true;
-                bet.multiplier = parseFloat(currentMultiplier.toFixed(2));
-                bet.win = parseFloat((bet.amount * bet.multiplier).toFixed(2));
-                updated = true;
+            const betIndices = [];
+            activeBets.forEach((b, idx) => { if (!b.cashedOut) betIndices.push(idx); });
+            
+            if (betIndices.length > 0) {
+                const randomIdx = betIndices[Math.floor(Math.random() * betIndices.length)];
+                const bet = activeBets[randomIdx];
+                if (bet && !bet.cashedOut) {
+                    bet.cashedOut = true;
+                    bet.multiplier = parseFloat(currentMultiplier.toFixed(2));
+                    bet.win = parseFloat((bet.amount * bet.multiplier).toFixed(2));
+                    updated = true;
+                }
             }
         }
 
@@ -2841,7 +2856,12 @@ class AviatorGame {
 
         // ── COUNTDOWN ─────────────────────────────────────────────────────────
         else if (incomingState === 'countdown') {
-            this.gameState = 'countdown';
+            // Trigger reset and generation only on transition to countdown
+            if (this.gameState !== 'countdown') {
+                this.gameState = 'countdown';
+                this.resetForNewRound(); // Ensure clean slate
+                this.startBetGeneration(); // Start trickling bets
+            }
             
             // Clear "FLEW AWAY" if it was showing
             const counterElement = document.getElementById('counter');
@@ -3023,7 +3043,7 @@ let game;
 async function initializeWebSocket() {
     const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
     const API_BASE_URL = isLocal
-        ? 'http://localhost:3001'
+        ? 'http://localhost:4000'
         : 'https://back.classybetaviator.com';
 
     try {
@@ -3687,7 +3707,7 @@ if (profileBtn) {
 
         // For localhost, use the full backend URL
         if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-            window.location.href = 'http://localhost:3001/profile';
+            window.location.href = 'http://localhost:4000/profile';
             return;
         }
 
@@ -3701,7 +3721,7 @@ if (adminBtn) {
         const isLocal = window.location.hostname === 'localhost' ||
             window.location.hostname === '127.0.0.1' ||
             window.location.protocol === 'file:';
-        const adminUrl = isLocal ? 'http://localhost:3001/admin' : 'https://back.classybetaviator.com/admin';
+        const adminUrl = isLocal ? 'http://localhost:4000/admin' : 'https://back.classybetaviator.com/admin';
         console.log('Admin URL:', adminUrl);
         window.open(adminUrl, '_blank');
     });
