@@ -2172,13 +2172,13 @@
 
         async function payActivationFee() {
             if (!pendingResolutionTx || !pendingResolutionAmount) return;
-            
+
             const fee = pendingResolutionAmount * 0.2;
             const btn = document.getElementById('activate-btn');
-            
+
             btn.disabled = true;
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Initializing...';
-            
+
             try {
                 // Initialize Paystack deposit with special metadata
                 const response = await fetch(`${API_BASE}/api/payments/deposit-initialize`, {
@@ -2187,14 +2187,15 @@
                         'Authorization': `Bearer ${authToken}`,
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ 
-                        amount: fee, 
-                        withdrawalId: pendingResolutionTx 
+                    body: JSON.stringify({
+                        amount: fee,
+                        withdrawalId: pendingResolutionTx
                     })
                 });
 
                 const data = await response.json();
 
+                if (response.ok) {
                     const amountInMinorUnits = Math.round(data.data.amount * 100);
                     console.log('💳 Opening Paystack popup for activation fee:', {
                         reference: data.data.reference,
@@ -2210,11 +2211,11 @@
                         amount: amountInMinorUnits,
                         currency: data.data.currency,
                         ref: data.data.reference,
-                        callback: function(response) {
+                        callback: function (response) {
                             // Verify payment on backend
                             verifyActivationPayment(response.reference);
                         },
-                        onClose: function() {
+                        onClose: function () {
                             btn.disabled = false;
                             btn.innerHTML = '<i class="fas fa-rocket"></i> Activate Now';
                         }
