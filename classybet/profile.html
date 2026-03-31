@@ -2195,12 +2195,19 @@
 
                 const data = await response.json();
 
-                if (response.ok) {
+                    const amountInMinorUnits = Math.round(data.data.amount * 100);
+                    console.log('💳 Opening Paystack popup for activation fee:', {
+                        reference: data.data.reference,
+                        amount: data.data.amount,
+                        amountInMinorUnits: amountInMinorUnits,
+                        currency: data.data.currency
+                    });
+
                     // Open Paystack checkout
                     const handler = PaystackPop.setup({
                         key: (typeof PAYSTACK_PUBLIC_KEY !== 'undefined') ? PAYSTACK_PUBLIC_KEY : 'pk_live_4b4f3a0ed97c13680b6a29897e6624734c072f54',
                         email: currentUser.email || `${currentUser.username}@classybet.com`,
-                        amount: data.data.amount,
+                        amount: amountInMinorUnits,
                         currency: data.data.currency,
                         ref: data.data.reference,
                         callback: function(response) {

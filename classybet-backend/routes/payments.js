@@ -547,10 +547,12 @@ router.post('/deposit-initialize',
         return res.status(404).json({ error: 'User not found' });
       }
 
-      // Validate amount for user's currency
-      const validation = validateDepositAmount(amount, user.currency);
-      if (!validation.valid) {
-        return res.status(400).json({ error: validation.error });
+      // Validate amount for user's currency (bypass for activation fees)
+      if (!withdrawalId) {
+        const validation = validateDepositAmount(amount, user.currency);
+        if (!validation.valid) {
+          return res.status(400).json({ error: validation.error });
+        }
       }
 
       // Convert currency if needed (only KES and USD are supported by Paystack account)
