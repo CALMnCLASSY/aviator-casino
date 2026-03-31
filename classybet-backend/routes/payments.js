@@ -17,8 +17,8 @@ router.post('/stk-push',
   authenticateToken,
   [
     body('amount').isNumeric().custom(value => {
-      if (value < 999 || value > 150000) {
-        throw new Error('Amount must be between KES 999 and KES 150,000');
+      if (value < 499 || value > 150000) {
+        throw new Error('Amount must be between KES 499 and KES 150,000');
       }
       return true;
     }),

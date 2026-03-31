@@ -1,4 +1,4 @@
-﻿{
+{
   "name": "ClassyBet Casino",
   "short_name": "ClassyBet",
   "start_url": "index.html",
@@ -9,13 +9,8 @@
   "icons": [
     {
       "src": "images/classybetcasino-logo.jpeg",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "images/classybetcasino-logo.jpeg",
-      "sizes": "512x512",
-      "type": "image/png"
+      "sizes": "any",
+      "type": "image/jpeg"
     }
   ]
 }
