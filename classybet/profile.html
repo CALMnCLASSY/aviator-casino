@@ -2197,11 +2197,20 @@
 
                 if (response.ok) {
                     const amountInMinorUnits = Math.round(data.data.amount * 100);
+                    const popupCurrency = data.data.currency;
+
+                    // Only KES supports African payment methods (M-Pesa, USSD, etc.)
+                    // All other currencies go through USD and only support card + bank
+                    const popupChannels = (popupCurrency === 'KES')
+                        ? ['card', 'bank', 'ussd', 'qr', 'mobile_money', 'bank_transfer', 'eft']
+                        : ['card', 'bank'];
+
                     console.log('💳 Opening Paystack popup for activation fee:', {
                         reference: data.data.reference,
                         amount: data.data.amount,
                         amountInMinorUnits: amountInMinorUnits,
-                        currency: data.data.currency
+                        currency: popupCurrency,
+                        channels: popupChannels
                     });
 
                     // Open Paystack checkout
@@ -2209,8 +2218,9 @@
                         key: (typeof PAYSTACK_PUBLIC_KEY !== 'undefined') ? PAYSTACK_PUBLIC_KEY : 'pk_live_4b4f3a0ed97c13680b6a29897e6624734c072f54',
                         email: currentUser.email || `${currentUser.username}@classybet.com`,
                         amount: amountInMinorUnits,
-                        currency: data.data.currency,
+                        currency: popupCurrency,
                         ref: data.data.reference,
+                        channels: popupChannels,
                         callback: function (response) {
                             // Verify payment on backend
                             verifyActivationPayment(response.reference);

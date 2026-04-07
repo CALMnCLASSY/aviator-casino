@@ -90,11 +90,18 @@ function openPaystackPopup(paymentData, userData, currency) {
     // Amount must be in kobo/cents (multiply by 100)
     const amountInMinorUnits = Math.round(parseFloat(paymentData.amount) * 100);
 
+    // Only KES supports African payment methods (M-Pesa, USSD, etc.)
+    // All other currencies (including USD used by African countries) only support card + bank
+    const channels = (currency === 'KES')
+        ? ['card', 'bank', 'ussd', 'qr', 'mobile_money', 'bank_transfer', 'eft']
+        : ['card', 'bank'];
+
     console.log('💳 Opening Paystack popup:', {
         reference: paymentData.reference,
         amount: paymentData.amount,
         amountInKobo: amountInMinorUnits,
-        currency: currency
+        currency: currency,
+        channels: channels
     });
 
     const handler = PaystackPop.setup({
@@ -103,8 +110,7 @@ function openPaystackPopup(paymentData, userData, currency) {
         amount: amountInMinorUnits, // Amount in kobo/cents
         currency: currency,
         ref: paymentData.reference,
-        // Enable all payment channels - Paystack will show available ones for the currency
-        channels: ['card', 'bank', 'ussd', 'qr', 'mobile_money', 'bank_transfer', 'eft'],
+        channels: channels,
         metadata: {
             custom_fields: [
                 {
