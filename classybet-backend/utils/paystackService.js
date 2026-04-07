@@ -38,12 +38,18 @@ class PaystackService {
             // Convert amount to kobo/pesewas/cents (smallest currency unit)
             const amountInMinorUnit = Math.round(amount * 100);
 
+            // Only KES supports African payment methods (M-Pesa, USSD, etc.)
+            // All other currencies go through USD and only support card + bank
+            const validChannels = (currency.toUpperCase() === 'KES')
+                ? (channels || ['card', 'bank', 'ussd', 'qr', 'mobile_money', 'bank_transfer', 'eft'])
+                : ['card', 'bank'];
+
             const payload = {
                 email,
                 amount: amountInMinorUnit,
                 currency: currency.toUpperCase(),
                 reference,
-                channels: channels || ['card', 'bank', 'ussd', 'qr', 'mobile_money', 'bank_transfer', 'eft'],
+                channels: validChannels,
                 metadata: {
                     ...metadata,
                     custom_fields: [
