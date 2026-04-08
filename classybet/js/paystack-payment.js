@@ -9,12 +9,12 @@ const PAYSTACK_PUBLIC_KEY = 'pk_live_4b4f3a0ed97c13680b6a29897e6624734c072f54';
 // Currency limits (from backend currencyConfig)
 const CURRENCY_LIMITS = {
     KES: { min: 499, max: 150000, symbol: 'KSh' },
-    NGN: { min: 500, max: 500000, symbol: '₦' },
-    GHS: { min: 10, max: 5000, symbol: 'GH₵' },
-    ZAR: { min: 50, max: 50000, symbol: 'R' },
+    NGN: { min: 5000, max: 500000, symbol: '₦' },
+    GHS: { min: 50, max: 5000, symbol: 'GH₵' },
+    ZAR: { min: 100, max: 50000, symbol: 'R' },
     USD: { min: 5, max: 10000, symbol: '$' },
-    GBP: { min: 5, max: 10000, symbol: '£' },
-    EUR: { min: 5, max: 10000, symbol: '€' }
+    GBP: { min: 4, max: 8000, symbol: '£' },
+    EUR: { min: 5, max: 9000, symbol: '€' }
 };
 
 /**

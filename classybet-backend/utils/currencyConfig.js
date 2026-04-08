@@ -150,14 +150,14 @@ const COUNTRY_CURRENCY_MAP = {
     '+90': { currency: 'USD', country: 'Turkey' }
 };
 
-// Minimum deposit amounts per currency (in smallest unit)
+// Minimum deposit amounts per currency
 const MIN_DEPOSIT = {
     KES: 499,
-    NGN: 500,
-    GHS: 10,
-    ZAR: 50,
+    NGN: 5000,
+    GHS: 50,
+    ZAR: 100,
     USD: 5,
-    GBP: 5,
+    GBP: 4,
     EUR: 5
 };
 
@@ -168,8 +168,8 @@ const MAX_DEPOSIT = {
     GHS: 5000,
     ZAR: 50000,
     USD: 10000,
-    GBP: 10000,
-    EUR: 10000
+    GBP: 8000,
+    EUR: 9000
 };
 
 // Minimum withdrawal amounts per currency

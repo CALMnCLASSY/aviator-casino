@@ -1174,11 +1174,13 @@
         // Currency limits helper
         function getCurrencyLimits(currency = 'KES') {
             const limits = {
-                'KES': { min: 200, max: 150000 },
-                'USD': { min: 2, max: 1000 },
-                'GHS': { min: 20, max: 10000 },
-                'NGN': { min: 1000, max: 500000 },
-                'ZAR': { min: 30, max: 20000 }
+                'KES': { min: 499, max: 150000 },
+                'USD': { min: 5, max: 10000 },
+                'NGN': { min: 5000, max: 500000 },
+                'GHS': { min: 50, max: 5000 },
+                'ZAR': { min: 100, max: 50000 },
+                'GBP': { min: 4, max: 8000 },
+                'EUR': { min: 5, max: 9000 }
             };
             return limits[currency] || limits['KES'];
         }
@@ -1285,7 +1287,7 @@
                             <p style="color: #ccc;">Withdrawals are processed within 24-48 hours. M-Pesa withdrawals are typically instant once approved.</p>
                         <div style="margin-bottom: 1.5rem;">
                             <h5 style="color: #fb024c; margin-bottom: 0.5rem;">What is the minimum deposit?</h5>
-                            <p style="color: #ccc;">The minimum deposit is KES 499 for most payment methods.</p>
+                            <p style="color: #ccc;">The minimum deposit varies by currency (e.g., KES 499, USD 5, GHS 50). Check the deposit form for your currency-specific limits.</p>
                         </div>
                         
                         <div style="margin-bottom: 1.5rem;">
