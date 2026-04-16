@@ -674,11 +674,9 @@
         <div style="padding: 2rem;">
             <!-- Amount Display -->
             <div style="background: rgba(255, 193, 7, 0.08); border: 1px solid rgba(255, 193, 7, 0.2); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; text-align: center;">
-                <p style="color: #ccc; margin: 0 0 0.5rem 0; font-size: 0.9rem;">Deposit Amount</p>
                 <div style="font-size: 2rem; font-weight: bold; color: #ffc107;">
                     <span id="crypto-display-amount">0</span> <span id="crypto-display-currency">KES</span>
                 </div>
-                <p style="color: #999; margin: 0.5rem 0 0 0; font-size: 0.85rem;">Convert this amount in your crypto wallet</p>
             </div>
 
             <!-- USDT Address -->
@@ -688,7 +686,7 @@
                 </p>
                 <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
                     <code style="flex: 1; min-width: 200px; background: rgba(0, 0, 0, 0.3); padding: 1rem; border-radius: 8px; border: 1px solid rgba(48, 252, 190, 0.2); color: #30fcbe; font-size: 0.85rem; word-break: break-all; font-family: 'Courier New', monospace;">
-                        TL7pKMZPkB3cRWvBf7qJ9hX2nK5mL8pQrStU1vWxYz3aB4cD5eF6gH7iJ8kL
+                        0x5f9af3c006d73346e117776b023534af418bbb48
                     </code>
                     <button onclick="copyCryptoAddress()" style="background: rgba(48, 252, 190, 0.2); border: 1px solid #30fcbe; color: #30fcbe; padding: 0.75rem 1rem; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s; white-space: nowrap;">
                         <i class="fas fa-copy"></i> Copy
@@ -702,18 +700,17 @@
                     <i class="fas fa-list-ol"></i> How to Deposit
                 </h4>
                 <ol style="color: #ccc; margin: 0; padding-left: 1.5rem; line-height: 1.8;">
-                    <li style="margin-bottom: 0.75rem;">Open your crypto wallet (Metamask, Trust Wallet, etc.)</li>
+                    <li style="margin-bottom: 0.75rem;">Open your crypto wallet (Metamask, Trust Wallet, Binance, Bybit, etc.)</li>
                     <li style="margin-bottom: 0.75rem;">Send exactly <strong id="crypto-amount-bold" style="color: #ffc107;">0 KES</strong> worth of USDT to the address above</li>
-                    <li style="margin-bottom: 0.75rem;">Include your username as a memo/note (if supported)</li>
                     <li style="margin-bottom: 0.75rem;">Wait for blockchain confirmation (1-5 minutes)</li>
-                    <li>Contact support once confirmed - we'll manually verify and credit your account</li>
+                    <li>Click I've Paid, We'll verify and credit your account</li>
                 </ol>
             </div>
 
             <!-- Important Notice -->
             <div style="background: rgba(255, 152, 0, 0.08); border: 1px solid rgba(255, 152, 0, 0.2); border-radius: 12px; padding: 1rem; margin-bottom: 1.5rem;">
                 <p style="color: #ffa726; margin: 0; font-size: 0.9rem;">
-                    <i class="fas fa-exclamation-circle"></i> <strong>Important:</strong> Use USDT on Polygon (MATIC) network for lower fees. Always verify the address before sending.
+                    <i class="fas fa-exclamation-circle"></i> <strong>Important:</strong> Use USDT on Ethereum (ERC20) network for lower fees. Always verify the address before sending.
                 </p>
             </div>
 
@@ -721,7 +718,7 @@
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
                 <div style="background: rgba(48, 252, 190, 0.08); border-radius: 8px; padding: 1rem; text-align: center;">
                     <p style="color: #999; margin: 0 0 0.5rem 0; font-size: 0.85rem;">Accepted Network</p>
-                    <p style="color: #30fcbe; margin: 0; font-size: 1.1rem; font-weight: bold;">Polygon (MATIC)</p>
+                    <p style="color: #30fcbe; margin: 0; font-size: 1.1rem; font-weight: bold;">Ethereum (ERC20)</p>
                 </div>
                 <div style="background: rgba(48, 252, 190, 0.08); border-radius: 8px; padding: 1rem; text-align: center;">
                     <p style="color: #999; margin: 0 0 0.5rem 0; font-size: 0.85rem;">Supported Token</p>
@@ -784,7 +781,7 @@ function closeCryptoModal() {
 }
 
 function copyCryptoAddress() {
-    const address = 'TL7pKMZPkB3cRWvBf7qJ9hX2nK5mL8pQrStU1vWxYz3aB4cD5eF6gH7iJ8kL';
+    const address = '0x5f9af3c006d73346e117776b023534af418bbb48';
     navigator.clipboard.writeText(address).then(() => {
         const btn = event.target.closest('button');
         const originalText = btn.innerHTML;
@@ -808,17 +805,16 @@ function copyFullInstructions() {
     const instructions = `ClassyBet Crypto Deposit - ${new Date().toLocaleString()}
 
 Amount: ${amount} ${currency}
-Address: TL7pKMZPkB3cRWvBf7qJ9hX2nK5mL8pQrStU1vWxYz3aB4cD5eF6gH7iJ8kL
-Network: Polygon (MATIC)
+Address: 0x5f9af3c006d73346e117776b023534af418bbb48
+Network: Ethereum (ERC20)
 Token: USDT
 Username: ${username}
 
 Instructions:
-1. Open your crypto wallet (Metamask, Trust Wallet, etc.)
-2. Send USDT on Polygon network to the address above
+1. Open your crypto wallet (Metamask, Trust Wallet, Binance, Bybit, etc.)
+2. Send USDT on Ethereum network to the address above
 3. Include your username as a memo/note
 4. Wait for blockchain confirmation (1-5 minutes)
-5. Contact support - we'll verify and credit your account
 
 Support: support@classybetaviator.com`;
     
