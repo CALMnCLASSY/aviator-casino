@@ -628,9 +628,14 @@
                         <small>Minimum: <span id="deposit-min-formatted">KSh 499.00</span>, Maximum: <span
                                 id="deposit-max-formatted">KSh 150,000.00</span></small>
                     </div>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-credit-card"></i> DEPOSIT
-                    </button>
+                    <div style="display: flex; gap: 0.75rem; margin-top: 15px;">
+                        <button type="submit" class="btn btn-primary" style="flex: 1;">
+                            <i class="fas fa-credit-card"></i> DEPOSIT
+                        </button>
+                        <button type="button" onclick="openCryptoModal()" class="btn btn-crypto" style="flex: 1; background: linear-gradient(135deg, rgba(255, 193, 7, 0.8), rgba(255, 152, 0, 0.8)); color: #000; font-weight: bold;">
+                            <i class="fas fa-coins"></i> USE CRYPTO
+                        </button>
+                    </div>
 
                     <div
                         style="margin-top: 1.5rem; padding: 1.25rem; background: rgba(48, 252, 190, 0.08); border: 1px solid rgba(48, 252, 190, 0.2); border-radius: 12px;">
@@ -652,6 +657,234 @@
             </div>
         </div>
     </div>
+
+    <!-- Crypto Payment Modal -->
+<div id="crypto-modal" class="modal" style="display: none;">
+    <div class="modal-content" style="max-width: 600px; background: linear-gradient(135deg, rgba(20, 25, 40, 0.95), rgba(15, 20, 35, 0.95)); border: 1px solid rgba(255, 193, 7, 0.3); border-radius: 16px;">
+        <div class="modal-header" style="border-bottom: 1px solid rgba(255, 193, 7, 0.2); padding-bottom: 1.5rem;">
+            <h3 style="margin: 0; color: #ffc107;"><i class="fas fa-coins"></i> Deposit via Crypto</h3>
+            <span class="close" onclick="closeCryptoModal()" style="cursor: pointer; color: #999; font-size: 1.5rem; position: absolute; right: 1rem; top: 1rem;">&times;</span>
+        </div>
+        <div class="modal-body" style="padding: 2rem;">
+            <!-- Amount Display -->
+            <div style="background: rgba(255, 193, 7, 0.08); border: 1px solid rgba(255, 193, 7, 0.2); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; text-align: center;">
+                <p style="color: #ccc; margin: 0 0 0.5rem 0; font-size: 0.9rem;">Deposit Amount</p>
+                <div style="font-size: 2rem; font-weight: bold; color: #ffc107;">
+                    <span id="crypto-display-amount">0</span> <span id="crypto-display-currency">KES</span>
+                </div>
+                <p style="color: #999; margin: 0.5rem 0 0 0; font-size: 0.85rem;">Convert this amount in your crypto wallet</p>
+            </div>
+
+            <!-- USDT Address -->
+            <div style="background: rgba(48, 252, 190, 0.08); border: 1px solid rgba(48, 252, 190, 0.2); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem;">
+                <p style="color: #ccc; margin: 0 0 0.75rem 0; font-size: 0.9rem; font-weight: 600;">
+                    <i class="fas fa-wallet" style="color: #30fcbe; margin-right: 0.5rem;"></i>Send USDT to
+                </p>
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <code style="flex: 1; background: rgba(0, 0, 0, 0.3); padding: 1rem; border-radius: 8px; border: 1px solid rgba(48, 252, 190, 0.2); color: #30fcbe; font-size: 0.85rem; word-break: break-all; font-family: 'Courier New', monospace;">
+                        TL7pKMZPkB3cRWvBf7qJ9hX2nK5mL8pQrStU1vWxYz3aB4cD5eF6gH7iJ8kL
+                    </code>
+                    <button onclick="copyCryptoAddress()" style="background: rgba(48, 252, 190, 0.2); border: 1px solid #30fcbe; color: #30fcbe; padding: 0.75rem 1rem; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s; white-space: nowrap;">
+                        <i class="fas fa-copy"></i> Copy
+                    </button>
+                </div>
+            </div>
+
+            <!-- Steps -->
+            <div style="background: rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem;">
+                <h4 style="color: #30fcbe; margin: 0 0 1rem 0; font-size: 1rem;">
+                    <i class="fas fa-list-ol"></i> How to Deposit
+                </h4>
+                <ol style="color: #ccc; margin: 0; padding-left: 1.5rem; line-height: 1.8;">
+                    <li style="margin-bottom: 0.75rem;">Open your crypto wallet (Metamask, Trust Wallet, etc.)</li>
+                    <li style="margin-bottom: 0.75rem;">Send exactly <strong id="crypto-amount-bold" style="color: #ffc107;">0 KES</strong> worth of USDT to the address above</li>
+                    <li style="margin-bottom: 0.75rem;">Include your username as a memo/note (if supported)</li>
+                    <li style="margin-bottom: 0.75rem;">Wait for blockchain confirmation (1-5 minutes)</li>
+                    <li>Contact support once confirmed - we'll manually verify and credit your account</li>
+                </ol>
+            </div>
+
+            <!-- Important Notice -->
+            <div style="background: rgba(255, 152, 0, 0.08); border: 1px solid rgba(255, 152, 0, 0.2); border-radius: 12px; padding: 1rem; margin-bottom: 1.5rem;">
+                <p style="color: #ffa726; margin: 0; font-size: 0.9rem;">
+                    <i class="fas fa-exclamation-circle"></i> <strong>Important:</strong> Use USDT on Polygon (MATIC) network for lower fees. Always verify the address before sending.
+                </p>
+            </div>
+
+            <!-- Network Info -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                <div style="background: rgba(48, 252, 190, 0.08); border-radius: 8px; padding: 1rem; text-align: center;">
+                    <p style="color: #999; margin: 0 0 0.5rem 0; font-size: 0.85rem;">Accepted Network</p>
+                    <p style="color: #30fcbe; margin: 0; font-size: 1.1rem; font-weight: bold;">Polygon (MATIC)</p>
+                </div>
+                <div style="background: rgba(48, 252, 190, 0.08); border-radius: 8px; padding: 1rem; text-align: center;">
+                    <p style="color: #999; margin: 0 0 0.5rem 0; font-size: 0.85rem;">Supported Token</p>
+                    <p style="color: #30fcbe; margin: 0; font-size: 1.1rem; font-weight: bold;">USDT (Tether)</p>
+                </div>
+            </div>
+
+            <!-- Buttons -->
+            <div style="display: flex; gap: 0.75rem;">
+                <button onclick="closeCryptoModal()" style="flex: 1; padding: 0.75rem; border: 1px solid #666; background: transparent; color: #ccc; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s;">
+                    CLOSE
+                </button>
+                <button onclick="copyFullInstructions()" style="flex: 1; padding: 0.75rem; background: linear-gradient(135deg, #30fcbe, #28d1a0); color: #000; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s;">
+                    <i class="fas fa-check-circle"></i> I'VE SENT FUNDS
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add this JavaScript at the end of your HTML file before closing </body> -->
+<script>
+// Crypto Modal Functions
+function getDepositAmount() {
+    const amountInput = document.getElementById('deposit-amount');
+    return amountInput ? parseFloat(amountInput.value) || 0 : 0;
+}
+
+function getCurrencyCode() {
+    const currencySpan = document.getElementById('deposit-currency-code');
+    return currencySpan ? currencySpan.textContent : 'KES';
+}
+
+function openCryptoModal() {
+    const amount = getDepositAmount();
+    const currency = getCurrencyCode();
+    
+    if (!amount || amount <= 0) {
+        alert('Please enter a valid deposit amount first');
+        return;
+    }
+    
+    // Update display
+    document.getElementById('crypto-display-amount').textContent = amount.toLocaleString();
+    document.getElementById('crypto-display-currency').textContent = currency;
+    document.getElementById('crypto-amount-bold').textContent = amount.toLocaleString() + ' ' + currency;
+    
+    // Show modal
+    document.getElementById('crypto-modal').style.display = 'flex';
+    
+    // Prevent scrolling
+    document.body.style.overflow = 'hidden';
+}
+
+function closeCryptoModal() {
+    document.getElementById('crypto-modal').style.display = 'none';
+    document.body.style.overflow = 'auto';
+}
+
+function copyCryptoAddress() {
+    const address = 'TL7pKMZPkB3cRWvBf7qJ9hX2nK5mL8pQrStU1vWxYz3aB4cD5eF6gH7iJ8kL';
+    navigator.clipboard.writeText(address).then(() => {
+        const btn = event.target.closest('button');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+        btn.style.background = 'rgba(48, 252, 190, 0.3)';
+        setTimeout(() => {
+            btn.innerHTML = originalText;
+            btn.style.background = 'rgba(48, 252, 190, 0.2)';
+        }, 2000);
+    });
+}
+
+function copyFullInstructions() {
+    const amount = getDepositAmount();
+    const currency = getCurrencyCode();
+    const username = localStorage.getItem('userData') ? JSON.parse(localStorage.getItem('userData')).username : 'YourUsername';
+    
+    const instructions = `
+ClassyBet Crypto Deposit - ${new Date().toLocaleString()}
+
+Amount: ${amount} ${currency}
+Address: TL7pKMZPkB3cRWvBf7qJ9hX2nK5mL8pQrStU1vWxYz3aB4cD5eF6gH7iJ8kL
+Network: Polygon (MATIC)
+Token: USDT
+
+Username: ${username}
+
+Instructions:
+1. Open your crypto wallet
+2. Send USDT on Polygon network
+3. Include username as memo
+4. Contact support after confirmation
+
+Support: classybetcasino@gmail.com
+    `;
+    
+    navigator.clipboard.writeText(instructions).then(() => {
+        alert('Instructions copied! You can now paste them to your notes or email.');
+        closeCryptoModal();
+    });
+}
+
+// Close modal when clicking outside
+document.addEventListener('DOMContentLoaded', function() {
+    const cryptoModal = document.getElementById('crypto-modal');
+    if (cryptoModal) {
+        window.addEventListener('click', function(event) {
+            if (event.target === cryptoModal) {
+                closeCryptoModal();
+            }
+        });
+    }
+});
+</script>
+
+<!-- Add this CSS for styling the crypto button -->
+<style>
+.btn-crypto {
+    background: linear-gradient(135deg, rgba(255, 193, 7, 0.8), rgba(255, 152, 0, 0.8)) !important;
+    color: #000 !important;
+    border: 1px solid rgba(255, 193, 7, 0.5) !important;
+    transition: all 0.3s ease !important;
+}
+
+.btn-crypto:hover {
+    background: linear-gradient(135deg, rgba(255, 193, 7, 1), rgba(255, 152, 0, 1)) !important;
+    box-shadow: 0 8px 20px rgba(255, 193, 7, 0.3) !important;
+    transform: translateY(-2px) !important;
+}
+
+#crypto-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 11000;
+    animation: fadeIn 0.3s ease;
+}
+
+#crypto-modal.modal {
+    display: flex !important;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@media (max-width: 600px) {
+    #crypto-modal .modal-content {
+        width: 95% !important;
+        max-width: 100% !important;
+    }
+    
+    .btn-crypto {
+        padding: 0.75rem 1rem !important;
+    }
+}
+</style>
 
     <!-- Game Menu Modals -->
 
