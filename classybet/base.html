@@ -659,13 +659,19 @@
     </div>
 
     <!-- Crypto Payment Modal -->
-<div id="crypto-modal" class="modal" style="display: none;">
-    <div class="modal-content" style="max-width: 600px; background: linear-gradient(135deg, rgba(20, 25, 40, 0.95), rgba(15, 20, 35, 0.95)); border: 1px solid rgba(255, 193, 7, 0.3); border-radius: 16px;">
-        <div class="modal-header" style="border-bottom: 1px solid rgba(255, 193, 7, 0.2); padding-bottom: 1.5rem;">
-            <h3 style="margin: 0; color: #ffc107;"><i class="fas fa-coins"></i> Deposit via Crypto</h3>
-            <span class="close" onclick="closeCryptoModal()" style="cursor: pointer; color: #999; font-size: 1.5rem; position: absolute; right: 1rem; top: 1rem;">&times;</span>
+<!-- Crypto Payment Modal (Hidden by default) -->
+<div id="crypto-modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); z-index: 11000; align-items: center; justify-content: center; animation: fadeIn 0.3s ease;">
+    <div style="background: linear-gradient(135deg, rgba(20, 25, 40, 0.95), rgba(15, 20, 35, 0.95)); border: 1px solid rgba(255, 193, 7, 0.3); border-radius: 16px; max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);">
+        <!-- Crypto Modal Header -->
+        <div style="border-bottom: 1px solid rgba(255, 193, 7, 0.2); padding: 1.5rem 2rem; display: flex; justify-content: space-between; align-items: center; sticky: top: 0; background: rgba(20, 25, 40, 0.95);">
+            <h3 style="margin: 0; color: #ffc107; display: flex; align-items: center; gap: 0.75rem;">
+                <i class="fas fa-coins"></i> Deposit via Crypto
+            </h3>
+            <button onclick="closeCryptoModal()" style="background: none; border: none; color: #999; font-size: 1.5rem; cursor: pointer; padding: 0; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">×</button>
         </div>
-        <div class="modal-body" style="padding: 2rem;">
+
+        <!-- Crypto Modal Body -->
+        <div style="padding: 2rem;">
             <!-- Amount Display -->
             <div style="background: rgba(255, 193, 7, 0.08); border: 1px solid rgba(255, 193, 7, 0.2); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; text-align: center;">
                 <p style="color: #ccc; margin: 0 0 0.5rem 0; font-size: 0.9rem;">Deposit Amount</p>
@@ -680,8 +686,8 @@
                 <p style="color: #ccc; margin: 0 0 0.75rem 0; font-size: 0.9rem; font-weight: 600;">
                     <i class="fas fa-wallet" style="color: #30fcbe; margin-right: 0.5rem;"></i>Send USDT to
                 </p>
-                <div style="display: flex; align-items: center; gap: 0.75rem;">
-                    <code style="flex: 1; background: rgba(0, 0, 0, 0.3); padding: 1rem; border-radius: 8px; border: 1px solid rgba(48, 252, 190, 0.2); color: #30fcbe; font-size: 0.85rem; word-break: break-all; font-family: 'Courier New', monospace;">
+                <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                    <code style="flex: 1; min-width: 200px; background: rgba(0, 0, 0, 0.3); padding: 1rem; border-radius: 8px; border: 1px solid rgba(48, 252, 190, 0.2); color: #30fcbe; font-size: 0.85rem; word-break: break-all; font-family: 'Courier New', monospace;">
                         TL7pKMZPkB3cRWvBf7qJ9hX2nK5mL8pQrStU1vWxYz3aB4cD5eF6gH7iJ8kL
                     </code>
                     <button onclick="copyCryptoAddress()" style="background: rgba(48, 252, 190, 0.2); border: 1px solid #30fcbe; color: #30fcbe; padding: 0.75rem 1rem; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s; white-space: nowrap;">
@@ -738,7 +744,7 @@
 
 <!-- Add this JavaScript at the end of your HTML file before closing </body> -->
 <script>
-// Crypto Modal Functions
+// ===== CRYPTO MODAL FUNCTIONS =====
 function getDepositAmount() {
     const amountInput = document.getElementById('deposit-amount');
     return amountInput ? parseFloat(amountInput.value) || 0 : 0;
@@ -758,20 +764,22 @@ function openCryptoModal() {
         return;
     }
     
-    // Update display
+    // Update all display fields with the entered amount
     document.getElementById('crypto-display-amount').textContent = amount.toLocaleString();
     document.getElementById('crypto-display-currency').textContent = currency;
     document.getElementById('crypto-amount-bold').textContent = amount.toLocaleString() + ' ' + currency;
     
-    // Show modal
-    document.getElementById('crypto-modal').style.display = 'flex';
+    // Show the crypto modal overlay
+    const overlay = document.getElementById('crypto-modal-overlay');
+    overlay.style.display = 'flex';
     
-    // Prevent scrolling
+    // Prevent body scrolling
     document.body.style.overflow = 'hidden';
 }
 
 function closeCryptoModal() {
-    document.getElementById('crypto-modal').style.display = 'none';
+    const overlay = document.getElementById('crypto-modal-overlay');
+    overlay.style.display = 'none';
     document.body.style.overflow = 'auto';
 }
 
@@ -786,48 +794,59 @@ function copyCryptoAddress() {
             btn.innerHTML = originalText;
             btn.style.background = 'rgba(48, 252, 190, 0.2)';
         }, 2000);
+    }).catch(() => {
+        alert('Failed to copy address');
     });
 }
 
 function copyFullInstructions() {
     const amount = getDepositAmount();
     const currency = getCurrencyCode();
-    const username = localStorage.getItem('userData') ? JSON.parse(localStorage.getItem('userData')).username : 'YourUsername';
+    const userData = localStorage.getItem('userData');
+    const username = userData ? JSON.parse(userData).username : 'YourUsername';
     
-    const instructions = `
-ClassyBet Crypto Deposit - ${new Date().toLocaleString()}
+    const instructions = `ClassyBet Crypto Deposit - ${new Date().toLocaleString()}
 
 Amount: ${amount} ${currency}
 Address: TL7pKMZPkB3cRWvBf7qJ9hX2nK5mL8pQrStU1vWxYz3aB4cD5eF6gH7iJ8kL
 Network: Polygon (MATIC)
 Token: USDT
-
 Username: ${username}
 
 Instructions:
-1. Open your crypto wallet
-2. Send USDT on Polygon network
-3. Include username as memo
-4. Contact support after confirmation
+1. Open your crypto wallet (Metamask, Trust Wallet, etc.)
+2. Send USDT on Polygon network to the address above
+3. Include your username as a memo/note
+4. Wait for blockchain confirmation (1-5 minutes)
+5. Contact support - we'll verify and credit your account
 
-Support: classybetcasino@gmail.com
-    `;
+Support: support@classybetaviator.com`;
     
     navigator.clipboard.writeText(instructions).then(() => {
-        alert('Instructions copied! You can now paste them to your notes or email.');
+        alert('Instructions copied! Share with support to verify your deposit.');
         closeCryptoModal();
+    }).catch(() => {
+        alert('Failed to copy instructions');
     });
 }
 
-// Close modal when clicking outside
+// Close modal when clicking outside the modal content
 document.addEventListener('DOMContentLoaded', function() {
-    const cryptoModal = document.getElementById('crypto-modal');
-    if (cryptoModal) {
-        window.addEventListener('click', function(event) {
-            if (event.target === cryptoModal) {
+    const overlay = document.getElementById('crypto-modal-overlay');
+    if (overlay) {
+        overlay.addEventListener('click', function(event) {
+            // Only close if clicking on the overlay background, not the modal content
+            if (event.target === overlay) {
                 closeCryptoModal();
             }
         });
+    }
+});
+
+// Close modal with Escape key
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        closeCryptoModal();
     }
 });
 </script>
@@ -879,7 +898,9 @@ document.addEventListener('DOMContentLoaded', function() {
         width: 95% !important;
         max-width: 100% !important;
     }
-    
+   #crypto-modal-overlay > div {
+        width: 95% !important;
+    }
     .btn-crypto {
         padding: 0.75rem 1rem !important;
     }
