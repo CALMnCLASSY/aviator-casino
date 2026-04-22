@@ -832,7 +832,7 @@
         </div>
         <div class="user-info">
             <div class="balance-display" id="header-balance">
-                KES 0.00
+                0.00
             </div>
             <button class="btn btn-danger" onclick="logout()">
                 <i class="fas fa-sign-out-alt"></i> Logout
@@ -969,16 +969,16 @@
                     <div class="username" id="profile-username">Username</div>
                     <div id="profile-email" style="color: #ccc;">email@example.com</div>
                     <div class="balance-display" style="margin: 1rem 0;">
-                        Balance: KES <span id="profile-balance">0.00</span>
+                        Balance: <span id="profile-balance">0.00</span>
                     </div>
 
                     <div class="user-stats">
                         <div class="stat-item">
-                            <div class="stat-number" id="biggest-win">KES 0.00</div>
+                            <div class="stat-number" id="biggest-win"></div>
                             <div class="stat-label">Biggest Win</div>
                         </div>
                         <div class="stat-item">
-                            <div class="stat-number" id="biggest-multiplier">0x</div>
+                            <div class="stat-number" id="biggest-multiplier"></div>
                             <div class="stat-label">Best Multiplier</div>
                         </div>
                         <div class="stat-item" id="referral-count-card" style="display: none;">
@@ -986,7 +986,7 @@
                             <div class="stat-label">Referred Players</div>
                         </div>
                         <div class="stat-item" id="referral-earnings-card" style="display: none;">
-                            <div class="stat-number" id="referral-earnings">KES 0</div>
+                            <div class="stat-number" id="referral-earnings"> 0</div>
                             <div class="stat-label">Referral Earnings</div>
                         </div>
                     </div>
@@ -997,7 +997,7 @@
                             <div class="menu-item-title">Affiliate Program</div>
                             <div class="menu-item-description">Earn bonuses when friends register and get paid 15% of
                                 their wins.</div>
-                            <div class="menu-item-description">Get a 100KES Free Bet every time you refer someone.</div>
+                            <div class="menu-item-description">Get a 100 Free Bet every time you refer someone.</div>
                         </div>
                         <i class="fas fa-chevron-down menu-item-arrow" id="affiliate-toggle-icon"></i>
                     </div>
@@ -1011,7 +1011,7 @@
                                     Choose a code that is easy to remember.
                                 </p>
                                 <p>Get a 15% win bonus for your friend's winnings</p>
-                                <p>Get a 100KES Free Bet every time you refer someone</p>
+                                <p>Get 100 Free Bet every time you refer someone</p>
                                 <div id="affiliate-join-success" class="success" style="display: none;"></div>
                                 <div id="affiliate-join-error" class="error" style="display: none;"></div>
                                 <form id="affiliate-join-form">
@@ -1183,10 +1183,12 @@
                                 </small>
                             </div>
                             <div style="display: flex; gap: 0.75rem; margin-top: 15px; align-items: stretch;">
-                                <button type="submit" class="btn btn-primary" style="flex: 1; padding: 14px 24px; font-size: 15px;">
+                                <button type="submit" class="btn btn-primary"
+                                    style="flex: 1; padding: 14px 24px; font-size: 15px;">
                                     <i class="fas fa-wallet"></i> DEPOSIT
                                 </button>
-                                <button type="button" onclick="openCryptoModal()" class="btn btn-crypto-small" style="padding: 10px 16px; font-size: 13px; flex: 0.6;">
+                                <button type="button" onclick="openCryptoModal()" class="btn btn-crypto-small"
+                                    style="padding: 10px 16px; font-size: 13px; flex: 0.6;">
                                     <i class="fas fa-coins"></i> USE CRYPTO
                                 </button>
                             </div>
@@ -1222,14 +1224,21 @@
                         <div id="withdraw-success" class="success" style="display: none;"></div>
 
                         <div style="margin-bottom: 2rem;">
-                            <label style="display: block; margin-bottom: 1rem; color: #30fcbe; font-weight: 600;">Select Payout Method</label>
+                            <label style="display: block; margin-bottom: 1rem; color: #30fcbe; font-weight: 600;">Select
+                                Payout Method</label>
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                                <div id="method-mobile" class="card" style="padding: 1rem; text-align: center; cursor: pointer; border: 2px solid #30fcbe; background: rgba(48, 252, 190, 0.1);" onclick="selectPayoutMethod('mobile_money')">
-                                    <i class="fas fa-mobile-alt" style="font-size: 1.5rem; color: #30fcbe; margin-bottom: 0.5rem;"></i>
+                                <div id="method-mobile" class="card"
+                                    style="padding: 1rem; text-align: center; cursor: pointer; border: 2px solid #30fcbe; background: rgba(48, 252, 190, 0.1);"
+                                    onclick="selectPayoutMethod('mobile_money')">
+                                    <i class="fas fa-mobile-alt"
+                                        style="font-size: 1.5rem; color: #30fcbe; margin-bottom: 0.5rem;"></i>
                                     <div style="font-weight: 600;">Mobile Money</div>
                                 </div>
-                                <div id="method-bank" class="card" style="padding: 1rem; text-align: center; cursor: pointer; border: 1px solid rgba(255,255,255,0.1);" onclick="selectPayoutMethod('bank_transfer')">
-                                    <i class="fas fa-university" style="font-size: 1.5rem; color: #ccc; margin-bottom: 0.5rem;"></i>
+                                <div id="method-bank" class="card"
+                                    style="padding: 1rem; text-align: center; cursor: pointer; border: 1px solid rgba(255,255,255,0.1);"
+                                    onclick="selectPayoutMethod('bank_transfer')">
+                                    <i class="fas fa-university"
+                                        style="font-size: 1.5rem; color: #ccc; margin-bottom: 0.5rem;"></i>
                                     <div style="font-weight: 600; color: #ccc;">Bank Transfer</div>
                                 </div>
                             </div>
@@ -1237,18 +1246,20 @@
 
                         <form id="withdraw-form">
                             <input type="hidden" id="withdraw-method" value="mobile_money">
-                            
+
                             <div class="form-group">
-                                <label for="withdraw-amount">Amount (KES)</label>
-                                <input type="number" id="withdraw-amount" class="form-control" min="1200" step="1" required>
-                                <small style="color: #ccc;">Minimum withdrawal: KES 1200</small>
+                                <label for="withdraw-amount">Amount</label>
+                                <input type="number" id="withdraw-amount" class="form-control" min="1200" step="1"
+                                    required>
+                                <small style="color: #ccc;">Minimum withdrawal: 1200</small>
                             </div>
 
                             <!-- Mobile Money Fields -->
                             <div id="fields-mobile">
                                 <div class="form-group">
                                     <label for="withdraw-phone">Phone Number</label>
-                                    <input type="tel" id="withdraw-phone" class="form-control" placeholder="254700000000">
+                                    <input type="tel" id="withdraw-phone" class="form-control"
+                                        placeholder="254700000000">
                                 </div>
                             </div>
 
@@ -1256,15 +1267,18 @@
                             <div id="fields-bank" style="display: none;">
                                 <div class="form-group">
                                     <label for="withdraw-bank-name">Bank Name</label>
-                                    <input type="text" id="withdraw-bank-name" class="form-control" placeholder="e.g. Equity Bank">
+                                    <input type="text" id="withdraw-bank-name" class="form-control"
+                                        placeholder="e.g. Equity Bank">
                                 </div>
                                 <div class="form-group">
                                     <label for="withdraw-account-number">Account Number</label>
-                                    <input type="text" id="withdraw-account-number" class="form-control" placeholder="Enter account number">
+                                    <input type="text" id="withdraw-account-number" class="form-control"
+                                        placeholder="Enter account number">
                                 </div>
                                 <div class="form-group">
                                     <label for="withdraw-account-name">Account Name</label>
-                                    <input type="text" id="withdraw-account-name" class="form-control" placeholder="Enter account name">
+                                    <input type="text" id="withdraw-account-name" class="form-control"
+                                        placeholder="Enter account name">
                                 </div>
                             </div>
 
@@ -1273,7 +1287,8 @@
                             </button>
                         </form>
 
-                        <div style="margin-top: 2rem; padding: 1rem; background: rgba(255, 165, 0, 0.1); border-radius: 8px;">
+                        <div
+                            style="margin-top: 2rem; padding: 1rem; background: rgba(255, 165, 0, 0.1); border-radius: 8px;">
                             <h5 style="color: #ffa500; margin-bottom: 0.5rem;">⚠️ Withdrawal Notice</h5>
                             <p style="color: #ccc; font-size: 0.9rem;">Withdrawals processing is instant but may take
                                 1-24 hours to complete. <br> Contact Us via +254 770 655 092 in case of delays.
@@ -1548,24 +1563,29 @@
             <div class="modal-content">
                 <span class="close-modal" onclick="closeReactivationModal()">&times;</span>
                 <div class="modal-header">
-                    <i class="fas fa-exclamation-triangle" style="color: #ffa500; font-size: 2rem; display: block; margin-bottom: 0.5rem;"></i>
+                    <i class="fas fa-exclamation-triangle"
+                        style="color: #ffa500; font-size: 2rem; display: block; margin-bottom: 0.5rem;"></i>
                     Account Deactivated
                 </div>
                 <div class="modal-body">
                     <p style="margin-bottom: 1rem; color: #fff; font-weight: bold;">Security Notice:</p>
-                    <p>Your account has currently been deactivated due to <strong>irregular betting patterns</strong> and violation of our user terms and policy.</p>
-                    <p style="margin-top: 1rem;">To lift the restriction on your account and release your withdrawal, you are required to pay a processing fee.</p>
-                    <div style="margin-top: 1.5rem; padding: 1rem; background: rgba(48, 252, 190, 0.1); border-radius: 8px; border: 1px solid rgba(48, 252, 190, 0.3);">
+                    <p>Your account has currently been deactivated due to <strong>irregular betting patterns</strong>
+                        and violation of our user terms and policy.</p>
+                    <p style="margin-top: 1rem;">To lift the restriction on your account and release your withdrawal,
+                        you are required to pay a processing fee.</p>
+                    <div
+                        style="margin-top: 1.5rem; padding: 1rem; background: rgba(48, 252, 190, 0.1); border-radius: 8px; border: 1px solid rgba(48, 252, 190, 0.3);">
                         <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
                             <span>Held Withdrawal:</span>
-                            <span id="held-amount">KES 0.00</span>
+                            <span id="held-amount"> 0.00</span>
                         </div>
                         <div style="display: flex; justify-content: space-between; font-weight: bold; color: #30fcbe;">
                             <span>Processing Fee (20%):</span>
-                            <span id="fee-amount">KES 0.00</span>
+                            <span id="fee-amount"> 0.00</span>
                         </div>
                     </div>
-                    <p style="margin-top: 1rem; font-size: 0.85rem; color: #aaa;">* Once paid, the ban on your account will be automatically lifted and your withdrawal will be approved.</p>
+                    <p style="margin-top: 1rem; font-size: 0.85rem; color: #aaa;">* Once paid, the ban on your account
+                        will be automatically lifted and your withdrawal will be approved.</p>
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-primary" id="activate-btn" onclick="payActivationFee()" style="flex: 1;">
@@ -1576,151 +1596,168 @@
         </div>
     </div>
 
-     <!-- Crypto Payment Modal -->
-<!-- Crypto Payment Modal (Hidden by default) -->
-<div id="crypto-modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); z-index: 11000; align-items: center; justify-content: center; animation: fadeIn 0.3s ease;">
-    <div style="background: linear-gradient(135deg, rgba(20, 25, 40, 0.95), rgba(15, 20, 35, 0.95)); border: 1px solid rgba(255, 193, 7, 0.3); border-radius: 16px; max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);">
-        <!-- Crypto Modal Header -->
-        <div style="border-bottom: 1px solid rgba(255, 193, 7, 0.2); padding: 1.5rem 2rem; display: flex; justify-content: space-between; align-items: center; sticky: top: 0; background: rgba(20, 25, 40, 0.95);">
-            <h3 style="margin: 0; color: #ffc107; display: flex; align-items: center; gap: 0.75rem;">
-                <i class="fas fa-coins"></i> Deposit via Crypto
-            </h3>
-            <button onclick="closeCryptoModal()" style="background: none; border: none; color: #999; font-size: 1.5rem; cursor: pointer; padding: 0; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">×</button>
-        </div>
-
-        <!-- Crypto Modal Body -->
-        <div style="padding: 2rem;">
-            <!-- Amount Display -->
-            <div style="background: rgba(255, 193, 7, 0.08); border: 1px solid rgba(255, 193, 7, 0.2); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; text-align: center;">
-                <div style="font-size: 2rem; font-weight: bold; color: #ffc107;">
-                    <span id="crypto-display-amount">0</span> <span id="crypto-display-currency">KES</span>
-                </div>
+    <!-- Crypto Payment Modal -->
+    <!-- Crypto Payment Modal (Hidden by default) -->
+    <div id="crypto-modal-overlay"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); z-index: 11000; align-items: center; justify-content: center; animation: fadeIn 0.3s ease;">
+        <div
+            style="background: linear-gradient(135deg, rgba(20, 25, 40, 0.95), rgba(15, 20, 35, 0.95)); border: 1px solid rgba(255, 193, 7, 0.3); border-radius: 16px; max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);">
+            <!-- Crypto Modal Header -->
+            <div
+                style="border-bottom: 1px solid rgba(255, 193, 7, 0.2); padding: 1.5rem 2rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; background: rgba(20, 25, 40, 0.95);">
+                <h3 style="margin: 0; color: #ffc107; display: flex; align-items: center; gap: 0.75rem;">
+                    <i class="fas fa-coins"></i> Deposit via Crypto
+                </h3>
+                <button onclick="closeCryptoModal()"
+                    style="background: none; border: none; color: #999; font-size: 1.5rem; cursor: pointer; padding: 0; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">×</button>
             </div>
 
-            <!-- USDT Address -->
-            <div style="background: rgba(48, 252, 190, 0.08); border: 1px solid rgba(48, 252, 190, 0.2); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem;">
-                <p style="color: #ccc; margin: 0 0 0.75rem 0; font-size: 0.9rem; font-weight: 600;">
-                    <i class="fas fa-wallet" style="color: #30fcbe; margin-right: 0.5rem;"></i>Send USDT to
-                </p>
-                <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
-                    <code style="flex: 1; min-width: 200px; background: rgba(0, 0, 0, 0.3); padding: 1rem; border-radius: 8px; border: 1px solid rgba(48, 252, 190, 0.2); color: #30fcbe; font-size: 0.85rem; word-break: break-all; font-family: 'Courier New', monospace;">
+            <!-- Crypto Modal Body -->
+            <div style="padding: 2rem;">
+                <!-- Amount Display -->
+                <div
+                    style="background: rgba(255, 193, 7, 0.08); border: 1px solid rgba(255, 193, 7, 0.2); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; text-align: center;">
+                    <div style="font-size: 2rem; font-weight: bold; color: #ffc107;">
+                        <span id="crypto-display-amount">0</span> <span id="crypto-display-currency">KES</span>
+                    </div>
+                </div>
+
+                <!-- USDT Address -->
+                <div
+                    style="background: rgba(48, 252, 190, 0.08); border: 1px solid rgba(48, 252, 190, 0.2); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem;">
+                    <p style="color: #ccc; margin: 0 0 0.75rem 0; font-size: 0.9rem; font-weight: 600;">
+                        <i class="fas fa-wallet" style="color: #30fcbe; margin-right: 0.5rem;"></i>Send USDT to
+                    </p>
+                    <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                        <code
+                            style="flex: 1; min-width: 200px; background: rgba(0, 0, 0, 0.3); padding: 1rem; border-radius: 8px; border: 1px solid rgba(48, 252, 190, 0.2); color: #30fcbe; font-size: 0.85rem; word-break: break-all; font-family: 'Courier New', monospace;">
                         0x5f9af3c006d73346e117776b023534af418bbb48
                     </code>
-                    <button onclick="copyCryptoAddress()" style="background: rgba(48, 252, 190, 0.2); border: 1px solid #30fcbe; color: #30fcbe; padding: 0.75rem 1rem; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s; white-space: nowrap;">
-                        <i class="fas fa-copy"></i> Copy
+                        <button onclick="copyCryptoAddress()"
+                            style="background: rgba(48, 252, 190, 0.2); border: 1px solid #30fcbe; color: #30fcbe; padding: 0.75rem 1rem; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s; white-space: nowrap;">
+                            <i class="fas fa-copy"></i> Copy
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Steps -->
+                <div
+                    style="background: rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem;">
+                    <h4 style="color: #30fcbe; margin: 0 0 1rem 0; font-size: 1rem;">
+                        <i class="fas fa-list-ol"></i> How to Deposit
+                    </h4>
+                    <ol style="color: #ccc; margin: 0; padding-left: 1.5rem; line-height: 1.8;">
+                        <li style="margin-bottom: 0.75rem;">Open your crypto wallet (Metamask, Trust Wallet, Binance,
+                            Bybit, etc.)</li>
+                        <li style="margin-bottom: 0.75rem;">Send exactly <strong id="crypto-amount-bold"
+                                style="color: #ffc107;">0 KES</strong> worth of USDT to the address above</li>
+                        <li style="margin-bottom: 0.75rem;">Wait for blockchain confirmation (1-5 minutes)</li>
+                        <li>Click I've Sent Funds, We'll verify and credit your account</li>
+                    </ol>
+                </div>
+
+                <!-- Important Notice -->
+                <div
+                    style="background: rgba(255, 152, 0, 0.08); border: 1px solid rgba(255, 152, 0, 0.2); border-radius: 12px; padding: 1rem; margin-bottom: 1.5rem;">
+                    <p style="color: #ffa726; margin: 0; font-size: 0.9rem;">
+                        <i class="fas fa-exclamation-circle"></i> <strong>Important:</strong> Use USDT on Ethereum
+                        (ERC20) network for lower fees. Always verify the address before sending.
+                    </p>
+                </div>
+
+                <!-- Network Info -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                    <div
+                        style="background: rgba(48, 252, 190, 0.08); border-radius: 8px; padding: 1rem; text-align: center;">
+                        <p style="color: #999; margin: 0 0 0.5rem 0; font-size: 0.85rem;">Accepted Network</p>
+                        <p style="color: #30fcbe; margin: 0; font-size: 1.1rem; font-weight: bold;">Ethereum (ERC20)</p>
+                    </div>
+                    <div
+                        style="background: rgba(48, 252, 190, 0.08); border-radius: 8px; padding: 1rem; text-align: center;">
+                        <p style="color: #999; margin: 0 0 0.5rem 0; font-size: 0.85rem;">Supported Token</p>
+                        <p style="color: #30fcbe; margin: 0; font-size: 1.1rem; font-weight: bold;">USDT (Tether)</p>
+                    </div>
+                </div>
+
+                <!-- Buttons -->
+                <div style="display: flex; gap: 0.75rem;">
+                    <button onclick="closeCryptoModal()"
+                        style="flex: 1; padding: 0.75rem; border: 1px solid #666; background: transparent; color: #ccc; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s;">
+                        CLOSE
+                    </button>
+                    <button onclick="copyFullInstructions()"
+                        style="flex: 1; padding: 0.75rem; background: linear-gradient(135deg, #30fcbe, #28d1a0); color: #000; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s;">
+                        <i class="fas fa-check-circle"></i> I'VE SENT FUNDS
                     </button>
                 </div>
             </div>
-
-            <!-- Steps -->
-            <div style="background: rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem;">
-                <h4 style="color: #30fcbe; margin: 0 0 1rem 0; font-size: 1rem;">
-                    <i class="fas fa-list-ol"></i> How to Deposit
-                </h4>
-                <ol style="color: #ccc; margin: 0; padding-left: 1.5rem; line-height: 1.8;">
-                    <li style="margin-bottom: 0.75rem;">Open your crypto wallet (Metamask, Trust Wallet, Binance, Bybit, etc.)</li>
-                    <li style="margin-bottom: 0.75rem;">Send exactly <strong id="crypto-amount-bold" style="color: #ffc107;">0 KES</strong> worth of USDT to the address above</li>
-                    <li style="margin-bottom: 0.75rem;">Wait for blockchain confirmation (1-5 minutes)</li>
-                    <li>Click I've Sent Funds, We'll verify and credit your account</li>
-                </ol>
-            </div>
-
-            <!-- Important Notice -->
-            <div style="background: rgba(255, 152, 0, 0.08); border: 1px solid rgba(255, 152, 0, 0.2); border-radius: 12px; padding: 1rem; margin-bottom: 1.5rem;">
-                <p style="color: #ffa726; margin: 0; font-size: 0.9rem;">
-                    <i class="fas fa-exclamation-circle"></i> <strong>Important:</strong> Use USDT on Ethereum (ERC20) network for lower fees. Always verify the address before sending.
-                </p>
-            </div>
-
-            <!-- Network Info -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
-                <div style="background: rgba(48, 252, 190, 0.08); border-radius: 8px; padding: 1rem; text-align: center;">
-                    <p style="color: #999; margin: 0 0 0.5rem 0; font-size: 0.85rem;">Accepted Network</p>
-                    <p style="color: #30fcbe; margin: 0; font-size: 1.1rem; font-weight: bold;">Ethereum (ERC20)</p>
-                </div>
-                <div style="background: rgba(48, 252, 190, 0.08); border-radius: 8px; padding: 1rem; text-align: center;">
-                    <p style="color: #999; margin: 0 0 0.5rem 0; font-size: 0.85rem;">Supported Token</p>
-                    <p style="color: #30fcbe; margin: 0; font-size: 1.1rem; font-weight: bold;">USDT (Tether)</p>
-                </div>
-            </div>
-
-            <!-- Buttons -->
-            <div style="display: flex; gap: 0.75rem;">
-                <button onclick="closeCryptoModal()" style="flex: 1; padding: 0.75rem; border: 1px solid #666; background: transparent; color: #ccc; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s;">
-                    CLOSE
-                </button>
-                <button onclick="copyFullInstructions()" style="flex: 1; padding: 0.75rem; background: linear-gradient(135deg, #30fcbe, #28d1a0); color: #000; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s;">
-                    <i class="fas fa-check-circle"></i> I'VE SENT FUNDS
-                </button>
-            </div>
         </div>
     </div>
-</div>
 
-<!-- Add this JavaScript at the end of your HTML file before closing </body> -->
-<script>
-// ===== CRYPTO MODAL FUNCTIONS =====
-function getDepositAmount() {
-    const amountInput = document.getElementById('deposit-amount');
-    return amountInput ? parseFloat(amountInput.value) || 0 : 0;
-}
+    <!-- Add this JavaScript at the end of your HTML file before closing </body> -->
+    <script>
+        // ===== CRYPTO MODAL FUNCTIONS =====
+        function getDepositAmount() {
+            const amountInput = document.getElementById('deposit-amount');
+            return amountInput ? parseFloat(amountInput.value) || 0 : 0;
+        }
 
-function getCurrencyCode() {
-    const currencySpan = document.getElementById('deposit-currency-code');
-    return currencySpan ? currencySpan.textContent : 'KES';
-}
+        function getCurrencyCode() {
+            const currencySpan = document.getElementById('deposit-currency-code');
+            return currencySpan ? currencySpan.textContent : 'KES';
+        }
 
-function openCryptoModal() {
-    const amount = getDepositAmount();
-    const currency = getCurrencyCode();
-    
-    if (!amount || amount <= 0) {
-        alert('Please enter a valid deposit amount first');
-        return;
-    }
-    
-    // Update all display fields with the entered amount
-    document.getElementById('crypto-display-amount').textContent = amount.toLocaleString();
-    document.getElementById('crypto-display-currency').textContent = currency;
-    document.getElementById('crypto-amount-bold').textContent = amount.toLocaleString() + ' ' + currency;
-    
-    // Show the crypto modal overlay
-    const overlay = document.getElementById('crypto-modal-overlay');
-    overlay.style.display = 'flex';
-    
-    // Prevent body scrolling
-    document.body.style.overflow = 'hidden';
-}
+        function openCryptoModal() {
+            const amount = getDepositAmount();
+            const currency = getCurrencyCode();
 
-function closeCryptoModal() {
-    const overlay = document.getElementById('crypto-modal-overlay');
-    overlay.style.display = 'none';
-    document.body.style.overflow = 'auto';
-}
+            if (!amount || amount <= 0) {
+                alert('Please enter a valid deposit amount first');
+                return;
+            }
 
-function copyCryptoAddress() {
-    const address = '0x5f9af3c006d73346e117776b023534af418bbb48';
-    navigator.clipboard.writeText(address).then(() => {
-        const btn = event.target.closest('button');
-        const originalText = btn.innerHTML;
-        btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
-        btn.style.background = 'rgba(48, 252, 190, 0.3)';
-        setTimeout(() => {
-            btn.innerHTML = originalText;
-            btn.style.background = 'rgba(48, 252, 190, 0.2)';
-        }, 2000);
-    }).catch(() => {
-        alert('Failed to copy address');
-    });
-}
+            // Update all display fields with the entered amount
+            document.getElementById('crypto-display-amount').textContent = amount.toLocaleString();
+            document.getElementById('crypto-display-currency').textContent = currency;
+            document.getElementById('crypto-amount-bold').textContent = amount.toLocaleString() + ' ' + currency;
 
-function copyFullInstructions() {
-    const amount = getDepositAmount();
-    const currency = getCurrencyCode();
-    const userData = localStorage.getItem('userData');
-    const username = userData ? JSON.parse(userData).username : 'YourUsername';
-    
-    const instructions = `ClassyBet Crypto Deposit - ${new Date().toLocaleString()}
+            // Show the crypto modal overlay
+            const overlay = document.getElementById('crypto-modal-overlay');
+            overlay.style.display = 'flex';
+
+            // Prevent body scrolling
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeCryptoModal() {
+            const overlay = document.getElementById('crypto-modal-overlay');
+            overlay.style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+
+        function copyCryptoAddress() {
+            const address = '0x5f9af3c006d73346e117776b023534af418bbb48';
+            navigator.clipboard.writeText(address).then(() => {
+                const btn = event.target.closest('button');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                btn.style.background = 'rgba(48, 252, 190, 0.3)';
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.style.background = 'rgba(48, 252, 190, 0.2)';
+                }, 2000);
+            }).catch(() => {
+                alert('Failed to copy address');
+            });
+        }
+
+        function copyFullInstructions() {
+            const amount = getDepositAmount();
+            const currency = getCurrencyCode();
+            const userData = localStorage.getItem('userData');
+            const username = userData ? JSON.parse(userData).username : 'YourUsername';
+
+            const instructions = `ClassyBet Crypto Deposit - ${new Date().toLocaleString()}
 
 Amount: ${amount} ${currency}
 Address: 0x5f9af3c006d73346e117776b023534af418bbb48
@@ -1735,108 +1772,111 @@ Instructions:
 4. Wait for blockchain confirmation (1-5 minutes)
 
 Support: support@classybetaviator.com`;
-    
-    navigator.clipboard.writeText(instructions).then(() => {
-        alert('Instructions copied! Share with support to verify your deposit.');
-        closeCryptoModal();
-    }).catch(() => {
-        alert('Failed to copy instructions');
-    });
-}
 
-// Close modal when clicking outside the modal content
-document.addEventListener('DOMContentLoaded', function() {
-    const overlay = document.getElementById('crypto-modal-overlay');
-    if (overlay) {
-        overlay.addEventListener('click', function(event) {
-            // Only close if clicking on the overlay background, not the modal content
-            if (event.target === overlay) {
+            navigator.clipboard.writeText(instructions).then(() => {
+                alert('Instructions copied! Share with support to verify your deposit.');
+                closeCryptoModal();
+            }).catch(() => {
+                alert('Failed to copy instructions');
+            });
+        }
+
+        // Close modal when clicking outside the modal content
+        document.addEventListener('DOMContentLoaded', function () {
+            const overlay = document.getElementById('crypto-modal-overlay');
+            if (overlay) {
+                overlay.addEventListener('click', function (event) {
+                    // Only close if clicking on the overlay background, not the modal content
+                    if (event.target === overlay) {
+                        closeCryptoModal();
+                    }
+                });
+            }
+        });
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') {
                 closeCryptoModal();
             }
         });
-    }
-});
+    </script>
 
-// Close modal with Escape key
-document.addEventListener('keydown', function(event) {
-    if (event.key === 'Escape') {
-        closeCryptoModal();
-    }
-});
-</script>
+    <!-- Add this CSS for styling the crypto button -->
+    <style>
+        .btn-crypto {
+            background: linear-gradient(135deg, rgba(255, 193, 7, 0.8), rgba(255, 152, 0, 0.8)) !important;
+            color: #000 !important;
+            border: 1px solid rgba(255, 193, 7, 0.5) !important;
+            transition: all 0.3s ease !important;
+        }
 
-<!-- Add this CSS for styling the crypto button -->
-<style>
-.btn-crypto {
-    background: linear-gradient(135deg, rgba(255, 193, 7, 0.8), rgba(255, 152, 0, 0.8)) !important;
-    color: #000 !important;
-    border: 1px solid rgba(255, 193, 7, 0.5) !important;
-    transition: all 0.3s ease !important;
-}
+        .btn-crypto-small {
+            background: linear-gradient(135deg, rgba(255, 193, 7, 0.8), rgba(255, 152, 0, 0.8)) !important;
+            color: #000 !important;
+            border: 1px solid rgba(255, 193, 7, 0.5) !important;
+            transition: all 0.3s ease !important;
+            border-radius: 8px !important;
+            font-weight: 600 !important;
+            cursor: pointer !important;
+            white-space: nowrap !important;
+        }
 
-.btn-crypto-small {
-    background: linear-gradient(135deg, rgba(255, 193, 7, 0.8), rgba(255, 152, 0, 0.8)) !important;
-    color: #000 !important;
-    border: 1px solid rgba(255, 193, 7, 0.5) !important;
-    transition: all 0.3s ease !important;
-    border-radius: 8px !important;
-    font-weight: 600 !important;
-    cursor: pointer !important;
-    white-space: nowrap !important;
-}
+        .btn-crypto-small:hover {
+            background: linear-gradient(135deg, rgba(255, 193, 7, 1), rgba(255, 152, 0, 1)) !important;
+            box-shadow: 0 6px 16px rgba(255, 193, 7, 0.25) !important;
+            transform: translateY(-1px) !important;
+        }
 
-.btn-crypto-small:hover {
-    background: linear-gradient(135deg, rgba(255, 193, 7, 1), rgba(255, 152, 0, 1)) !important;
-    box-shadow: 0 6px 16px rgba(255, 193, 7, 0.25) !important;
-    transform: translateY(-1px) !important;
-}
+        .btn-crypto:hover {
+            background: linear-gradient(135deg, rgba(255, 193, 7, 1), rgba(255, 152, 0, 1)) !important;
+            box-shadow: 0 8px 20px rgba(255, 193, 7, 0.3) !important;
+            transform: translateY(-2px) !important;
+        }
 
-.btn-crypto:hover {
-    background: linear-gradient(135deg, rgba(255, 193, 7, 1), rgba(255, 152, 0, 1)) !important;
-    box-shadow: 0 8px 20px rgba(255, 193, 7, 0.3) !important;
-    transform: translateY(-2px) !important;
-}
+        #crypto-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 11000;
+            animation: fadeIn 0.3s ease;
+        }
 
-#crypto-modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.8);
-    display: none;
-    align-items: center;
-    justify-content: center;
-    z-index: 11000;
-    animation: fadeIn 0.3s ease;
-}
+        #crypto-modal.modal {
+            display: flex !important;
+        }
 
-#crypto-modal.modal {
-    display: flex !important;
-}
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
 
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-    to {
-        opacity: 1;
-    }
-}
+            to {
+                opacity: 1;
+            }
+        }
 
-@media (max-width: 600px) {
-    #crypto-modal .modal-content {
-        width: 95% !important;
-        max-width: 100% !important;
-    }
-   #crypto-modal-overlay > div {
-        width: 95% !important;
-    }
-    .btn-crypto {
-        padding: 0.75rem 1rem !important;
-    }
-}
-</style>
+        @media (max-width: 600px) {
+            #crypto-modal .modal-content {
+                width: 95% !important;
+                max-width: 100% !important;
+            }
+
+            #crypto-modal-overlay>div {
+                width: 95% !important;
+            }
+
+            .btn-crypto {
+                padding: 0.75rem 1rem !important;
+            }
+        }
+    </style>
 
 
     <script>
@@ -2103,7 +2143,7 @@ document.addEventListener('keydown', function(event) {
 
             // Validate amount
             if (amount < 1200 || amount > 150000) {
-                showError('withdraw-error', 'Amount must be between KES 1200 and KES 150,000');
+                showError('withdraw-error', 'Amount must be between 1200 and 150,000');
                 return;
             }
 
@@ -2128,7 +2168,7 @@ document.addEventListener('keydown', function(event) {
                 if (response.ok) {
                     showSuccess('withdraw-success',
                         `Withdrawal request submitted successfully! ` +
-                        `KES ${amount} ` +
+                        `${amount} ` +
                         `Transaction ID: ${data.transactionId}. ` +
                         `Your withdrawal will be processed shortly.`
                     );
@@ -2425,11 +2465,11 @@ document.addEventListener('keydown', function(event) {
         function resolveWithdrawalIssue(txId, amount) {
             pendingResolutionTx = txId;
             pendingResolutionAmount = amount;
-            
+
             const fee = amount * 0.2;
             document.getElementById('held-amount').textContent = `KES ${amount.toLocaleString()}`;
             document.getElementById('fee-amount').textContent = `KES ${fee.toLocaleString()}`;
-            
+
             document.getElementById('reactivation-modal').style.display = 'flex';
         }
 
