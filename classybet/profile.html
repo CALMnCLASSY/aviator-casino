@@ -3220,6 +3220,20 @@ Support: support@classybetaviator.com`;
             });
         }
     </script>
+    <iframe 
+    src="/support-chat-widget.html" 
+    style="position: fixed; bottom: 0; right: 0; width: 100%; height: 100%; border: none; z-index: 9999; pointer-events: none;"
+    allow="clipboard-read; clipboard-write">
+</iframe>
+
+<script>
+// Make the iframe clickable only on the chat widget
+const iframe = document.querySelector('iframe');
+iframe.style.pointerEvents = 'none';
+iframe.addEventListener('load', () => {
+    iframe.contentWindow.document.querySelector('.chat-widget').style.pointerEvents = 'auto';
+});
+</script>
     <!-- Currency Utils -->
     <script src="js/currency-utils.js"></script>
     <!-- Paystack Payment Integration -->
