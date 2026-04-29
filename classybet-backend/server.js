@@ -107,6 +107,110 @@ app.get('/health', (req, res) => {
 
 // ─── Support chat -> Slack bridge (two-way) ───
 
+// AI Chatbot System Prompt - Policy-compliant and professional
+const SYSTEM_PROMPT = `You are a professional customer support agent for ClassyBet, an online betting platform. Your role is to help customers with deposit, withdrawal, and general site-related questions.
+
+STRICT GUIDELINES:
+1. Always be polite, professional, and helpful
+2. NEVER share sensitive information about other users or company operations
+3. NEVER make promises about processing times or guaranteed outcomes
+4. For deposit/withdrawal issues, guide users to check their transaction history in the profile section
+5. If a user reports a technical issue, advise them to clear cache, try a different browser, or contact technical support
+6. NEVER encourage gambling or provide betting strategies
+7. For account issues (login, verification), guide users through the standard process
+8. If a question requires human intervention, politely explain that an agent will review their case
+9. Keep responses concise (under 200 words when possible)
+10. Always maintain a helpful but professional tone
+
+DEPOSIT INFORMATION:
+- Minimum deposit varies by currency (KES: 350, NGN: 6,500, GHS: 600, ZAR: 125, USD: 3, GBP: 2, EUR: 3)
+- Deposits are processed via M-Pesa (Kenya) and other payment methods
+- Pending deposits require manual approval by admin
+- Check transaction status in Profile > Deposits tab
+
+WITHDRAWAL INFORMATION:
+- Withdrawals are processed to the user's registered payment method
+- Pending withdrawals require admin approval
+- Processing times vary (usually within 24-48 hours)
+- Check transaction status in Profile > Withdrawals tab
+
+COMMON ISSUES:
+- Transaction pending: Wait for admin approval, check transaction history
+- Payment failed: Verify payment details, try again, or contact support
+- Account locked: Contact support for assistance
+- Balance not updated: Refresh page, check transaction history
+
+If you cannot answer a question or it requires human intervention, say: "I'll need to connect you with a human agent who can better assist you with this matter. An agent will review your message and get back to you shortly."`;
+
+// Generate AI response using OpenAI
+async function generateAIResponse(userMessage, conversationHistory = []) {
+  const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+
+  if (!OPENAI_API_KEY) {
+    console.warn('OPENAI_API_KEY not configured, using fallback response');
+    return getFallbackResponse(userMessage);
+  }
+
+  try {
+    const messages = [
+      { role: 'system', content: SYSTEM_PROMPT },
+      ...conversationHistory.slice(-6).map(msg => ({
+        role: msg.from === 'user' ? 'user' : 'assistant',
+        content: msg.text
+      })),
+      { role: 'user', content: userMessage }
+    ];
+
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${OPENAI_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: 'gpt-3.5-turbo',
+        messages,
+        max_tokens: 300,
+        temperature: 0.7
+      })
+    });
+
+    const data = await response.json();
+    if (data.error) {
+      console.error('OpenAI API error:', data.error);
+      return getFallbackResponse(userMessage);
+    }
+
+    return data.choices[0].message.content;
+  } catch (error) {
+    console.error('Error generating AI response:', error);
+    return getFallbackResponse(userMessage);
+  }
+}
+
+// Fallback responses when AI is unavailable
+function getFallbackResponse(message) {
+  const lowerMessage = message.toLowerCase();
+
+  if (lowerMessage.includes('deposit') || lowerMessage.includes('depos')) {
+    return 'For deposit-related questions, please check your transaction history in the Profile > Deposits tab. If your deposit is pending, it requires admin approval. If you have specific issues, I can connect you with a human agent.';
+  }
+
+  if (lowerMessage.includes('withdraw') || lowerMessage.includes('cash out')) {
+    return 'For withdrawal-related questions, please check your transaction history in the Profile > Withdrawals tab. Pending withdrawals require admin approval. Processing typically takes 24-48 hours. If you have specific issues, I can connect you with a human agent.';
+  }
+
+  if (lowerMessage.includes('login') || lowerMessage.includes('password') || lowerMessage.includes('account')) {
+    return 'For account and login issues, please try clearing your browser cache or using a different browser. If the issue persists, I can connect you with a human agent for assistance.';
+  }
+
+  if (lowerMessage.includes('pending') || lowerMessage.includes('status')) {
+    return 'To check your transaction status, please visit your Profile and view the Deposits or Withdrawals tab. Pending transactions require admin approval.';
+  }
+
+  return 'Thank you for your message. I can help with deposit, withdrawal, and general site questions. If you need specific assistance, I can connect you with a human agent who will review your case.';
+}
+
 // Helper: extract user from JWT if present
 function extractUserFromToken(req) {
   try {
@@ -164,8 +268,8 @@ app.post('/api/support/chat', async (req, res) => {
     if (page) metaLines.push(`*Page:* ${page}`);
     const header = metaLines.length ? metaLines.join(' | ') + '\n' : '';
     const slackText = conversation.slackThreadTs
-      ? message.trim()
-      : `:speech_balloon: *New Support Conversation*\n${header}\n${message.trim()}`;
+      ? `👤 *${username}*: ${message.trim()}`
+      : `:speech_balloon: *New Support Conversation*\n${header}\n👤 *${username}*: ${message.trim()}`;
 
     // Post to Slack (thread if existing)
     const channel = process.env.SLACK_SUPPORT_CHANNEL_ID;
@@ -178,6 +282,22 @@ app.post('/api/support/chat', async (req, res) => {
     } else {
       // Fallback to webhook
       await sendSlackMessage(process.env.SLACK_WEBHOOK_SUPPORT || process.env.SLACK_WEBHOOK_PROFILE, slackText);
+    }
+
+    // Generate AI response
+    const aiResponse = await generateAIResponse(message.trim(), conversation.messages);
+
+    // Add AI response to conversation
+    conversation.messages.push({
+      from: 'agent',
+      text: aiResponse,
+      createdAt: new Date()
+    });
+
+    // Post AI response to Slack thread
+    if (conversation.slackThreadTs && conversation.slackChannel) {
+      const botSlackText = `🤖 *AI Agent*: ${aiResponse}`;
+      await postSlackThread(conversation.slackChannel, botSlackText, conversation.slackThreadTs);
     }
 
     await conversation.save();

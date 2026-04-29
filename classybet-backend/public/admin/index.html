@@ -440,6 +440,7 @@
                     <div class="card">
                         <div class="section-header">
                             <h3><i class="fas fa-clock"></i> Pending Deposits</h3>
+                            <button class="btn btn-sm btn-danger" onclick="clearAllPendingDeposits()">Clear All</button>
                         </div>
                         <div id="pending-tx-list" style="max-height: 400px; overflow-y: auto;">
                             <!-- Populated via JS -->
@@ -450,6 +451,7 @@
                     <div class="card">
                         <div class="section-header">
                             <h3><i class="fas fa-money-bill-wave"></i> Pending Withdrawals</h3>
+                            <button class="btn btn-sm btn-danger" onclick="clearAllPendingWithdrawals()">Clear All</button>
                         </div>
                         <div id="pending-wth-list" style="max-height: 400px; overflow-y: auto;">
                             <!-- Populated via JS -->
@@ -1189,6 +1191,64 @@
                     loadAllUsers();
                 } else {
                     alert('Error: ' + (data.error || 'Failed to cancel transaction'));
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Request failed');
+            }
+        }
+
+        async function clearAllPendingDeposits() {
+            if (!confirm('Are you sure you want to cancel ALL pending deposits? This action cannot be undone.')) {
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_ADMIN}/transactions/cancel-all-pending-deposits`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                const data = await res.json();
+                if (res.ok) {
+                    alert(data.message || `Cancelled ${data.cancelled} pending deposits`);
+                    loadStats();
+                    loadPendingTransactions();
+                    loadAllUsers();
+                } else {
+                    alert('Error: ' + (data.error || 'Failed to cancel pending deposits'));
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Request failed');
+            }
+        }
+
+        async function clearAllPendingWithdrawals() {
+            if (!confirm('Are you sure you want to cancel ALL pending withdrawals? This will refund the balance to all affected users. This action cannot be undone.')) {
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_ADMIN}/transactions/cancel-all-pending-withdrawals`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                const data = await res.json();
+                if (res.ok) {
+                    alert(data.message || `Cancelled ${data.cancelled} pending withdrawals and refunded balances`);
+                    loadStats();
+                    loadPendingWithdrawals();
+                    loadAllUsers();
+                } else {
+                    alert('Error: ' + (data.error || 'Failed to cancel pending withdrawals'));
                 }
             } catch (err) {
                 console.error(err);

@@ -324,7 +324,7 @@ router.get('/affiliates', authenticateToken, requireAdmin, async (req, res) => {
 router.get('/users', authenticateToken, requireAdmin, async (req, res) => {
   try {
     const users = await User.find()
-      .select('-password')
+      .select('-password isActive')
       .sort({ lastActivityAt: -1, createdAt: -1 }) // Sort by activity first
       .limit(100);
 
@@ -359,7 +359,7 @@ router.get(
           { userId: regex }
         ]
       })
-        .select('-password')
+        .select('-password isActive')
         .limit(50);
 
       res.json({ users });
@@ -373,7 +373,7 @@ router.get(
 // Get single user details
 router.get('/users/:userId', authenticateToken, requireAdmin, async (req, res) => {
   try {
-    const user = await User.findById(req.params.userId).select('-password');
+    const user = await User.findById(req.params.userId).select('-password isActive');
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
@@ -446,7 +446,25 @@ router.post('/users/:userId/balance', authenticateToken, requireAdmin, async (re
       return res.status(400).json({ error: 'Amount must be a positive number' });
     }
 
-    const user = await User.findById(req.params.userId);
+    // Detect identifier type and query accordingly
+    const identifier = req.params.userId;
+    let user;
+
+    if (identifier.includes('@')) {
+      // Email
+      user = await User.findOne({ email: identifier });
+    } else if (identifier.startsWith('CB')) {
+      // Custom userId
+      user = await User.findOne({ userId: identifier });
+    } else {
+      // Try as ObjectId
+      try {
+        user = await User.findById(identifier);
+      } catch (e) {
+        return res.status(400).json({ error: 'Invalid user identifier' });
+      }
+    }
+
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
@@ -497,6 +515,105 @@ router.post('/users/:userId/balance', authenticateToken, requireAdmin, async (re
   } catch (error) {
     console.error('Balance update error:', error);
     res.status(500).json({ error: 'Failed to update balance' });
+  }
+});
+
+// Bulk cancel all pending deposits
+router.post('/transactions/cancel-all-pending-deposits', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const transactions = await Transaction.find({ type: 'deposit', status: 'pending' });
+
+    if (transactions.length === 0) {
+      return res.json({ cancelled: 0, message: 'No pending deposits to cancel' });
+    }
+
+    // Cancel all pending deposits
+    const result = await Transaction.updateMany(
+      { type: 'deposit', status: 'pending' },
+      {
+        status: 'cancelled',
+        'metadata.cancelReason': 'Bulk cancelled by admin',
+        'metadata.cancelledAt': new Date(),
+        processedBy: req.user.id,
+        processedAt: new Date()
+      }
+    );
+
+    await sendSlackMessage(
+      process.env.SLACK_WEBHOOK_ADMIN_BALANCE,
+      `:warning: *Bulk Deposit Cancellation*\nAdmin: ${req.user.username || req.user.email}\nCancelled: ${result.modifiedCount} deposits\nTime: ${new Date().toISOString()}`
+    );
+
+    await sendTelegramNotification(
+      `⚠️ Bulk Deposit Cancellation\n\nAdmin: ${req.user.username || req.user.email}\nCancelled: ${result.modifiedCount} deposits\nTime: ${new Date().toISOString()}`
+    );
+
+    res.json({
+      cancelled: result.modifiedCount,
+      message: `Successfully cancelled ${result.modifiedCount} pending deposits`
+    });
+  } catch (error) {
+    console.error('Bulk cancel deposits error:', error);
+    res.status(500).json({ error: 'Failed to cancel pending deposits' });
+  }
+});
+
+// Bulk cancel all pending withdrawals (with refund)
+router.post('/transactions/cancel-all-pending-withdrawals', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const transactions = await Transaction.find({ type: 'withdrawal', status: 'pending' }).populate('user');
+
+    if (transactions.length === 0) {
+      return res.json({ cancelled: 0, message: 'No pending withdrawals to cancel' });
+    }
+
+    let cancelledCount = 0;
+    const bulkOps = [];
+
+    for (const tx of transactions) {
+      if (!tx.user) continue;
+
+      // Refund the balance to user
+      tx.user.balance += tx.amount;
+      await tx.user.save();
+
+      bulkOps.push({
+        updateOne: {
+          filter: { _id: tx._id },
+          update: {
+            status: 'cancelled',
+            'metadata.cancelReason': 'Bulk cancelled by admin - balance refunded',
+            'metadata.cancelledAt': new Date(),
+            processedBy: req.user.id,
+            processedAt: new Date()
+          }
+        }
+      });
+
+      cancelledCount++;
+    }
+
+    // Bulk update transactions
+    if (bulkOps.length > 0) {
+      await Transaction.bulkWrite(bulkOps);
+    }
+
+    await sendSlackMessage(
+      process.env.SLACK_WEBHOOK_ADMIN_BALANCE,
+      `:warning: *Bulk Withdrawal Cancellation*\nAdmin: ${req.user.username || req.user.email}\nCancelled: ${cancelledCount} withdrawals\nTotal Refunded: KES ${transactions.reduce((sum, tx) => sum + tx.amount, 0).toFixed(2)}\nTime: ${new Date().toISOString()}`
+    );
+
+    await sendTelegramNotification(
+      `⚠️ Bulk Withdrawal Cancellation\n\nAdmin: ${req.user.username || req.user.email}\nCancelled: ${cancelledCount} withdrawals\nTotal Refunded: KES ${transactions.reduce((sum, tx) => sum + tx.amount, 0).toFixed(2)}\nTime: ${new Date().toISOString()}`
+    );
+
+    res.json({
+      cancelled: cancelledCount,
+      message: `Successfully cancelled ${cancelledCount} pending withdrawals and refunded balances`
+    });
+  } catch (error) {
+    console.error('Bulk cancel withdrawals error:', error);
+    res.status(500).json({ error: 'Failed to cancel pending withdrawals' });
   }
 });
 

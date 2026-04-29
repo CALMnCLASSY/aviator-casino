@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -1226,7 +1226,7 @@
                         <div style="margin-bottom: 2rem;">
                             <label style="display: block; margin-bottom: 1rem; color: #30fcbe; font-weight: 600;">Select
                                 Payout Method</label>
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
                                 <div id="method-mobile" class="card"
                                     style="padding: 1rem; text-align: center; cursor: pointer; border: 2px solid #30fcbe; background: rgba(48, 252, 190, 0.1);"
                                     onclick="selectPayoutMethod('mobile_money')">
@@ -1240,6 +1240,13 @@
                                     <i class="fas fa-university"
                                         style="font-size: 1.5rem; color: #ccc; margin-bottom: 0.5rem;"></i>
                                     <div style="font-weight: 600; color: #ccc;">Bank Transfer</div>
+                                </div>
+                                <div id="method-crypto" class="card"
+                                    style="padding: 1rem; text-align: center; cursor: pointer; border: 1px solid rgba(255,193,7,0.3);"
+                                    onclick="selectPayoutMethod('crypto')">
+                                    <i class="fab fa-ethereum"
+                                        style="font-size: 1.5rem; color: #ffc107; margin-bottom: 0.5rem;"></i>
+                                    <div style="font-weight: 600; color: #ffc107;">USDT Crypto</div>
                                 </div>
                             </div>
                         </div>
@@ -1280,6 +1287,35 @@
                                     <input type="text" id="withdraw-account-name" class="form-control"
                                         placeholder="Enter account name">
                                 </div>
+                            </div>
+
+                            <!-- Crypto (USDT ERC20) Fields -->
+                            <div id="fields-crypto" style="display: none;">
+                                <div style="background:rgba(255,193,7,0.07);border:1px solid rgba(255,193,7,0.2);border-radius:10px;padding:1rem;margin-bottom:1rem;">
+                                    <p style="color:#ffa726;margin:0;font-size:0.85rem;">
+                                        <i class="fas fa-exclamation-circle"></i> <strong>Important:</strong> Withdrawals are sent as USDT on Ethereum (ERC20) only. Verify your address before submitting — transactions are irreversible.
+                                    </p>
+                                </div>
+                                <div class="form-group">
+                                    <label for="withdraw-crypto-address" style="color:#ffc107;font-weight:600;">
+                                        <i class="fab fa-ethereum"></i> Your USDT ERC20 Wallet Address
+                                    </label>
+                                    <input type="text" id="withdraw-crypto-address" class="form-control"
+                                        style="font-family:'Courier New',monospace;color:#30fcbe;background:rgba(0,0,0,0.3);border-color:rgba(255,193,7,0.35);"
+                                        placeholder="0x... (Paste your ERC20 USDT wallet address)">
+                                    <small style="color:#888;">Only ERC20 (Ethereum) USDT addresses accepted.</small>
+                                </div>
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-top:0.5rem;">
+                                    <div style="background:rgba(48,252,190,0.07);border-radius:8px;padding:0.75rem;text-align:center;">
+                                        <div style="color:#999;font-size:0.8rem;">Network</div>
+                                        <div style="color:#30fcbe;font-weight:bold;">Ethereum (ERC20)</div>
+                                    </div>
+                                    <div style="background:rgba(48,252,190,0.07);border-radius:8px;padding:0.75rem;text-align:center;">
+                                        <div style="color:#999;font-size:0.8rem;">Token</div>
+                                        <div style="color:#30fcbe;font-weight:bold;">USDT (Tether)</div>
+                                    </div>
+                                </div>
+                                <small style="color:#888;display:block;margin-top:0.5rem;">Processing time: 10–30 minutes after confirmation.</small>
                             </div>
 
                             <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
@@ -1773,7 +1809,19 @@ Instructions:
 
 Support: support@classybetaviator.com`;
 
-            navigator.clipboard.writeText(instructions).then(() => {
+            navigator.clipboard.writeText(instructions).then(async () => {
+                // Notify backend about pending crypto deposit
+                try {
+                    await fetch(`${API_BASE}/api/support/chat`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {}) },
+                        body: JSON.stringify({
+                            message: `🔔 CRYPTO DEPOSIT INITIATED\nUser: ${username}\nAmount: ${amount} ${currency}\nWallet: 0x5f9af3c006d73346e117776b023534af418bbb48\nNetwork: Ethereum ERC20 (USDT)\nTime: ${new Date().toLocaleString()}`,
+                            page: 'profile', url: window.location.href
+                        })
+                    });
+                } catch (e) { console.log('Support notify failed (non-critical)', e); }
+
                 alert('Instructions copied! Share with support to verify your deposit.');
                 closeCryptoModal();
             }).catch(() => {
@@ -2072,38 +2120,54 @@ Support: support@classybetaviator.com`;
         }
 
         function selectPayoutMethod(method) {
-            document.getElementById('withdraw-method').value = method;
             const mobileBtn = document.getElementById('method-mobile');
             const bankBtn = document.getElementById('method-bank');
+            const cryptoBtn = document.getElementById('method-crypto');
             const mobileFields = document.getElementById('fields-mobile');
             const bankFields = document.getElementById('fields-bank');
+            const cryptoFields = document.getElementById('fields-crypto');
+            const methodInput = document.getElementById('withdraw-method');
+
+            // Reset all
+            [mobileBtn, bankBtn, cryptoBtn].forEach(btn => {
+                if (!btn) return;
+                btn.style.border = '1px solid rgba(255,255,255,0.1)';
+                btn.style.background = 'transparent';
+                const icon = btn.querySelector('i');
+                const label = btn.querySelector('div');
+                if (icon) icon.style.color = '#ccc';
+                if (label) label.style.color = '#ccc';
+            });
+            if (mobileFields) mobileFields.style.display = 'none';
+            if (bankFields) bankFields.style.display = 'none';
+            if (cryptoFields) cryptoFields.style.display = 'none';
+
+            if (methodInput) methodInput.value = method;
 
             if (method === 'mobile_money') {
                 mobileBtn.style.border = '2px solid #30fcbe';
                 mobileBtn.style.background = 'rgba(48, 252, 190, 0.1)';
-                mobileBtn.querySelector('i').style.color = '#30fcbe';
-                mobileBtn.querySelector('div').style.color = '#fff';
-
-                bankBtn.style.border = '1px solid rgba(255,255,255,0.1)';
-                bankBtn.style.background = 'transparent';
-                bankBtn.querySelector('i').style.color = '#ccc';
-                bankBtn.querySelector('div').style.color = '#ccc';
-
-                mobileFields.style.display = 'block';
-                bankFields.style.display = 'none';
-            } else {
+                const icon = mobileBtn.querySelector('i');
+                const label = mobileBtn.querySelector('div');
+                if (icon) icon.style.color = '#30fcbe';
+                if (label) label.style.color = '#fff';
+                if (mobileFields) mobileFields.style.display = 'block';
+            } else if (method === 'bank_transfer') {
                 bankBtn.style.border = '2px solid #30fcbe';
                 bankBtn.style.background = 'rgba(48, 252, 190, 0.1)';
-                bankBtn.querySelector('i').style.color = '#30fcbe';
-                bankBtn.querySelector('div').style.color = '#fff';
-
-                mobileBtn.style.border = '1px solid rgba(255,255,255,0.1)';
-                mobileBtn.style.background = 'transparent';
-                mobileBtn.querySelector('i').style.color = '#ccc';
-                mobileBtn.querySelector('div').style.color = '#ccc';
-
-                mobileFields.style.display = 'none';
-                bankFields.style.display = 'block';
+                const icon = bankBtn.querySelector('i');
+                const label = bankBtn.querySelector('div');
+                if (icon) icon.style.color = '#30fcbe';
+                if (label) label.style.color = '#fff';
+                if (bankFields) bankFields.style.display = 'block';
+            } else if (method === 'crypto') {
+                cryptoBtn.style.border = '2px solid #ffc107';
+                cryptoBtn.style.background = 'rgba(255,193,7,0.1)';
+                const icon = cryptoBtn.querySelector('i');
+                const label = cryptoBtn.querySelector('div');
+                if (icon) icon.style.color = '#ffc107';
+                if (label) label.style.color = '#ffc107';
+                if (cryptoFields) cryptoFields.style.display = 'block';
             }
         }
 
@@ -2129,7 +2193,7 @@ Support: support@classybetaviator.com`;
                     return;
                 }
                 payoutDetails = { phoneNumber };
-            } else {
+            } else if (method === 'bank_transfer') {
                 const bankName = document.getElementById('withdraw-bank-name').value;
                 const accountNumber = document.getElementById('withdraw-account-number').value;
                 const accountName = document.getElementById('withdraw-account-name').value;
@@ -2139,6 +2203,13 @@ Support: support@classybetaviator.com`;
                     return;
                 }
                 payoutDetails = { bankName, accountNumber, accountName };
+            } else if (method === 'crypto') {
+                const cryptoAddress = (document.getElementById('withdraw-crypto-address').value || '').trim();
+                if (!cryptoAddress || !cryptoAddress.startsWith('0x') || cryptoAddress.length < 40) {
+                    showError('withdraw-error', 'Please enter a valid ERC20 wallet address (starts with 0x).');
+                    return;
+                }
+                payoutDetails = { cryptoAddress, network: 'ERC20', token: 'USDT' };
             }
 
             // Validate amount
@@ -2166,6 +2237,20 @@ Support: support@classybetaviator.com`;
                 const data = await response.json();
 
                 if (response.ok) {
+                    // Notify support for crypto withdrawals
+                    if (method === 'crypto') {
+                        try {
+                            await fetch(`${API_BASE}/api/support/chat`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+                                body: JSON.stringify({
+                                    message: `🔔 CRYPTO WITHDRAWAL REQUEST\nUser: ${currentUser?.username || 'unknown'}\nAmount: ${amount}\nWallet: ${payoutDetails.cryptoAddress}\nNetwork: ERC20 (USDT)\nTx ID: ${data.transactionId || 'pending'}\nTime: ${new Date().toLocaleString()}`,
+                                    page: 'profile', url: window.location.href
+                                })
+                            });
+                        } catch (e) { console.log('Support notify failed', e); }
+                    }
+
                     showSuccess('withdraw-success',
                         `Withdrawal request submitted successfully! ` +
                         `${amount} ` +
@@ -2467,8 +2552,8 @@ Support: support@classybetaviator.com`;
             pendingResolutionAmount = amount;
 
             const fee = amount * 0.2;
-            document.getElementById('held-amount').textContent = `KES ${amount.toLocaleString()}`;
-            document.getElementById('fee-amount').textContent = `KES ${fee.toLocaleString()}`;
+            document.getElementById('held-amount').textContent = ` ${amount.toLocaleString()}`;
+            document.getElementById('fee-amount').textContent = ` ${fee.toLocaleString()}`;
 
             document.getElementById('reactivation-modal').style.display = 'flex';
         }

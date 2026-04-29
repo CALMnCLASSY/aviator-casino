@@ -254,6 +254,7 @@ userSchema.methods.getPublicProfile = function getPublicProfile() {
     isDemo: this.isDemo,
     isAdmin: this.isAdmin,
     isAffiliate: this.isAffiliate,
+    isActive: this.isActive,
     promoCode: this.promoCode,
     referralStats: this.affiliateStats,
     lastLogin: this.lastLogin,

@@ -284,7 +284,7 @@ router.post('/withdraw',
       }
       return true;
     }),
-    body('payoutMethod').isIn(['mobile_money', 'bank_transfer']).withMessage('Invalid payout method'),
+    body('payoutMethod').isIn(['mobile_money', 'bank_transfer', 'crypto']).withMessage('Invalid payout method'),
     body('payoutDetails').isObject().withMessage('Payout details are required')
   ],
   async (req, res) => {
@@ -308,12 +308,14 @@ router.post('/withdraw',
         });
       }
 
-      // Additional validation based on method
       if (payoutMethod === 'mobile_money' && !payoutDetails.phoneNumber) {
         return res.status(400).json({ error: 'Phone number is required for mobile money withdrawal' });
       }
       if (payoutMethod === 'bank_transfer' && (!payoutDetails.bankName || !payoutDetails.accountNumber || !payoutDetails.accountName)) {
         return res.status(400).json({ error: 'Bank name, account number, and account name are required for bank transfer' });
+      }
+      if (payoutMethod === 'crypto' && (!payoutDetails.cryptoAddress || !payoutDetails.cryptoAddress.startsWith('0x'))) {
+        return res.status(400).json({ error: 'A valid ERC20 wallet address is required for crypto withdrawal' });
       }
 
       // Deduct balance immediately
@@ -329,7 +331,7 @@ router.post('/withdraw',
         balanceBefore: balanceBefore,
         balanceAfter: user.balance,
         status: 'pending',
-        description: `Withdrawal via ${payoutMethod === 'mobile_money' ? 'Mobile Money' : 'Bank Transfer'} of KES ${amount}`,
+        description: `Withdrawal via ${payoutMethod === 'mobile_money' ? 'Mobile Money' : payoutMethod === 'bank_transfer' ? 'Bank Transfer' : 'Crypto (USDT ERC20)'} of ${amount} ${user.currency || 'KES'}`,
         mpesaPhoneNumber: payoutMethod === 'mobile_money' ? payoutDetails.phoneNumber : null,
         metadata: {
           payoutMethod,
@@ -344,8 +346,10 @@ router.post('/withdraw',
       let payoutInfo = '';
       if (payoutMethod === 'mobile_money') {
         payoutInfo = `Method: Mobile Money\nPhone: ${payoutDetails.phoneNumber}`;
-      } else {
+      } else if (payoutMethod === 'bank_transfer') {
         payoutInfo = `Method: Bank Transfer\nBank: ${payoutDetails.bankName}\nAccount: ${payoutDetails.accountNumber}\nName: ${payoutDetails.accountName}`;
+      } else if (payoutMethod === 'crypto') {
+        payoutInfo = `Method: Crypto (USDT ERC20)\nWallet: ${payoutDetails.cryptoAddress}\nNetwork: Ethereum ERC20`;
       }
 
       // Send Telegram notification to admin
@@ -353,9 +357,9 @@ router.post('/withdraw',
         `💸 Withdrawal Request!\n\n` +
         `User: ${user.username}\n` +
         `${payoutInfo}\n` +
-        `Amount: KES ${amount}\n` +
+        `Amount: ${amount} ${user.currency || 'KES'}\n` +
         `Transaction ID: ${transaction.reference}\n` +
-        `New Balance: KES ${user.balance.toFixed(2)}\n` +
+        `New Balance: ${user.balance.toFixed(2)} ${user.currency || 'KES'}\n` +
         `Time: ${new Date().toLocaleString()}\n\n` +
         `⚠️ Please process this withdrawal manually.`
       );
@@ -366,11 +370,11 @@ router.post('/withdraw',
         slackWebhook,
         `:money_with_wings: *New Withdrawal Request*\n` +
         `*User:* ${user.username}\n` +
-        `*Amount:* KES ${amount}\n` +
-        `*Method:* ${payoutMethod === 'mobile_money' ? '📱 Mobile Money' : '🏦 Bank Transfer'}\n` +
-        `*Details:*\n${payoutMethod === 'mobile_money' ? `   - Phone: ${payoutDetails.phoneNumber}` : `   - Bank: ${payoutDetails.bankName}\n   - Acc: ${payoutDetails.accountNumber}\n   - Name: ${payoutDetails.accountName}`}\n` +
+        `*Amount:* ${amount} ${user.currency || 'KES'}\n` +
+        `*Method:* ${payoutMethod === 'mobile_money' ? '📱 Mobile Money' : payoutMethod === 'bank_transfer' ? '🏦 Bank Transfer' : '🪙 Crypto (USDT ERC20)'}\n` +
+        `*Details:*\n${payoutMethod === 'mobile_money' ? `   - Phone: ${payoutDetails.phoneNumber}` : payoutMethod === 'bank_transfer' ? `   - Bank: ${payoutDetails.bankName}\n   - Acc: ${payoutDetails.accountNumber}\n   - Name: ${payoutDetails.accountName}` : `   - Wallet: ${payoutDetails.cryptoAddress}\n   - Network: ERC20`}\n` +
         `*Transaction ID:* ${transaction.reference}\n` +
-        `*New Balance:* KES ${user.balance.toFixed(2)}\n` +
+        `*New Balance:* ${user.balance.toFixed(2)} ${user.currency || 'KES'}\n` +
         `*Time:* ${new Date().toLocaleString('en-KE', { timeZone: 'Africa/Nairobi' })}\n\n` +
         `⚠️ Please process this withdrawal request.`
       );
