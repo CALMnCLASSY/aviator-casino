@@ -324,7 +324,7 @@ router.get('/affiliates', authenticateToken, requireAdmin, async (req, res) => {
 router.get('/users', authenticateToken, requireAdmin, async (req, res) => {
   try {
     const users = await User.find()
-      .select('-password isActive')
+      .select('-password')
       .sort({ lastActivityAt: -1, createdAt: -1 }) // Sort by activity first
       .limit(100);
 
@@ -359,7 +359,7 @@ router.get(
           { userId: regex }
         ]
       })
-        .select('-password isActive')
+        .select('-password')
         .limit(50);
 
       res.json({ users });
@@ -373,7 +373,7 @@ router.get(
 // Get single user details
 router.get('/users/:userId', authenticateToken, requireAdmin, async (req, res) => {
   try {
-    const user = await User.findById(req.params.userId).select('-password isActive');
+    const user = await User.findById(req.params.userId).select('-password');
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
