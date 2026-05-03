@@ -310,6 +310,23 @@ function extractUserFromToken(req) {
   } catch { return null; }
 }
 
+// OPTIONS handlers for support routes (CORS preflight)
+app.options('/api/support/chat', (req, res) => {
+  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.sendStatus(200);
+});
+
+app.options('/api/support/conversation/current', (req, res) => {
+  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+  res.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.sendStatus(200);
+});
+
 // POST /api/support/chat — send a message & persist conversation
 app.post('/api/support/chat', async (req, res) => {
   try {
