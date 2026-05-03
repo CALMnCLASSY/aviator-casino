@@ -108,21 +108,6 @@ app.get('/health', (req, res) => {
 
 // ─── Support chat -> Slack bridge (two-way) ───
 
-// AI Chatbot System Prompt - Policy-compliant and professional
-const SYSTEM_PROMPT = `You are a professional customer support agent for ClassyBet, an online betting casino platform. Your role is to help customers with deposit, withdrawal, and general site-related questions.
-
-STRICT GUIDELINES:
-1. Always be polite, professional, and helpful
-2. NEVER share sensitive information about other users or company operations
-3. NEVER make promises about processing times or guaranteed outcomes
-4. For deposit/withdrawal issues, guide users to check their transaction history in the profile section
-5. If a user reports a technical issue, advise them to clear cache, try a different browser, or contact technical support
-6. NEVER encourage gambling or provide betting strategies
-7. For account issues (login, verification), guide users through the standard process
-8. If a question requires human intervention, politely explain that an agent will review their case
-9. Keep responses concise (under 200 words when possible)
-10. Always maintain a helpful but professional tone
-
 // Comprehensive keyword-based response system
 const KEYWORD_RESPONSES = [
   // Deposit-related keywords
@@ -339,7 +324,7 @@ app.post('/api/support/chat', async (req, res) => {
     const tokenUser = extractUserFromToken(req);
     const userId = tokenUser ? tokenUser.userId : null;
     const username = meta?.username || tokenUser?.username || 'Anonymous';
-    const sid = sessionId || `anon-${Date.now()}`;
+    const sid = sessionId || 'anon-' + Date.now();
 
     // Find or create conversation
     let conversation;
@@ -368,14 +353,14 @@ app.post('/api/support/chat', async (req, res) => {
 
     // Build Slack text
     const metaLines = [];
-    if (username !== 'Anonymous') metaLines.push(`*User:* ${username}`);
-    if (meta?.email) metaLines.push(`*Email:* ${meta.email}`);
-    if (meta?.phone) metaLines.push(`*Phone:* ${meta.phone}`);
-    if (page) metaLines.push(`*Page:* ${page}`);
+    if (username !== 'Anonymous') metaLines.push('*User:* ' + username);
+    if (meta?.email) metaLines.push('*Email:* ' + meta.email);
+    if (meta?.phone) metaLines.push('*Phone:* ' + meta.phone);
+    if (page) metaLines.push('*Page:* ' + page);
     const header = metaLines.length ? metaLines.join(' | ') + '\n' : '';
     const slackText = conversation.slackThreadTs
-      ? `👤 *${username}*: ${message.trim()}`
-      : `:speech_balloon: *New Support Conversation*\n${header}\n👤 *${username}*: ${message.trim()}`;
+      ? '👤 *' + username + '*: ' + message.trim()
+      : ':speech_balloon: *New Support Conversation*\n' + header + '\n👤 *' + username + '*: ' + message.trim();
 
     // Post to Slack (thread if existing)
     const channel = process.env.SLACK_SUPPORT_CHANNEL_ID;
@@ -402,7 +387,7 @@ app.post('/api/support/chat', async (req, res) => {
 
     // Post bot response to Slack thread
     if (conversation.slackThreadTs && conversation.slackChannel) {
-      const botSlackText = `🤖 *Support Bot*: ${botResponse}`;
+      const botSlackText = '🤖 *Support Bot*: ' + botResponse;
       await postSlackThread(conversation.slackChannel, botSlackText, conversation.slackThreadTs);
     }
 
@@ -506,7 +491,7 @@ app.post('/api/support/slack-events', async (req, res) => {
           createdAt: new Date()
         });
         await conversation.save();
-        console.log(`💬 Agent reply saved for conversation ${conversation._id}`);
+        console.log('💬 Agent reply saved for conversation ' + conversation._id);
       }
     }
 
@@ -590,7 +575,7 @@ const io = new Server(server, {
 
 // WebSocket connection handling
 io.on('connection', (socket) => {
-  console.log(`🔌 Client connected: ${socket.id}`);
+  console.log('🔌 Client connected: ' + socket.id);
 
   // Send current game state immediately
   socket.emit('game-state', gameStateManager.getCurrentState());
@@ -644,7 +629,7 @@ io.on('connection', (socket) => {
       });
       await bet.save();
 
-      console.log(`💰 Bet placed: ${userId} - ${amount} KES | New balance: ${user.balance} | Round: ${gameState.roundId}`);
+      console.log('💰 Bet placed: ' + userId + ' - ' + amount + ' KES | New balance: ' + user.balance + ' | Round: ' + gameState.roundId);
 
       // Increment shared bet counter — triggers broadcast to all clients
       gameStateManager.incrementActiveBets();
@@ -709,7 +694,7 @@ io.on('connection', (socket) => {
       bet.cashedOutAt = new Date();  // ✅ Added timestamp
       await bet.save();
 
-      console.log(`💸 Cashout: ${userId} - ${winAmount} KES at ${currentMultiplier.toFixed(2)}x | New balance: ${user.balance} | Round: ${bet.gameRound}`);
+      console.log('💸 Cashout: ' + userId + ' - ' + winAmount + ' KES at ' + currentMultiplier.toFixed(2) + 'x | New balance: ' + user.balance + ' | Round: ' + bet.gameRound);
 
       // Decrement shared bet counter
       gameStateManager.decrementActiveBets();
@@ -727,7 +712,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
-    console.log(`🔌 Client disconnected: ${socket.id}`);
+    console.log('🔌 Client disconnected: ' + socket.id);
   });
 });
 
@@ -758,16 +743,16 @@ cron.schedule('*/2 * * * *', async () => {
 
         // Post to Slack if configured
         if (conversation.slackThreadTs && conversation.slackChannel) {
-          const botSlackText = `🤖 *Support Bot (Cron)*: ${botResponse}`;
+          const botSlackText = '🤖 *Support Bot (Cron)*: ' + botResponse;
           await postSlackThread(conversation.slackChannel, botSlackText, conversation.slackThreadTs);
         }
 
         await conversation.save();
-        console.log(`✅ Responded to conversation ${conversation._id} via cron job`);
+        console.log('✅ Responded to conversation ' + conversation._id + ' via cron job');
       }
     }
 
-    console.log(`✅ Cron job completed. Processed ${conversations.length} conversations.`);
+    console.log('✅ Cron job completed. Processed ' + conversations.length + ' conversations.');
   } catch (error) {
     console.error('❌ Error in support message cron job:', error);
   }
@@ -776,14 +761,14 @@ cron.schedule('*/2 * * * *', async () => {
 // Start server only if not in Vercel serverless environment
 if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
   server.listen(PORT, '0.0.0.0', () => {
-    console.log(`\n🚀 ClassyBet Backend Server is running!`);
-    console.log(`📍 Binding: 0.0.0.0:${PORT}`);
-    console.log(`🔗 Local Access: http://localhost:${PORT}`);
-    console.log(`🏥 Health: http://localhost:${PORT}/health`);
-    console.log(`👨‍💼 Admin: http://localhost:${PORT}/admin`);
-    console.log(`👤 Profile: http://localhost:${PORT}/profile`);
-    console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`🎮 WebSocket: Enabled`);
+    console.log('\n🚀 ClassyBet Backend Server is running!');
+    console.log('📍 Binding: 0.0.0.0:' + PORT);
+    console.log('🔗 Local Access: http://localhost:' + PORT);
+    console.log('🏥 Health: http://localhost:' + PORT + '/health');
+    console.log('👨‍💼 Admin: http://localhost:' + PORT + '/admin');
+    console.log('👤 Profile: http://localhost:' + PORT + '/profile');
+    console.log('🌍 Environment: ' + (process.env.NODE_ENV || 'development'));
+    console.log('🎮 WebSocket: Enabled');
     console.log('='.repeat(50));
   });
 }
