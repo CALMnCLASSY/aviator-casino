@@ -21,6 +21,7 @@ const SupportConversation = require('./models/SupportConversation');
 const { startRoundScheduler } = require('./utils/roundScheduler');
 const { sendSlackMessage, postSlackThread, verifySlackSignature } = require('./utils/slack');
 const jwt = require('jsonwebtoken');
+const cron = require('node-cron');
 
 const app = express();
 
@@ -108,7 +109,7 @@ app.get('/health', (req, res) => {
 // ─── Support chat -> Slack bridge (two-way) ───
 
 // AI Chatbot System Prompt - Policy-compliant and professional
-const SYSTEM_PROMPT = `You are a professional customer support agent for ClassyBet, an online betting platform. Your role is to help customers with deposit, withdrawal, and general site-related questions.
+const SYSTEM_PROMPT = `You are a professional customer support agent for ClassyBet, an online betting casino platform. Your role is to help customers with deposit, withdrawal, and general site-related questions.
 
 STRICT GUIDELINES:
 1. Always be polite, professional, and helpful
@@ -122,93 +123,181 @@ STRICT GUIDELINES:
 9. Keep responses concise (under 200 words when possible)
 10. Always maintain a helpful but professional tone
 
-DEPOSIT INFORMATION:
-- Minimum deposit varies by currency (KES: 350, NGN: 6,500, GHS: 600, ZAR: 125, USD: 3, GBP: 2, EUR: 3)
-- Deposits are processed via M-Pesa (Kenya) and other payment methods
-- Pending deposits require manual approval by admin
-- Check transaction status in Profile > Deposits tab
-
-WITHDRAWAL INFORMATION:
-- Withdrawals are processed to the user's registered payment method
-- Pending withdrawals require admin approval
-- Processing times vary (usually within 24-48 hours)
-- Check transaction status in Profile > Withdrawals tab
-
-COMMON ISSUES:
-- Transaction pending: Wait for admin approval, check transaction history
-- Payment failed: Verify payment details, try again, or contact support
-- Account locked: Contact support for assistance
-- Balance not updated: Refresh page, check transaction history
-
-If you cannot answer a question or it requires human intervention, say: "I'll need to connect you with a human agent who can better assist you with this matter. An agent will review your message and get back to you shortly."`;
-
-// Generate AI response using OpenAI
-async function generateAIResponse(userMessage, conversationHistory = []) {
-  const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-
-  if (!OPENAI_API_KEY) {
-    console.warn('OPENAI_API_KEY not configured, using fallback response');
-    return getFallbackResponse(userMessage);
+// Comprehensive keyword-based response system
+const KEYWORD_RESPONSES = [
+  // Deposit-related keywords
+  {
+    keywords: ['deposit', 'depos', 'add money', 'add fund', 'top up', 'load money', 'fund account'],
+    response: 'To make a deposit:\n1. Go to your Profile and click the Deposit button\n2. Choose your preferred payment method (Mobile Money, Crypto, or Card)\n3. Enter the amount and follow the payment instructions\n4. Your balance will be updated automatically once the payment is confirmed\n\nMinimum deposits: KES 350, NGN 6,500, GHS 600, ZAR 125, USD 3, GBP 2, EUR 3\n\nIf your deposit is pending, it requires verification. Check your transaction history in Profile > Deposits tab.'
+  },
+  {
+    keywords: ['deposit pending', 'deposit not showing', 'deposit not credited', 'deposit stuck'],
+    response: 'If your deposit is pending:\n1. Check your transaction history in Profile > Deposits tab\n2. Pending deposits are being verified automatically\n3. Verification typically takes 5-30 minutes\n4. If it remains pending after 1 hour, please contact support with your transaction ID'
+  },
+  {
+    keywords: ['deposit failed', 'deposit declined', 'deposit rejected'],
+    response: 'If your deposit failed:\n1. Verify you have sufficient funds in your payment method\n2. Check that your payment details are correct\n3. Try using a different payment method\n4. Contact your bank if the issue persists\n5. If you believe this is an error, contact support with the error message'
+  },
+  
+  // Withdrawal-related keywords
+  {
+    keywords: ['withdraw', 'withdrawal', 'cash out', 'payout', 'take out', 'get money'],
+    response: 'To withdraw your winnings:\n1. Go to your Profile and click the Withdraw button\n2. Enter the amount you wish to withdraw\n3. Withdrawals are processed to your registered payment method\n4. Processing time: 24-48 hours\n5. You can track your withdrawal status in Profile > Withdrawals tab\n\nNote: Pending withdrawals require verification before processing.'
+  },
+  {
+    keywords: ['withdrawal pending', 'withdrawal not received', 'withdrawal stuck', 'where is my withdrawal'],
+    response: 'If your withdrawal is pending:\n1. Check your transaction history in Profile > Withdrawals tab\n2. Pending withdrawals are being verified\n3. Verification is required for security purposes\n4. Processing time: 24-48 hours after verification\n5. If it remains pending after 48 hours, please contact support'
+  },
+  {
+    keywords: ['withdrawal failed', 'withdrawal declined', 'withdrawal rejected'],
+    response: 'If your withdrawal failed:\n1. Verify your withdrawal details are correct\n2. Ensure you have sufficient balance\n3. Check that your payment method is valid and active\n4. Some withdrawals may require additional verification\n5. Contact support with the specific error message for assistance'
+  },
+  {
+    keywords: ['withdrawal limit', 'maximum withdrawal', 'minimum withdrawal'],
+    response: 'Withdrawal limits:\n- Minimum withdrawal: KES 500, NGN 10,000, GHS 900, ZAR 200, USD 5, GBP 4, EUR 4\n- Maximum withdrawal: Varies by payment method and account status\n- You can withdraw up to 5 times per day\n- For higher limits, contact support for VIP verification'
+  },
+  
+  // Account-related keywords
+  {
+    keywords: ['login', 'sign in', 'cannot login', 'login issue', 'cannot sign in'],
+    response: 'If you cannot login:\n1. Clear your browser cache and cookies\n2. Try using a different browser (Chrome, Firefox, Safari)\n3. Ensure you are using the correct email and password\n4. Reset your password using the "Forgot Password" link\n5. If the issue persists, contact support with your email address'
+  },
+  {
+    keywords: ['password', 'forgot password', 'reset password', 'change password'],
+    response: 'To reset your password:\n1. Click "Forgot Password" on the login page\n2. Enter your registered email address\n3. Check your email for the reset link (check spam folder)\n4. Click the link and create a new password\n5. Login with your new password\n\nIf you do not receive the email within 5 minutes, contact support.'
+  },
+  {
+    keywords: ['account locked', 'account suspended', 'account banned', 'cannot access account'],
+    response: 'If your account is locked:\n1. This may be due to multiple failed login attempts or suspicious activity\n2. Contact support for assistance\n3. Provide your username and email address\n4. Our team will review your account and assist with unlocking\n\nFor security reasons, account unlocks require manual verification.'
+  },
+  {
+    keywords: ['verify account', 'account verification', 'kyc', 'identity verification'],
+    response: 'Account verification:\n1. Go to Profile > Settings\n2. Click on "Verify Account"\n3. Upload a clear photo of your ID (passport, national ID, or driver\'s license)\n4. Upload a selfie holding your ID\n5. Verification typically takes 24-48 hours\n\nVerified accounts have higher withdrawal limits and faster processing times.'
+  },
+  {
+    keywords: ['delete account', 'close account', 'remove account'],
+    response: 'To close your account:\n1. Withdraw all your remaining balance first\n2. Go to Profile > Settings\n3. Click "Close Account"\n4. Confirm your decision\n5. Your account will be permanently closed\n\nNote: This action cannot be undone. If you change your mind, you will need to create a new account.'
+  },
+  
+  // Game-related keywords
+  {
+    keywords: ['aviator', 'crash game', 'fly game'],
+    response: 'Aviator Game Guide:\n1. Place your bet before the plane takes off\n2. Cash out before the plane flies away to win\n3. The multiplier increases as the plane flies higher\n4. If you don\'t cash out in time, you lose your bet\n5. Start with small bets to understand the game pattern\n\nTip: Set a cash-out target and stick to it for consistent winnings!'
+  },
+  {
+    keywords: ['how to play', 'game rules', 'how do i play'],
+    response: 'How to play:\n1. Select a game from the lobby\n2. Read the game rules before playing\n3. Set your bet amount within your budget\n4. Click "Play" or "Spin" to start\n5. Follow the game instructions to win\n\nAlways gamble responsibly. Set limits and never bet more than you can afford to lose.'
+  },
+  {
+    keywords: ['game not loading', 'game stuck', 'game freeze', 'game error'],
+    response: 'If a game is not loading:\n1. Refresh the page\n2. Clear your browser cache\n3. Check your internet connection\n4. Try using a different browser\n5. Disable any browser extensions that might block the game\n6. If the issue persists, contact support with the game name and error message'
+  },
+  {
+    keywords: ['fair', 'rigged', 'cheat', 'random'],
+    response: 'Our games are provably fair:\n1. All games use certified Random Number Generators (RNG)\n2. Game outcomes are completely random and cannot be manipulated\n3. We are licensed and regulated\n4. You can verify game results in your transaction history\n5. If you have concerns about game fairness, contact support for detailed verification'
+  },
+  
+  // Bonus and promotion keywords
+  {
+    keywords: ['bonus', 'promotion', 'promo', 'offer', 'reward'],
+    response: 'Bonuses and Promotions:\n1. Check the "Promotions" page for current offers\n2. Welcome bonus is available for new players\n3. Deposit bonuses are available on certain days\n4. Referral bonuses: Invite friends and earn rewards\n5. Read the terms and conditions for each bonus\n\nNote: Bonuses have wagering requirements that must be met before withdrawal.'
+  },
+  {
+    keywords: ['welcome bonus', 'sign up bonus', 'first deposit bonus'],
+    response: 'Welcome Bonus:\n1. Available for new players on their first deposit\n2. Bonus amount varies by deposit amount\n3. Wagering requirements apply (check terms)\n4. Bonus is credited automatically after qualifying deposit\n5. Contact support if your bonus is not credited within 30 minutes'
+  },
+  {
+    keywords: ['referral', 'invite friend', 'refer a friend'],
+    response: 'Referral Program:\n1. Go to Profile > Referral\n2. Copy your unique referral link\n3. Share it with friends\n4. You earn a commission on their deposits\n5. Your friend also gets a welcome bonus\n\nTrack your referrals and earnings in the Referral section.'
+  },
+  
+  // Transaction status keywords
+  {
+    keywords: ['pending', 'status', 'where is my money', 'transaction status'],
+    response: 'To check your transaction status:\n1. Go to your Profile\n2. Click on Deposits or Withdrawals tab\n3. Find your transaction in the list\n4. Status will show: Pending, Completed, or Cancelled\n\nPending transactions are being verified. This typically takes 5-30 minutes for deposits and 24-48 hours for withdrawals.'
+  },
+  {
+    keywords: ['transaction history', 'my transactions', 'view transactions'],
+    response: 'To view your transaction history:\n1. Go to your Profile\n2. Click on Deposits tab for deposit history\n3. Click on Withdrawals tab for withdrawal history\n4. You can see: date, amount, status, and receipt number\n5. Download or print receipts for your records'
+  },
+  
+  // Payment method keywords
+  {
+    keywords: ['mpesa', 'mobile money', 'm-pesa'],
+    response: 'M-Pesa/Mobile Money:\n1. Select M-Pesa as your payment method\n2. Enter your phone number\n3. Enter the amount\n4. You will receive an STK Push on your phone\n5. Enter your M-Pesa PIN to confirm\n6. Payment is processed instantly\n\nNote: Ensure you have sufficient funds in your M-Pesa account.'
+  },
+  {
+    keywords: ['crypto', 'bitcoin', 'ethereum', 'usdt', 'cryptocurrency'],
+    response: 'Crypto Payments:\n1. Select Crypto as your payment method\n2. Choose your preferred cryptocurrency (BTC, ETH, USDT)\n3. Send the exact amount to the provided wallet address\n4. Transaction is confirmed after network confirmations\n5. Your balance is updated automatically\n\nNote: Crypto deposits may take 10-30 minutes depending on network congestion.'
+  },
+  {
+    keywords: ['card', 'credit card', 'debit card', 'visa', 'mastercard'],
+    response: 'Card Payments:\n1. Select Card as your payment method\n2. Enter your card details (number, expiry, CVV)\n3. Enter the amount\n4. Complete the 3D Secure verification if required\n5. Payment is processed instantly\n\nYour card details are secure and encrypted. We do not store your card information.'
+  },
+  
+  // General support keywords
+  {
+    keywords: ['hello', 'hi', 'hey', 'good morning', 'good afternoon', 'good evening'],
+    response: 'Hello! Welcome to ClassyBet Support. How can I help you today? I can assist with:\n- Deposits and withdrawals\n- Account issues\n- Game questions\n- Bonuses and promotions\n- Payment methods\n\nPlease let me know how I can assist you.'
+  },
+  {
+    keywords: ['thank', 'thanks', 'appreciate'],
+    response: 'You\'re welcome! If you have any other questions or need further assistance, feel free to ask. We\'re here to help 24/7. Good luck and have fun playing!'
+  },
+  {
+    keywords: ['human', 'agent', 'speak to person', 'real person', 'talk to human'],
+    response: 'I understand you need to speak with a human agent. I\'ve flagged your conversation for priority review. A human agent will review your message and get back to you shortly. In the meantime, please provide any relevant details about your issue.'
+  },
+  {
+    keywords: ['complaint', 'unhappy', 'dissatisfied', 'issue', 'problem'],
+    response: 'I\'m sorry to hear you\'re experiencing an issue. Please provide more details about your problem so I can assist you better. Include:\n- What you were trying to do\n- What happened instead\n- Any error messages you received\n\nI will do my best to help resolve this for you.'
+  },
+  {
+    keywords: ['contact', 'phone number', 'email', 'support team', 'help'],
+    response: 'Contact Information:\n- Live Chat: Available 24/7 on this platform\n- Email: support@classybetaviator.com\n- Response time: Usually within 1-2 hours\n\nFor urgent issues, use the live chat for immediate assistance.'
+  },
+  
+  // Security keywords
+  {
+    keywords: ['security', 'safe', 'secure', 'protect'],
+    response: 'Security Features:\n1. All data is encrypted with SSL\n2. Two-factor authentication available\n3. Regular security audits\n4. Licensed and regulated\n5. Your personal and financial information is protected\n\nWe take security seriously. Never share your password with anyone.'
+  },
+  {
+    keywords: ['fraud', 'scam', 'suspicious', 'unauthorized'],
+    response: 'If you suspect fraud or unauthorized activity:\n1. Immediately change your password\n2. Contact support right away\n3. Provide details of the suspicious activity\n4. We will investigate and secure your account\n5. Your account may be temporarily locked for security\n\nReport any suspicious activity immediately to protect your account.'
+  },
+  
+  // Responsible gaming
+  {
+    keywords: ['responsible gaming', 'addiction', 'limit', 'self exclusion', 'gambling problem'],
+    response: 'Responsible Gaming:\n1. Set deposit limits in your Profile > Settings\n2. Set session time limits\n3. Take regular breaks\n4. Never gamble more than you can afford to lose\n5. If you have a gambling problem, contact support for self-exclusion\n\nWe are committed to responsible gaming. Help is available if you need it.'
+  },
+  
+  // Technical issues
+  {
+    keywords: ['slow', 'lag', 'loading', 'performance'],
+    response: 'If the site is slow or lagging:\n1. Check your internet connection\n2. Clear your browser cache\n3. Close other browser tabs\n4. Try a different browser\n5. Disable VPN if you are using one\n6. If the issue persists, contact support with your browser type and internet speed'
+  },
+  {
+    keywords: ['error', 'bug', 'glitch', 'something went wrong'],
+    response: 'If you encounter an error:\n1. Refresh the page\n2. Try the action again\n3. Clear your browser cache\n4. Note the error message or code\n5. Contact support with the error details\n\nProviding screenshots of the error can help us resolve the issue faster.'
   }
+];
 
-  try {
-    const messages = [
-      { role: 'system', content: SYSTEM_PROMPT },
-      ...conversationHistory.slice(-6).map(msg => ({
-        role: msg.from === 'user' ? 'user' : 'assistant',
-        content: msg.text
-      })),
-      { role: 'user', content: userMessage }
-    ];
-
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${OPENAI_API_KEY}`
-      },
-      body: JSON.stringify({
-        model: 'gpt-3.5-turbo',
-        messages,
-        max_tokens: 300,
-        temperature: 0.7
-      })
-    });
-
-    const data = await response.json();
-    if (data.error) {
-      console.error('OpenAI API error:', data.error);
-      return getFallbackResponse(userMessage);
-    }
-
-    return data.choices[0].message.content;
-  } catch (error) {
-    console.error('Error generating AI response:', error);
-    return getFallbackResponse(userMessage);
-  }
-}
-
-// Fallback responses when AI is unavailable
-function getFallbackResponse(message) {
+// Function to find matching response based on keywords
+function findKeywordResponse(message) {
   const lowerMessage = message.toLowerCase();
-
-  if (lowerMessage.includes('deposit') || lowerMessage.includes('depos')) {
-    return 'For deposit-related questions, please check your transaction history in the Profile > Deposits tab. If your deposit is pending, it requires admin approval. If you have specific issues, I can connect you with a human agent.';
+  
+  for (const item of KEYWORD_RESPONSES) {
+    for (const keyword of item.keywords) {
+      if (lowerMessage.includes(keyword)) {
+        return item.response;
+      }
+    }
   }
-
-  if (lowerMessage.includes('withdraw') || lowerMessage.includes('cash out')) {
-    return 'For withdrawal-related questions, please check your transaction history in the Profile > Withdrawals tab. Pending withdrawals require admin approval. Processing typically takes 24-48 hours. If you have specific issues, I can connect you with a human agent.';
-  }
-
-  if (lowerMessage.includes('login') || lowerMessage.includes('password') || lowerMessage.includes('account')) {
-    return 'For account and login issues, please try clearing your browser cache or using a different browser. If the issue persists, I can connect you with a human agent for assistance.';
-  }
-
-  if (lowerMessage.includes('pending') || lowerMessage.includes('status')) {
-    return 'To check your transaction status, please visit your Profile and view the Deposits or Withdrawals tab. Pending transactions require admin approval.';
-  }
-
-  return 'Thank you for your message. I can help with deposit, withdrawal, and general site questions. If you need specific assistance, I can connect you with a human agent who will review your case.';
+  
+  // Default response if no keywords match
+  return 'Thank you for your message. I can help with:\n- Deposits and withdrawals\n- Account and login issues\n- Game questions and rules\n- Bonuses and promotions\n- Payment methods\n- Transaction status\n\nPlease provide more details about your question, or type "human" to speak with a human agent who will review your case.';
 }
 
 // Helper: extract user from JWT if present
@@ -284,19 +373,19 @@ app.post('/api/support/chat', async (req, res) => {
       await sendSlackMessage(process.env.SLACK_WEBHOOK_SUPPORT || process.env.SLACK_WEBHOOK_PROFILE, slackText);
     }
 
-    // Generate AI response
-    const aiResponse = await generateAIResponse(message.trim(), conversation.messages);
+    // Generate keyword-based response immediately
+    const botResponse = findKeywordResponse(message.trim());
 
-    // Add AI response to conversation
+    // Add bot response to conversation
     conversation.messages.push({
       from: 'agent',
-      text: aiResponse,
+      text: botResponse,
       createdAt: new Date()
     });
 
-    // Post AI response to Slack thread
+    // Post bot response to Slack thread
     if (conversation.slackThreadTs && conversation.slackChannel) {
-      const botSlackText = `🤖 *AI Agent*: ${aiResponse}`;
+      const botSlackText = `🤖 *Support Bot*: ${botResponse}`;
       await postSlackThread(conversation.slackChannel, botSlackText, conversation.slackThreadTs);
     }
 
@@ -623,6 +712,48 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     console.log(`🔌 Client disconnected: ${socket.id}`);
   });
+});
+
+// Cron job to process pending support messages every 2 minutes
+cron.schedule('*/2 * * * *', async () => {
+  try {
+    console.log('🔄 Running support message cron job...');
+
+    // Find conversations where the last message is from user and is more than 1 minute old
+    const oneMinuteAgo = new Date(Date.now() - 60 * 1000);
+    const conversations = await SupportConversation.find({
+      status: 'open',
+      'messages.createdAt': { $lt: oneMinuteAgo }
+    });
+
+    for (const conversation of conversations) {
+      const lastMessage = conversation.messages[conversation.messages.length - 1];
+
+      // Only process if last message is from user and hasn't been responded to recently
+      if (lastMessage && lastMessage.from === 'user') {
+        const botResponse = findKeywordResponse(lastMessage.text);
+
+        conversation.messages.push({
+          from: 'agent',
+          text: botResponse,
+          createdAt: new Date()
+        });
+
+        // Post to Slack if configured
+        if (conversation.slackThreadTs && conversation.slackChannel) {
+          const botSlackText = `🤖 *Support Bot (Cron)*: ${botResponse}`;
+          await postSlackThread(conversation.slackChannel, botSlackText, conversation.slackThreadTs);
+        }
+
+        await conversation.save();
+        console.log(`✅ Responded to conversation ${conversation._id} via cron job`);
+      }
+    }
+
+    console.log(`✅ Cron job completed. Processed ${conversations.length} conversations.`);
+  } catch (error) {
+    console.error('❌ Error in support message cron job:', error);
+  }
 });
 
 // Start server only if not in Vercel serverless environment
