@@ -307,7 +307,7 @@ function extractUserFromToken(req) {
     if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
     const decoded = jwt.verify(authHeader.split(' ')[1], process.env.JWT_SECRET);
     return decoded;
-  } catch { return null; }
+  } catch (error) { return null; }
 }
 
 // OPTIONS handlers for support routes (CORS preflight)
