@@ -1,336 +1,369 @@
-/**
- * Currency Configuration Utility
- * Maps country codes to currencies and provides currency-specific settings
- */
-
-// Paystack currencies actually enabled on the ClassyBet account
 const PAYSTACK_CURRENCIES = ['KES', 'USD'];
 
-// Approximate exchange rates TO USD (update periodically)
-// e.g. 1 ZAR ≈ 0.054 USD
-const USD_EXCHANGE_RATES = {
-    USD: 1,
-    KES: 0.0077,   // 1 KES ≈ $0.0077
-    NGN: 0.00062,  // 1 NGN ≈ $0.00062
-    GHS: 0.077,    // 1 GHS ≈ $0.077
-    ZAR: 0.054,    // 1 ZAR ≈ $0.054
-    GBP: 1.27,     // 1 GBP ≈ $1.27
-    EUR: 1.08      // 1 EUR ≈ $1.08
-};
-
-// Currency symbols
 const CURRENCY_SYMBOLS = {
-    KES: 'KSh',
-    NGN: '₦',
-    GHS: 'GH₵',
-    ZAR: 'R',
-    USD: '$',
-    GBP: '£',
-    EUR: '€'
+    'AFN': '؋',
+    'DZD': 'د.ج',
+    'AOA': 'Kz',
+    'AUD': '$',
+    'EUR': '€',
+    'BHD': 'ب.د',
+    'BDT': '৳',
+    'XOF': 'CFA',
+    'BWP': 'P',
+    'BND': '$',
+    'BGN': 'лв',
+    'KHR': '៛',
+    'XAF': 'FCFA',
+    'CAD': '$',
+    'CVE': '$',
+    'CNY': '¥',
+    'KMF': 'CF',
+    'CZK': 'Kč',
+    'CDF': 'FC',
+    'DKK': 'kr',
+    'DJF': 'Fdj',
+    'EGP': '£',
+    'ERN': 'Nfk',
+    'SZL': 'E',
+    'ETB': 'Br',
+    'GMD': 'D',
+    'GHS': 'GH₵',
+    'GNF': 'FG',
+    'HUF': 'Ft',
+    'INR': '₹',
+    'IDR': 'Rp',
+    'IRR': '﷼',
+    'IQD': 'ع.د',
+    'ILS': '₪',
+    'JPY': '¥',
+    'JOD': 'د.ا',
+    'KES': 'KSh',
+    'KWD': 'د.ك',
+    'LAK': '₭',
+    'LBP': 'ل.ل',
+    'LSL': 'L',
+    'LRD': '$',
+    'LYD': 'ل.د',
+    'MGA': 'Ar',
+    'MWK': 'MK',
+    'MYR': 'RM',
+    'MVR': 'Rf',
+    'MUR': '₨',
+    'MAD': 'د.م.',
+    'MZN': 'MT',
+    'MMK': 'K',
+    'NAD': '$',
+    'NPR': 'रु',
+    'NGN': '₦',
+    'NOK': 'kr',
+    'OMR': 'ر.ع.',
+    'PKR': '₨',
+    'PHP': '₱',
+    'PLN': 'zł',
+    'QAR': '﷼',
+    'RON': 'lei',
+    'RUB': '₽',
+    'RWF': 'FRw',
+    'STN': 'Db',
+    'SAR': '﷼',
+    'RSD': 'дин.',
+    'SCR': '₨',
+    'SLL': 'Le',
+    'SGD': '$',
+    'SOS': 'Sh',
+    'ZAR': 'R',
+    'KRW': '₩',
+    'LKR': 'Rs',
+    'SDG': 'ج.س.',
+    'SEK': 'kr',
+    'CHF': 'CHF',
+    'SYP': '£',
+    'TZS': 'TSh',
+    'THB': '฿',
+    'TND': 'د.ت',
+    'TRY': '₺',
+    'AED': 'د.إ',
+    'UGX': 'USh',
+    'UAH': '₴',
+    'GBP': '£',
+    'USD': '$',
+    'VND': '₫',
+    'ZMW': 'ZK',
+    'ZWL': 'Z$',
 };
 
-// Currency names
 const CURRENCY_NAMES = {
-    KES: 'Kenyan Shilling',
-    NGN: 'Nigerian Naira',
-    GHS: 'Ghanaian Cedi',
-    ZAR: 'South African Rand',
-    USD: 'US Dollar',
-    GBP: 'British Pound',
-    EUR: 'Euro'
+    'AFN': 'AFN',
+    'DZD': 'DZD',
+    'AOA': 'AOA',
+    'AUD': 'AUD',
+    'EUR': 'EUR',
+    'BHD': 'BHD',
+    'BDT': 'BDT',
+    'XOF': 'XOF',
+    'BWP': 'BWP',
+    'BND': 'BND',
+    'BGN': 'BGN',
+    'KHR': 'KHR',
+    'XAF': 'XAF',
+    'CAD': 'CAD',
+    'CVE': 'CVE',
+    'CNY': 'CNY',
+    'KMF': 'KMF',
+    'CZK': 'CZK',
+    'CDF': 'CDF',
+    'DKK': 'DKK',
+    'DJF': 'DJF',
+    'EGP': 'EGP',
+    'ERN': 'ERN',
+    'SZL': 'SZL',
+    'ETB': 'ETB',
+    'GMD': 'GMD',
+    'GHS': 'GHS',
+    'GNF': 'GNF',
+    'HUF': 'HUF',
+    'INR': 'INR',
+    'IDR': 'IDR',
+    'IRR': 'IRR',
+    'IQD': 'IQD',
+    'ILS': 'ILS',
+    'JPY': 'JPY',
+    'JOD': 'JOD',
+    'KES': 'KES',
+    'KWD': 'KWD',
+    'LAK': 'LAK',
+    'LBP': 'LBP',
+    'LSL': 'LSL',
+    'LRD': 'LRD',
+    'LYD': 'LYD',
+    'MGA': 'MGA',
+    'MWK': 'MWK',
+    'MYR': 'MYR',
+    'MVR': 'MVR',
+    'MUR': 'MUR',
+    'MAD': 'MAD',
+    'MZN': 'MZN',
+    'MMK': 'MMK',
+    'NAD': 'NAD',
+    'NPR': 'NPR',
+    'NGN': 'NGN',
+    'NOK': 'NOK',
+    'OMR': 'OMR',
+    'PKR': 'PKR',
+    'PHP': 'PHP',
+    'PLN': 'PLN',
+    'QAR': 'QAR',
+    'RON': 'RON',
+    'RUB': 'RUB',
+    'RWF': 'RWF',
+    'STN': 'STN',
+    'SAR': 'SAR',
+    'RSD': 'RSD',
+    'SCR': 'SCR',
+    'SLL': 'SLL',
+    'SGD': 'SGD',
+    'SOS': 'SOS',
+    'ZAR': 'ZAR',
+    'KRW': 'KRW',
+    'LKR': 'LKR',
+    'SDG': 'SDG',
+    'SEK': 'SEK',
+    'CHF': 'CHF',
+    'SYP': 'SYP',
+    'TZS': 'TZS',
+    'THB': 'THB',
+    'TND': 'TND',
+    'TRY': 'TRY',
+    'AED': 'AED',
+    'UGX': 'UGX',
+    'UAH': 'UAH',
+    'GBP': 'GBP',
+    'USD': 'USD',
+    'VND': 'VND',
+    'ZMW': 'ZMW',
+    'ZWL': 'ZWL',
 };
 
-// Map country codes to currencies
 const COUNTRY_CURRENCY_MAP = {
-    // East Africa
-    '+254': { currency: 'KES', country: 'Kenya' },
-    '+255': { currency: 'USD', country: 'Tanzania' },
-    '+256': { currency: 'USD', country: 'Uganda' },
-    '+250': { currency: 'USD', country: 'Rwanda' },
-    '+257': { currency: 'USD', country: 'Burundi' },
-    '+251': { currency: 'USD', country: 'Ethiopia' },
-    '+252': { currency: 'USD', country: 'Somalia' },
-    '+253': { currency: 'USD', country: 'Djibouti' },
-
-    // West Africa
-    '+234': { currency: 'NGN', country: 'Nigeria' },
-    '+233': { currency: 'GHS', country: 'Ghana' },
-    '+221': { currency: 'USD', country: 'Senegal' },
-    '+223': { currency: 'USD', country: 'Mali' },
-    '+225': { currency: 'USD', country: 'Ivory Coast' },
-    '+226': { currency: 'USD', country: 'Burkina Faso' },
-    '+227': { currency: 'USD', country: 'Niger' },
-    '+228': { currency: 'USD', country: 'Togo' },
-    '+229': { currency: 'USD', country: 'Benin' },
-    '+220': { currency: 'USD', country: 'Gambia' },
-    '+224': { currency: 'USD', country: 'Guinea' },
-    '+245': { currency: 'USD', country: 'Guinea-Bissau' },
-    '+232': { currency: 'USD', country: 'Sierra Leone' },
-    '+231': { currency: 'USD', country: 'Liberia' },
-
-    // Southern Africa
-    '+27': { currency: 'ZAR', country: 'South Africa' },
-    '+260': { currency: 'USD', country: 'Zambia' },
-    '+263': { currency: 'USD', country: 'Zimbabwe' },
-    '+267': { currency: 'USD', country: 'Botswana' },
-    '+265': { currency: 'USD', country: 'Malawi' },
-    '+258': { currency: 'USD', country: 'Mozambique' },
-    '+264': { currency: 'USD', country: 'Namibia' },
-    '+266': { currency: 'USD', country: 'Lesotho' },
-    '+268': { currency: 'USD', country: 'Eswatini' },
-
-    // North Africa
-    '+20': { currency: 'USD', country: 'Egypt' },
-    '+212': { currency: 'USD', country: 'Morocco' },
-    '+213': { currency: 'USD', country: 'Algeria' },
-    '+216': { currency: 'USD', country: 'Tunisia' },
-    '+218': { currency: 'USD', country: 'Libya' },
-
-    // Central Africa
-    '+237': { currency: 'USD', country: 'Cameroon' },
-    '+241': { currency: 'USD', country: 'Gabon' },
-    '+242': { currency: 'USD', country: 'Republic of the Congo' },
-    '+243': { currency: 'USD', country: 'Democratic Republic of Congo' },
-    '+236': { currency: 'USD', country: 'Central African Republic' },
-    '+235': { currency: 'USD', country: 'Chad' },
-    '+240': { currency: 'USD', country: 'Equatorial Guinea' },
-    '+244': { currency: 'USD', country: 'Angola' },
-
-    // Europe
-    '+44': { currency: 'GBP', country: 'United Kingdom' },
-    '+33': { currency: 'EUR', country: 'France' },
-    '+49': { currency: 'EUR', country: 'Germany' },
-    '+39': { currency: 'EUR', country: 'Italy' },
-    '+34': { currency: 'EUR', country: 'Spain' },
-    '+31': { currency: 'EUR', country: 'Netherlands' },
-    '+32': { currency: 'EUR', country: 'Belgium' },
-    '+41': { currency: 'USD', country: 'Switzerland' },
+    '+93': { currency: 'AFN', country: 'Afghanistan' },
+    '+213': { currency: 'DZD', country: 'Algeria' },
+    '+244': { currency: 'AOA', country: 'Angola' },
+    '+61': { currency: 'AUD', country: 'Australia' },
     '+43': { currency: 'EUR', country: 'Austria' },
-    '+351': { currency: 'EUR', country: 'Portugal' },
-    '+30': { currency: 'EUR', country: 'Greece' },
-    '+353': { currency: 'EUR', country: 'Ireland' },
+    '+973': { currency: 'BHD', country: 'Bahrain' },
+    '+880': { currency: 'BDT', country: 'Bangladesh' },
+    '+32': { currency: 'EUR', country: 'Belgium' },
+    '+229': { currency: 'XOF', country: 'Benin' },
+    '+267': { currency: 'BWP', country: 'Botswana' },
+    '+673': { currency: 'BND', country: 'Brunei' },
+    '+359': { currency: 'BGN', country: 'Bulgaria' },
+    '+226': { currency: 'XOF', country: 'Burkina Faso' },
+    '+855': { currency: 'KHR', country: 'Cambodia' },
+    '+237': { currency: 'XAF', country: 'Cameroon' },
+    '+1': { currency: 'CAD', country: 'Canada' },
+    '+238': { currency: 'CVE', country: 'Cape Verde' },
+    '+236': { currency: 'XAF', country: 'Central African Republic' },
+    '+235': { currency: 'XAF', country: 'Chad' },
+    '+86': { currency: 'CNY', country: 'China' },
+    '+269': { currency: 'KMF', country: 'Comoros' },
+    '+385': { currency: 'EUR', country: 'Croatia' },
+    '+420': { currency: 'CZK', country: 'Czech Republic' },
+    '+243': { currency: 'CDF', country: 'Democratic Republic of Congo' },
+    '+45': { currency: 'DKK', country: 'Denmark' },
+    '+253': { currency: 'DJF', country: 'Djibouti' },
+    '+20': { currency: 'EGP', country: 'Egypt' },
+    '+240': { currency: 'XAF', country: 'Equatorial Guinea' },
+    '+291': { currency: 'ERN', country: 'Eritrea' },
+    '+372': { currency: 'EUR', country: 'Estonia' },
+    '+268': { currency: 'SZL', country: 'Eswatini' },
+    '+251': { currency: 'ETB', country: 'Ethiopia' },
     '+358': { currency: 'EUR', country: 'Finland' },
-    '+46': { currency: 'USD', country: 'Sweden' },
-    '+47': { currency: 'USD', country: 'Norway' },
-    '+45': { currency: 'USD', country: 'Denmark' },
-    '+48': { currency: 'USD', country: 'Poland' },
-
-    // Americas
+    '+33': { currency: 'EUR', country: 'France' },
+    '+241': { currency: 'XAF', country: 'Gabon' },
+    '+220': { currency: 'GMD', country: 'Gambia' },
+    '+49': { currency: 'EUR', country: 'Germany' },
+    '+233': { currency: 'GHS', country: 'Ghana' },
+    '+30': { currency: 'EUR', country: 'Greece' },
+    '+224': { currency: 'GNF', country: 'Guinea' },
+    '+245': { currency: 'XOF', country: 'Guinea-Bissau' },
+    '+36': { currency: 'HUF', country: 'Hungary' },
+    '+91': { currency: 'INR', country: 'India' },
+    '+62': { currency: 'IDR', country: 'Indonesia' },
+    '+98': { currency: 'IRR', country: 'Iran' },
+    '+964': { currency: 'IQD', country: 'Iraq' },
+    '+972': { currency: 'ILS', country: 'Israel' },
+    '+39': { currency: 'EUR', country: 'Italy' },
+    '+225': { currency: 'XOF', country: 'Ivory Coast' },
+    '+81': { currency: 'JPY', country: 'Japan' },
+    '+962': { currency: 'JOD', country: 'Jordan' },
+    '+254': { currency: 'KES', country: 'Kenya' },
+    '+965': { currency: 'KWD', country: 'Kuwait' },
+    '+856': { currency: 'LAK', country: 'Laos' },
+    '+371': { currency: 'EUR', country: 'Latvia' },
+    '+961': { currency: 'LBP', country: 'Lebanon' },
+    '+266': { currency: 'LSL', country: 'Lesotho' },
+    '+231': { currency: 'LRD', country: 'Liberia' },
+    '+218': { currency: 'LYD', country: 'Libya' },
+    '+370': { currency: 'EUR', country: 'Lithuania' },
+    '+261': { currency: 'MGA', country: 'Madagascar' },
+    '+265': { currency: 'MWK', country: 'Malawi' },
+    '+60': { currency: 'MYR', country: 'Malaysia' },
+    '+960': { currency: 'MVR', country: 'Maldives' },
+    '+223': { currency: 'XOF', country: 'Mali' },
+    '+230': { currency: 'MUR', country: 'Mauritius' },
+    '+212': { currency: 'MAD', country: 'Morocco' },
+    '+258': { currency: 'MZN', country: 'Mozambique' },
+    '+95': { currency: 'MMK', country: 'Myanmar' },
+    '+264': { currency: 'NAD', country: 'Namibia' },
+    '+977': { currency: 'NPR', country: 'Nepal' },
+    '+31': { currency: 'EUR', country: 'Netherlands' },
+    '+227': { currency: 'XOF', country: 'Niger' },
+    '+234': { currency: 'NGN', country: 'Nigeria' },
+    '+47': { currency: 'NOK', country: 'Norway' },
+    '+968': { currency: 'OMR', country: 'Oman' },
+    '+92': { currency: 'PKR', country: 'Pakistan' },
+    '+63': { currency: 'PHP', country: 'Philippines' },
+    '+48': { currency: 'PLN', country: 'Poland' },
+    '+351': { currency: 'EUR', country: 'Portugal' },
+    '+974': { currency: 'QAR', country: 'Qatar' },
+    '+242': { currency: 'XAF', country: 'Republic of the Congo' },
+    '+40': { currency: 'RON', country: 'Romania' },
+    '+7': { currency: 'RUB', country: 'Russia' },
+    '+250': { currency: 'RWF', country: 'Rwanda' },
+    '+239': { currency: 'STN', country: 'Sao Tome and Principe' },
+    '+966': { currency: 'SAR', country: 'Saudi Arabia' },
+    '+221': { currency: 'XOF', country: 'Senegal' },
+    '+381': { currency: 'RSD', country: 'Serbia' },
+    '+248': { currency: 'SCR', country: 'Seychelles' },
+    '+232': { currency: 'SLL', country: 'Sierra Leone' },
+    '+65': { currency: 'SGD', country: 'Singapore' },
+    '+421': { currency: 'EUR', country: 'Slovakia' },
+    '+386': { currency: 'EUR', country: 'Slovenia' },
+    '+252': { currency: 'SOS', country: 'Somalia' },
+    '+27': { currency: 'ZAR', country: 'South Africa' },
+    '+82': { currency: 'KRW', country: 'South Korea' },
+    '+34': { currency: 'EUR', country: 'Spain' },
+    '+94': { currency: 'LKR', country: 'Sri Lanka' },
+    '+249': { currency: 'SDG', country: 'Sudan' },
+    '+46': { currency: 'SEK', country: 'Sweden' },
+    '+41': { currency: 'CHF', country: 'Switzerland' },
+    '+963': { currency: 'SYP', country: 'Syria' },
+    '+255': { currency: 'TZS', country: 'Tanzania' },
+    '+66': { currency: 'THB', country: 'Thailand' },
+    '+228': { currency: 'XOF', country: 'Togo' },
+    '+216': { currency: 'TND', country: 'Tunisia' },
+    '+90': { currency: 'TRY', country: 'Turkey' },
+    '+971': { currency: 'AED', country: 'UAE' },
+    '+256': { currency: 'UGX', country: 'Uganda' },
+    '+380': { currency: 'UAH', country: 'Ukraine' },
+    '+44': { currency: 'GBP', country: 'United Kingdom' },
     '+1': { currency: 'USD', country: 'United States' },
-
-    // Asia
-    '+91': { currency: 'USD', country: 'India' },
-    '+86': { currency: 'USD', country: 'China' },
-    '+81': { currency: 'USD', country: 'Japan' },
-    '+82': { currency: 'USD', country: 'South Korea' },
-    '+65': { currency: 'USD', country: 'Singapore' },
-    '+60': { currency: 'USD', country: 'Malaysia' },
-    '+66': { currency: 'USD', country: 'Thailand' },
-    '+63': { currency: 'USD', country: 'Philippines' },
-    '+62': { currency: 'USD', country: 'Indonesia' },
-    '+84': { currency: 'USD', country: 'Vietnam' },
-    '+92': { currency: 'USD', country: 'Pakistan' },
-    '+880': { currency: 'USD', country: 'Bangladesh' },
-    '+94': { currency: 'USD', country: 'Sri Lanka' },
-
-    // Oceania
-    '+61': { currency: 'USD', country: 'Australia' },
-    '+64': { currency: 'USD', country: 'New Zealand' },
-
-    // Middle East
-    '+971': { currency: 'USD', country: 'UAE' },
-    '+966': { currency: 'USD', country: 'Saudi Arabia' },
-    '+974': { currency: 'USD', country: 'Qatar' },
-    '+965': { currency: 'USD', country: 'Kuwait' },
-    '+973': { currency: 'USD', country: 'Bahrain' },
-    '+968': { currency: 'USD', country: 'Oman' },
-    '+962': { currency: 'USD', country: 'Jordan' },
-    '+961': { currency: 'USD', country: 'Lebanon' },
-    '+972': { currency: 'USD', country: 'Israel' },
-    '+90': { currency: 'USD', country: 'Turkey' }
+    '+84': { currency: 'VND', country: 'Vietnam' },
+    '+260': { currency: 'ZMW', country: 'Zambia' },
+    '+263': { currency: 'ZWL', country: 'Zimbabwe' },
 };
 
-// Minimum deposit amounts per currency
-const MIN_DEPOSIT = {
-    KES: 499,
-    NGN: 5000,
-    GHS: 50,
-    ZAR: 100,
-    USD: 5,
-    GBP: 4,
-    EUR: 5
-};
-
-// Maximum deposit amounts per currency
-const MAX_DEPOSIT = {
-    KES: 150000,
-    NGN: 500000,
-    GHS: 5000,
-    ZAR: 50000,
-    USD: 10000,
-    GBP: 8000,
-    EUR: 9000
-};
-
-// Minimum withdrawal amounts per currency
-const MIN_WITHDRAWAL = {
-    KES: 1200,
-    NGN: 2000,
-    GHS: 50,
-    ZAR: 200,
-    USD: 20,
-    GBP: 20,
-    EUR: 20
-};
-
-// Maximum withdrawal amounts per currency
-const MAX_WITHDRAWAL = {
-    KES: 150000,
-    NGN: 500000,
-    GHS: 5000,
-    ZAR: 50000,
-    USD: 10000,
-    GBP: 10000,
-    EUR: 10000
-};
-
-/**
- * Get currency and country for a given country code
- * @param {string} countryCode - Country code (e.g., '+254')
- * @returns {object} - { currency, country }
- */
 function getCurrencyForCountryCode(countryCode) {
     const mapping = COUNTRY_CURRENCY_MAP[countryCode];
-    if (mapping) {
-        return mapping;
-    }
-    // Default to USD for unknown countries
-    return { currency: 'USD', country: 'International' };
+    return mapping || { currency: 'USD', country: 'International' };
 }
 
-/**
- * Get currency symbol
- * @param {string} currency - Currency code (e.g., 'KES')
- * @returns {string} - Currency symbol
- */
 function getCurrencySymbol(currency) {
     return CURRENCY_SYMBOLS[currency] || currency;
 }
 
-/**
- * Get currency name
- * @param {string} currency - Currency code
- * @returns {string} - Currency name
- */
 function getCurrencyName(currency) {
     return CURRENCY_NAMES[currency] || currency;
 }
 
-/**
- * Format amount with currency
- * @param {number} amount - Amount to format
- * @param {string} currency - Currency code
- * @returns {string} - Formatted amount
- */
 function formatCurrency(amount, currency) {
     const symbol = getCurrencySymbol(currency);
     return `${symbol} ${amount.toFixed(2)}`;
 }
 
-/**
- * Check if currency is supported by Paystack
- * @param {string} currency - Currency code
- * @returns {boolean}
- */
 function isPaystackSupported(currency) {
     return PAYSTACK_CURRENCIES.includes(currency);
 }
 
-/**
- * Get deposit limits for currency
- * @param {string} currency - Currency code
- * @returns {object} - { min, max }
- */
 function getDepositLimits(currency) {
+    const ExchangeRateService = require('../services/ExchangeRateService');
+    const rate = ExchangeRateService.getRate(currency);
+    const baseMinUsd = 5;
+    const baseMaxUsd = 10000;
+    const mult = rate || 1;
     return {
-        min: MIN_DEPOSIT[currency] || MIN_DEPOSIT.USD,
-        max: MAX_DEPOSIT[currency] || MAX_DEPOSIT.USD
+        min: Math.ceil(baseMinUsd * mult),
+        max: Math.floor(baseMaxUsd * mult)
     };
 }
 
-/**
- * Get withdrawal limits for currency
- * @param {string} currency - Currency code
- * @returns {object} - { min, max }
- */
 function getWithdrawalLimits(currency) {
+    const ExchangeRateService = require('../services/ExchangeRateService');
+    const rate = ExchangeRateService.getRate(currency);
+    const baseMinUsd = 20;
+    const baseMaxUsd = 10000;
+    const mult = rate || 1;
     return {
-        min: MIN_WITHDRAWAL[currency] || MIN_WITHDRAWAL.USD,
-        max: MAX_WITHDRAWAL[currency] || MAX_WITHDRAWAL.USD
+        min: Math.ceil(baseMinUsd * mult),
+        max: Math.floor(baseMaxUsd * mult)
     };
 }
 
-/**
- * Validate deposit amount for currency
- * @param {number} amount - Amount to validate
- * @param {string} currency - Currency code
- * @returns {object} - { valid, error }
- */
 function validateDepositAmount(amount, currency) {
     const limits = getDepositLimits(currency);
-
-    if (amount < limits.min) {
-        return {
-            valid: false,
-            error: `Minimum deposit is ${formatCurrency(limits.min, currency)}`
-        };
-    }
-
-    if (amount > limits.max) {
-        return {
-            valid: false,
-            error: `Maximum deposit is ${formatCurrency(limits.max, currency)}`
-        };
-    }
-
+    if (amount < limits.min) return { valid: false, error: `Minimum deposit is ${formatCurrency(limits.min, currency)}` };
+    if (amount > limits.max) return { valid: false, error: `Maximum deposit is ${formatCurrency(limits.max, currency)}` };
     return { valid: true };
 }
 
-/**
- * Validate withdrawal amount for currency
- * @param {number} amount - Amount to validate
- * @param {string} currency - Currency code
- * @returns {object} - { valid, error }
- */
 function validateWithdrawalAmount(amount, currency) {
     const limits = getWithdrawalLimits(currency);
-
-    if (amount < limits.min) {
-        return {
-            valid: false,
-            error: `Minimum withdrawal is ${formatCurrency(limits.min, currency)}`
-        };
-    }
-
-    if (amount > limits.max) {
-        return {
-            valid: false,
-            error: `Maximum withdrawal is ${formatCurrency(limits.max, currency)}`
-        };
-    }
-
+    if (amount < limits.min) return { valid: false, error: `Minimum withdrawal is ${formatCurrency(limits.min, currency)}` };
+    if (amount > limits.max) return { valid: false, error: `Maximum withdrawal is ${formatCurrency(limits.max, currency)}` };
     return { valid: true };
 }
 
-/**
- * Convert an amount to a Paystack-supported currency.
- * KES stays as KES. Everything else converts to USD.
- * @param {number} amount - Amount in the user's currency
- * @param {string} fromCurrency - User's currency code
- * @returns {object} - { paystackAmount, paystackCurrency, converted, originalAmount, originalCurrency }
- */
 function convertToPaystackCurrency(amount, fromCurrency) {
-    // KES and USD are natively supported — pass through
     if (PAYSTACK_CURRENCIES.includes(fromCurrency)) {
         return {
             paystackAmount: amount,
@@ -340,33 +373,29 @@ function convertToPaystackCurrency(amount, fromCurrency) {
             originalCurrency: fromCurrency
         };
     }
-
-    // Convert to USD
-    const rate = USD_EXCHANGE_RATES[fromCurrency];
-    if (!rate) {
-        // Unknown currency — reject
+    const ExchangeRateService = require('../services/ExchangeRateService');
+    const localToUsdRate = ExchangeRateService.getRate(fromCurrency);
+    if (!localToUsdRate) {
         return {
             paystackAmount: null,
             paystackCurrency: null,
             converted: false,
-            error: `Currency ${fromCurrency} is not supported`
+            error: `Currency ${fromCurrency} is not supported or rates unavailable`
         };
     }
-
-    const usdAmount = parseFloat((amount * rate).toFixed(2));
+    const usdAmount = parseFloat((amount / localToUsdRate).toFixed(2));
     return {
         paystackAmount: usdAmount,
         paystackCurrency: 'USD',
         converted: true,
         originalAmount: amount,
         originalCurrency: fromCurrency,
-        exchangeRate: rate
+        exchangeRate: 1 / localToUsdRate
     };
 }
 
 module.exports = {
     PAYSTACK_CURRENCIES,
-    USD_EXCHANGE_RATES,
     CURRENCY_SYMBOLS,
     CURRENCY_NAMES,
     COUNTRY_CURRENCY_MAP,

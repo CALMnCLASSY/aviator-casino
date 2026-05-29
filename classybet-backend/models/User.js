@@ -55,8 +55,7 @@ const userSchema = new mongoose.Schema({
   currency: {
     type: String,
     required: true,
-    default: 'KES',
-    enum: ['KES', 'NGN', 'GHS', 'ZAR', 'USD', 'GBP', 'EUR']
+    default: 'KES'
   },
   isDemo: {
     type: Boolean,

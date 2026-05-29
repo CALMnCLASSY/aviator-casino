@@ -758,6 +758,10 @@ cron.schedule('*/2 * * * *', async () => {
   }
 });
 
+// Start Exchange Rate Service
+const ExchangeRateService = require('./services/ExchangeRateService');
+ExchangeRateService.startPeriodicUpdates();
+
 // Start server only if not in Vercel serverless environment
 if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
   server.listen(PORT, '0.0.0.0', () => {

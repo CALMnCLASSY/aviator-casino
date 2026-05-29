@@ -208,3 +208,67 @@ Once everything works:
 4. Share your live site! 🎮
 
 **Good luck!** 🚀
+
+
+
+
+# Dynamic Global Currency Implementation Plan
+
+This document outlines the plan to support specific local currencies for users based on their country when they sign up, rather than defaulting most countries to USD or EUR.
+
+## User Review Required
+
+> [!IMPORTANT]
+> **Free Currency API Selection**
+> I recommend using the **Free Currency API by fawazahmed0** (hosted on a fast CDN like jsDelivr). It is completely free, does not require an API key, supports over 150+ global currencies, and updates daily. Is this acceptable, or would you prefer a service like ExchangeRate-API which has a free tier but requires registering for an API key?
+
+> [!WARNING]
+> **Database Schema Change**
+> The current `User` model in the backend restricts the `currency` field to a specific enum: `['KES', 'NGN', 'GHS', 'ZAR', 'USD', 'GBP', 'EUR']`. I will need to remove this enum restriction to allow any valid 3-letter currency code (e.g., `INR`, `BRL`, `JPY`). This will apply to new signups.
+
+## Open Questions
+
+1. **Payment Gateway Support**: Currently, the code converts non-supported currencies to USD for Paystack (`convertToPaystackCurrency`). Do we want to continue routing all international (non-KES) deposits through Paystack as USD, utilizing the dynamic live exchange rates to calculate the exact USD amount?
+2. **Deposit/Withdrawal Limits**: Currently, min/max limits are hardcoded per currency. For 150+ currencies, we should calculate limits dynamically based on a base USD value (e.g., Min Deposit = $5 -> converted to local currency). Does this approach work for you?
+
+## Proposed Changes
+
+---
+
+### Backend
+
+#### [MODIFY] [models/User.js](file:///c:/Users/User/OneDrive/Desktop/aviator-signals-complete/casino/aviator-betting-game-clone/classybet-backend/models/User.js)
+- Remove the `enum` constraint from the `currency` field in the user schema to allow any 3-letter currency code.
+
+#### [NEW] [services/ExchangeRateService.js](file:///c:/Users/User/OneDrive/Desktop/aviator-signals-complete/casino/aviator-betting-game-clone/classybet-backend/services/ExchangeRateService.js)
+- Create a new service that fetches live exchange rates from the free currency API (e.g., `https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json`).
+- Implement caching so it fetches rates once per day and stores them in memory to avoid hitting rate limits or slowing down the app.
+
+#### [MODIFY] [utils/currencyConfig.js](file:///c:/Users/User/OneDrive/Desktop/aviator-signals-complete/casino/aviator-betting-game-clone/classybet-backend/utils/currencyConfig.js)
+- Update `COUNTRY_CURRENCY_MAP` so that every country code maps to its actual local currency (e.g., `+91` -> `INR`, `+81` -> `JPY`, `+55` -> `BRL`) instead of `USD`.
+- Update the `USD_EXCHANGE_RATES` logic to read from the newly fetched live exchange rates instead of static hardcoded values.
+- Refactor `getDepositLimits` and `getWithdrawalLimits` to calculate limits dynamically based on the live USD exchange rate if a hardcoded value doesn't exist.
+
+#### [MODIFY] [server.js](file:///c:/Users/User/OneDrive/Desktop/aviator-signals-complete/casino/aviator-betting-game-clone/classybet-backend/server.js)
+- Add a startup call to initialize the `ExchangeRateService` so that the app fetches the latest rates when the backend starts.
+
+---
+
+### Frontend
+
+#### [MODIFY] [country-codes.js](file:///c:/Users/User/OneDrive/Desktop/aviator-signals-complete/casino/aviator-betting-game-clone/classybet/country-codes.js)
+- Update the `countryCodes` array to reflect the true native currency and currency symbol for every country listed, replacing the fallback `USD` and `EUR` values with accurate local currencies (e.g., `INR` with `₹`, `BRL` with `R$`, `THB` with `฿`).
+
+#### [MODIFY] [auth.js](file:///c:/Users/User/OneDrive/Desktop/aviator-signals-complete/casino/aviator-betting-game-clone/classybet/auth.js) & [script.js](file:///c:/Users/User/OneDrive/Desktop/aviator-signals-complete/casino/aviator-betting-game-clone/classybet/script.js) (If necessary)
+- Ensure that the registration form correctly pulls the new dynamic currencies and that user balances display correctly using the right symbols.
+
+## Verification Plan
+
+### Automated Tests
+- Restart the backend and verify that live exchange rates are successfully fetched and logged.
+- Register a new user using a newly supported country code (e.g., India `+91`) and verify the database saves their currency as `INR`.
+
+### Manual Verification
+- Log in as the newly registered user and verify the frontend balance correctly displays the new currency symbol (e.g., `₹ 0.00`).
+- Place a demo bet and verify the balance updates properly in the local currency.
+- Check the Admin dashboard to ensure it can display and handle the newly supported currencies.

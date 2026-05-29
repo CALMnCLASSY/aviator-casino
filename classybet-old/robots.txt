@@ -1,8 +1,0 @@
-# robots.txt for ClassyBet Aviator
-User-agent: *
-Allow: /
-Disallow: /private/
-Disallow: /api/
-Disallow: /admin/
-
-Sitemap: https://classybetaviator.com/sitemap.xml
