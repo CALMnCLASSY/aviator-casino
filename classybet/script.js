@@ -3312,10 +3312,34 @@ document.addEventListener('DOMContentLoaded', () => {
 // Authentication Event Listeners
 function setupAuthEventListeners() {
     // Set up API event listeners
-    classyBetAPI.on('onAuthChange', (data) => {
+    classyBetAPI.on('onAuthChange', async (data) => {
         if (data.authenticated) {
             showUserView();
             updateUserDisplay(data.user);
+            
+            // Fetch limits and update UI
+            try {
+                const limitsRes = await classyBetAPI.getLimits();
+                if (limitsRes.success) {
+                    window.dynamicMinDeposit = limitsRes.data.deposit.min;
+                    
+                    document.querySelectorAll('input#deposit-amount, input[id="deposit-amount"]').forEach(el => {
+                        el.min = limitsRes.data.deposit.min;
+                        el.max = limitsRes.data.deposit.max;
+                        el.placeholder = 'Min: ' + limitsRes.data.deposit.min;
+                    });
+                    
+                    document.querySelectorAll('#deposit-min-formatted, #min-deposit').forEach(el => {
+                        el.textContent = limitsRes.data.deposit.formattedMin;
+                    });
+                    
+                    document.querySelectorAll('#deposit-max-formatted, #max-deposit').forEach(el => {
+                        el.textContent = limitsRes.data.deposit.formattedMax;
+                    });
+                }
+            } catch (err) {
+                console.error('Failed to update limits UI', err);
+            }
             // API integration now handled by syncBetWithBackend
         } else {
             showGuestView();

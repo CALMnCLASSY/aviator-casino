@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -1170,10 +1170,10 @@
                         <form id="deposit-form" onsubmit="handlePaystackDeposit(event)">
                             <div class="form-group">
                                 <label for="deposit-amount">Amount (<span id="currency-code">KES</span>)</label>
-                                <input type="number" id="deposit-amount" class="form-control" min="499" max="150000"
+                                <input type="number" id="deposit-amount" class="form-control" min="5" max="150000"
                                     step="1" required>
                                 <small style="color: #ccc;">
-                                    Min: <span id="min-deposit">KSh 499.00</span> | Max: <span id="max-deposit">KSh
+                                    Min: <span id="min-deposit">...</span> | Max: <span id="max-deposit">KSh
                                         150,000.00</span>
                                 </small>
                                 <small style="color: #999; font-size: 0.8rem; margin-top: 0.25rem; display: block;"
@@ -1256,9 +1256,9 @@
 
                             <div class="form-group">
                                 <label for="withdraw-amount">Amount</label>
-                                <input type="number" id="withdraw-amount" class="form-control" min="1200" step="1"
+                                <input type="number" id="withdraw-amount" class="form-control" step="1"
                                     required>
-                                <small style="color: #ccc;">Minimum withdrawal: 1200</small>
+                                <small style="color: #ccc;" id="withdraw-amount-hint">Loading limit...</small>
                             </div>
 
                             <!-- Mobile Money Fields -->
@@ -2031,53 +2031,44 @@ Support: support@classybetaviator.com`;
             }
         }
 
-        // Update currency limits on page load and when user data changes
-        function updateDepositCurrencyLimits() {
-            const userData = JSON.parse(localStorage.getItem('userData'));
-            if (userData && userData.currency) {
-                const limits = typeof formatDepositLimits === 'function' ? formatDepositLimits(userData.currency) : null;
+        // Fetch and apply currency limits from backend API
+        async function updateDepositCurrencyLimits() {
+            try {
+                const response = await fetch(`${API_BASE}/api/payments/limits`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                if (!response.ok) throw new Error('Failed to fetch limits');
+                const limits = await response.json();
 
-                if (limits) {
-                    const currencyCodeEl = document.getElementById('currency-code');
-                    const minDepositEl = document.getElementById('min-deposit');
-                    const maxDepositEl = document.getElementById('max-deposit');
-                    const depositAmountEl = document.getElementById('deposit-amount');
-                    const depositNoteEl = document.getElementById('deposit-note');
+                // Store globally for use in validation
+                window.dynamicMinDeposit = limits.deposit.min;
+                window.dynamicMaxDeposit = limits.deposit.max;
+                window.dynamicMinWithdrawal = limits.withdrawal.min;
+                window.dynamicMaxWithdrawal = limits.withdrawal.max;
 
-                    if (currencyCodeEl) currencyCodeEl.textContent = userData.currency;
-                    if (minDepositEl) minDepositEl.textContent = limits.min;
-                    if (maxDepositEl) maxDepositEl.textContent = limits.max;
-                    if (depositAmountEl) {
-                        depositAmountEl.min = limits.minValue;
-                        depositAmountEl.max = limits.maxValue;
-                        depositAmountEl.placeholder = `Min: ${limits.minValue}`;
-                    }
-                    if (depositNoteEl) {
-                        depositNoteEl.innerHTML = `<i class="fas fa-info-circle"></i> Minimum deposit for ${userData.currency} is ${limits.min}. Limits may vary based on payment method.`;
-                    }
-
-                    console.log(`Updated deposit limits for ${userData.currency}: Min ${limits.min}, Max ${limits.max}`);
-                } else {
-                    // Fallback if formatDepositLimits is not available
-                    console.warn('formatDepositLimits function not available, using default KES values');
-                    const currencyCodeEl = document.getElementById('currency-code');
-                    if (currencyCodeEl) currencyCodeEl.textContent = 'KES';
-                }
-            } else {
-                // Default to KES if no user currency is set
                 const currencyCodeEl = document.getElementById('currency-code');
+                const depositCurrencyCodeEl = document.getElementById('deposit-currency-code');
                 const minDepositEl = document.getElementById('min-deposit');
                 const maxDepositEl = document.getElementById('max-deposit');
                 const depositAmountEl = document.getElementById('deposit-amount');
+                const depositNoteEl = document.getElementById('deposit-note');
 
-                if (currencyCodeEl) currencyCodeEl.textContent = 'KES';
-                if (minDepositEl) minDepositEl.textContent = 'KSh 499.00';
-                if (maxDepositEl) maxDepositEl.textContent = 'KSh 150,000.00';
+                if (currencyCodeEl) currencyCodeEl.textContent = limits.currency;
+                if (depositCurrencyCodeEl) depositCurrencyCodeEl.textContent = limits.currency;
+                if (minDepositEl) minDepositEl.textContent = limits.deposit.formattedMin;
+                if (maxDepositEl) maxDepositEl.textContent = limits.deposit.formattedMax;
                 if (depositAmountEl) {
-                    depositAmountEl.min = 499;
-                    depositAmountEl.max = 150000;
-                    depositAmountEl.placeholder = 'Min: 499';
+                    depositAmountEl.min = limits.deposit.min;
+                    depositAmountEl.max = limits.deposit.max;
+                    depositAmountEl.placeholder = `Min: ${limits.deposit.min}`;
                 }
+                if (depositNoteEl) {
+                    depositNoteEl.innerHTML = `<i class="fas fa-info-circle"></i> Minimum deposit: ${limits.deposit.formattedMin}. Maximum: ${limits.deposit.formattedMax}.`;
+                }
+
+                console.log(`Updated limits for ${limits.currency}: Deposit ${limits.deposit.formattedMin}–${limits.deposit.formattedMax}`);
+            } catch (err) {
+                console.warn('Could not fetch limits from API, using defaults:', err.message);
             }
         }
 
@@ -2174,9 +2165,11 @@ Support: support@classybetaviator.com`;
                 payoutDetails = { cryptoAddress, network: 'ERC20', token: 'USDT' };
             }
 
-            // Validate amount
-            if (amount < 1200 || amount > 150000) {
-                showError('withdraw-error', 'Amount must be between 1200 and 150,000');
+            // Validate amount using dynamic limits
+            const minWith = window.dynamicMinWithdrawal || 20;
+            const maxWith = window.dynamicMaxWithdrawal || 10000;
+            if (parseFloat(amount) < minWith || parseFloat(amount) > maxWith) {
+                showError('withdraw-error', `Amount must be between ${minWith} and ${maxWith.toLocaleString()}`);
                 return;
             }
 

@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -1135,7 +1135,7 @@
                             <p style="color: #ccc;">Withdrawals are processed within 24-48 hours. M-Pesa withdrawals are typically instant once approved.</p>
                         <div style="margin-bottom: 1.5rem;">
                             <h5 style="color: #fb024c; margin-bottom: 0.5rem;">What is the minimum deposit?</h5>
-                            <p style="color: #ccc;">The minimum deposit varies by currency (e.g., KES 499, USD 5, GHS 50). Check the deposit form for your currency-specific limits.</p>
+                            <p style="color: #ccc;">The minimum deposit varies by currency (e.g., ..., USD 5, GHS 50). Check the deposit form for your currency-specific limits.</p>
                         </div>
                         
                         <div style="margin-bottom: 1.5rem;">
@@ -1476,9 +1476,9 @@
                 <form id="deposit-form" onsubmit="handleDeposit(event)">
                     <div class="form-group">
                         <label for="deposit-amount">Amount (<span id="deposit-currency-code">KES</span>)</label>
-                        <input type="number" id="deposit-amount" class="form-control" min="499" max="150000" step="1"
+                        <input type="number" id="deposit-amount" class="form-control" min="5" max="150000" step="1"
                             required>
-                        <small style="color: #888;">Minimum: <span id="deposit-min-formatted">KSh 499.00</span>,
+                        <small style="color: #888;">Minimum: <span id="deposit-min-formatted">...</span>,
                             Maximum: <span id="deposit-max-formatted">KSh 150,000.00</span></small>
                     </div>
                     <div style="display: flex; gap: 0.75rem; margin-top: 15px; align-items: stretch;">
@@ -1855,10 +1855,10 @@ Support: support@classybetaviator.com`;
                 <!-- Amount -->
                 <div style="margin-bottom:1rem;">
                     <label style="display:block;margin-bottom:0.4rem;color:#ccc;font-size:0.9rem;">Amount</label>
-                    <input type="number" id="wm-amount" min="1200" step="1"
+                    <input type="number" id="wm-amount" step="1"
                         style="width:100%;padding:0.8rem 1rem;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:#fff;font-size:1rem;box-sizing:border-box;"
                         placeholder="Enter amount">
-                    <small style="color:#888;font-size:0.82rem;">Minimum withdrawal: 1,200</small>
+                    <small style="color:#888;font-size:0.82rem;">Loading limit...</small>
                 </div>
 
                 <!-- Mobile Money fields -->
@@ -2035,30 +2035,53 @@ Support: support@classybetaviator.com`;
             }
         }
 
-        // Update deposit modal with user's currency
-        function updateDepositModalCurrency() {
-            if (typeof formatDepositLimits === 'function' && typeof getUserCurrency === 'function') {
-                const currency = getUserCurrency();
-                const limits = formatDepositLimits(currency);
+        // Update deposit modal with user's currency (fetches live limits from API)
+        async function updateDepositModalCurrency() {
+            const token = localStorage.getItem('user_token');
+            if (!token) return;
 
-                // Update currency code display
+            try {
+                const API = (() => {
+                    const { hostname, protocol } = window.location;
+                    return (hostname === 'localhost' || hostname === '127.0.0.1' || protocol === 'file:')
+                        ? 'http://localhost:4000' : 'https://back.classybetaviator.com';
+                })();
+
+                const response = await fetch(`${API}/api/payments/limits`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!response.ok) throw new Error('Failed to fetch limits');
+                const limits = await response.json();
+
+                // Store globally for validation
+                window.dynamicMinDeposit = limits.deposit.min;
+                window.dynamicMaxDeposit = limits.deposit.max;
+                window.dynamicMinWithdrawal = limits.withdrawal.min;
+                window.dynamicMaxWithdrawal = limits.withdrawal.max;
+
                 const currencyCodeEl = document.getElementById('deposit-currency-code');
-                if (currencyCodeEl) {
-                    currencyCodeEl.textContent = currency;
-                }
+                if (currencyCodeEl) currencyCodeEl.textContent = limits.currency;
 
-                // Update min/max formatted displays
                 const minFormattedEl = document.getElementById('deposit-min-formatted');
                 const maxFormattedEl = document.getElementById('deposit-max-formatted');
-                if (minFormattedEl) minFormattedEl.textContent = limits.min;
-                if (maxFormattedEl) maxFormattedEl.textContent = limits.max;
+                if (minFormattedEl) minFormattedEl.textContent = limits.deposit.formattedMin;
+                if (maxFormattedEl) maxFormattedEl.textContent = limits.deposit.formattedMax;
 
-                // Update input constraints
                 const amountInput = document.getElementById('deposit-amount');
                 if (amountInput) {
-                    amountInput.min = limits.minValue;
-                    amountInput.max = limits.maxValue;
+                    amountInput.min = limits.deposit.min;
+                    amountInput.max = limits.deposit.max;
+                    amountInput.placeholder = `Min: ${limits.deposit.min}`;
                 }
+
+                // Update withdraw modal hint text
+                const wmHint = document.querySelector('#wm-amount + small');
+                if (wmHint) wmHint.textContent = `Minimum withdrawal: ${limits.withdrawal.formattedMin}`;
+                const wmInput = document.getElementById('wm-amount');
+                if (wmInput) wmInput.min = limits.withdrawal.min;
+
+            } catch (err) {
+                console.warn('Could not fetch deposit limits:', err.message);
             }
         }
 
@@ -2195,7 +2218,10 @@ Support: support@classybetaviator.com`;
             const username = userData.username || 'User';
 
             if (!token) { wmShowError('Please log in to withdraw.'); return; }
-            if (!amount || amount < 1200) { wmShowError('Minimum withdrawal is 1,200.'); return; }
+            const minWith = window.dynamicMinWithdrawal || 20;
+            const maxWith = window.dynamicMaxWithdrawal || 10000;
+            if (!amount || amount < minWith) { wmShowError(`Minimum withdrawal is ${minWith.toLocaleString()}.`); return; }
+            if (amount > maxWith) { wmShowError(`Maximum withdrawal is ${maxWith.toLocaleString()}.`); return; }
 
             let payoutDetails = {};
 

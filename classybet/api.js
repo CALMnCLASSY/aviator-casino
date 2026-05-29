@@ -339,6 +339,30 @@ class ClassyBetAPI {
         }
     }
 
+    async getLimits() {
+        if (!this.isAuthenticated()) {
+            return { success: false, error: 'Not authenticated' };
+        }
+
+        try {
+            const response = await fetch(`${this.baseURL}${this.apiPath}/payments/limits`, {
+                headers: {
+                    'Authorization': `Bearer ${this.token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                return { success: true, data };
+            }
+
+            return { success: false, error: 'Failed to fetch limits' };
+        } catch (error) {
+            return { success: false, error: 'Connection failed' };
+        }
+    }
+
     // Utility methods
     formatBalance(balance) {
         return `KES ${balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;

@@ -271,6 +271,39 @@ router.get('/deposit-info', authenticateToken, async (req, res) => {
   }
 });
 
+// Get payment limits for user's currency
+router.get('/limits', authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    const { getDepositLimits, getWithdrawalLimits, formatCurrency } = require('../utils/currencyConfig');
+    
+    const depositLimits = getDepositLimits(user.currency);
+    const withdrawalLimits = getWithdrawalLimits(user.currency);
+    
+    res.json({
+      currency: user.currency,
+      deposit: {
+        min: depositLimits.min,
+        max: depositLimits.max,
+        formattedMin: formatCurrency(depositLimits.min, user.currency),
+        formattedMax: formatCurrency(depositLimits.max, user.currency)
+      },
+      withdrawal: {
+        min: withdrawalLimits.min,
+        max: withdrawalLimits.max,
+        formattedMin: formatCurrency(withdrawalLimits.min, user.currency),
+        formattedMax: formatCurrency(withdrawalLimits.max, user.currency)
+      }
+    });
+  } catch (error) {
+    console.error('Limits info error:', error);
+    res.status(500).json({ error: 'Failed to get limits information' });
+  }
+});
+
 // Request withdrawal
 router.post('/withdraw',
   authenticateToken,
@@ -300,8 +333,15 @@ router.post('/withdraw',
       const { amount, payoutMethod, payoutDetails } = req.body;
       const user = await User.findById(req.userId);
 
+      // Validate amount against dynamic limits for user's currency
+      const { validateWithdrawalAmount } = require('../utils/currencyConfig');
+      const validation = validateWithdrawalAmount(parseFloat(amount), user.currency || 'USD');
+      if (!validation.valid) {
+        return res.status(400).json({ error: validation.error });
+      }
+
       // Check if user has sufficient balance
-      if (user.balance < amount) {
+      if (user.balance < parseFloat(amount)) {
         return res.status(400).json({
           error: 'Insufficient balance',
           currentBalance: user.balance
