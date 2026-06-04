@@ -181,13 +181,34 @@ router.post('/message', [
 
     // Post user message to Slack thread
     if (conversation.slackThreadTs && conversation.slackChannel) {
-      const userSlackText = `👤 *${username}*: ${message}`;
+      const userSlackText = conversation.isEscalated
+        ? `👤 *${username}* (Escalated): ${message}`
+        : `👤 *${username}*: ${message}`;
       await postSlackThread(conversation.slackChannel, userSlackText, conversation.slackThreadTs);
+    }
+
+    // If conversation is already escalated, do not reply with AI
+    if (conversation.isEscalated) {
+      await conversation.save();
+      return res.json({
+        success: true,
+        message: null,
+        conversationId: conversation._id
+      });
     }
 
     // Generate AI response
     const conversationHistory = conversation.messages.slice(-10);
     const aiResponse = await generateAIResponse(message, conversationHistory);
+
+    // Check if AI response initiates human escalation
+    const triggersEscalation = aiResponse.toLowerCase().includes('connect you with a human agent') ||
+                              message.toLowerCase().includes('human') ||
+                              message.toLowerCase().includes('agent');
+
+    if (triggersEscalation) {
+      conversation.isEscalated = true;
+    }
 
     // Add AI response to conversation
     conversation.messages.push({
@@ -198,7 +219,10 @@ router.post('/message', [
 
     // Post AI response to Slack thread
     if (conversation.slackThreadTs && conversation.slackChannel) {
-      const botSlackText = `🤖 *AI Agent*: ${aiResponse}`;
+      let botSlackText = `🤖 *AI Agent*: ${aiResponse}`;
+      if (triggersEscalation) {
+        botSlackText += `\n\n🚨 *This conversation has been ESCALATED to human agents. The AI agent is muted.*`;
+      }
       await postSlackThread(conversation.slackChannel, botSlackText, conversation.slackThreadTs);
     }
 
@@ -286,6 +310,10 @@ router.post('/escalate/:sessionId', [
     if (!conversation) {
       return res.status(404).json({ error: 'Conversation not found' });
     }
+
+    // Set escalation flag
+    conversation.isEscalated = true;
+    await conversation.save();
 
     // Notify Slack about escalation
     if (conversation.slackThreadTs && conversation.slackChannel) {

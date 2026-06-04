@@ -12,6 +12,7 @@ const supportConversationSchema = new mongoose.Schema({
     sessionId: { type: String, required: true },
     messages: [messageSchema],
     status: { type: String, enum: ['open', 'closed'], default: 'open' },
+    isEscalated: { type: Boolean, default: false },
     slackThreadTs: { type: String, default: null },
     slackChannel: { type: String, default: null }
 }, { timestamps: true });

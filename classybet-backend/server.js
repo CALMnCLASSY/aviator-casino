@@ -286,6 +286,13 @@ function findKeywordResponse(message) {
   return 'Thank you for your message. I can help with:\n- Deposits and withdrawals\n- Account and login issues\n- Game questions and rules\n- Bonuses and promotions\n- Payment methods\n- Transaction status\n\nPlease provide more details about your question, or type "human" to speak with a human agent who will review your case.';
 }
 
+// Helper to check if message triggers human escalation
+function shouldEscalate(message) {
+  const lowerMessage = message.toLowerCase();
+  const keywords = ['human', 'agent', 'speak to person', 'real person', 'talk to human'];
+  return keywords.some(kw => lowerMessage.includes(kw));
+}
+
 // Helper: extract user from JWT if present
 function extractUserFromToken(req) {
   try {
@@ -359,9 +366,17 @@ app.post('/api/support/chat', async (req, res) => {
     if (meta?.phone) metaLines.push('*Phone:* ' + meta.phone);
     if (page) metaLines.push('*Page:* ' + page);
     const header = metaLines.length ? metaLines.join(' | ') + '\n' : '';
-    const slackText = conversation.slackThreadTs
+    
+    let slackText = conversation.slackThreadTs
       ? '👤 *' + username + '*: ' + message.trim()
       : ':speech_balloon: *New Support Conversation*\n' + header + '\n👤 *' + username + '*: ' + message.trim();
+
+    const matchesEscalation = shouldEscalate(message.trim());
+    const isAlreadyEscalated = conversation.isEscalated === true;
+
+    if (matchesEscalation && !isAlreadyEscalated) {
+      slackText = '🚨 *[ESCALATED]* ' + slackText;
+    }
 
     // Post to Slack (thread if existing)
     const channel = process.env.SLACK_SUPPORT_CHANNEL_ID;
@@ -374,6 +389,44 @@ app.post('/api/support/chat', async (req, res) => {
     } else {
       // Fallback to webhook
       await sendSlackMessage(process.env.SLACK_WEBHOOK_SUPPORT || process.env.SLACK_WEBHOOK_PROFILE, slackText);
+    }
+
+    // If the conversation is already escalated, do NOT reply with the bot
+    if (isAlreadyEscalated) {
+      await conversation.save();
+      return res.json({
+        success: true,
+        conversationId: conversation._id,
+        sessionId: conversation.sessionId,
+        messages: conversation.messages
+      });
+    }
+
+    // If matches escalation keywords, mark as escalated and send the escalation text
+    if (matchesEscalation) {
+      conversation.isEscalated = true;
+      const botResponse = 'I understand you need to speak with a human agent. I\'ve flagged your conversation for priority review. A human agent will review your message and get back to you shortly. In the meantime, please provide any relevant details about your issue.';
+      
+      conversation.messages.push({
+        from: 'agent',
+        text: botResponse,
+        createdAt: new Date()
+      });
+
+      // Post bot response/escalation status to Slack thread
+      if (conversation.slackThreadTs && conversation.slackChannel) {
+        const botSlackText = '🤖 *Support Bot*: ' + botResponse + '\n\n🚨 *This conversation is now ESCALATED to human agents. The bot is muted.*';
+        await postSlackThread(conversation.slackChannel, botSlackText, conversation.slackThreadTs);
+      }
+
+      await conversation.save();
+
+      return res.json({
+        success: true,
+        conversationId: conversation._id,
+        sessionId: conversation.sessionId,
+        messages: conversation.messages
+      });
     }
 
     // Generate keyword-based response immediately
