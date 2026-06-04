@@ -103,7 +103,12 @@ class PlinkoGame extends CasinoGame {
 
         const betAmount = parseFloat(document.getElementById('betAmount').value);
         if (betAmount < 10) {
-            alert('Minimum bet is KES 10');
+            alert('Minimum bet is ' + this.formatCurrency(10));
+            return;
+        }
+
+        const success = await this.placeBetOnGame(betAmount, `Placed bet of ${this.formatCurrency(betAmount)} on Plinko`);
+        if (!success) {
             return;
         }
 
@@ -122,6 +127,11 @@ class PlinkoGame extends CasinoGame {
         // Calculate result
         const multiplier = this.multipliers[this.riskLevel][landingSlot];
         const winAmount = betAmount * multiplier;
+
+        // Credit winnings on backend
+        if (winAmount > 0) {
+            await this.winBetOnGame(winAmount, `Won ${this.formatCurrency(winAmount)} (${multiplier.toFixed(1)}x) in Plinko`);
+        }
 
         // Highlight landing slot
         this.highlightSlot(landingSlot);
@@ -208,7 +218,7 @@ class PlinkoGame extends CasinoGame {
                     ${multiplier.toFixed(1)}x
                 </h2>
                 <div style="font-size: 36px; color: ${isWin ? '#36cb12' : '#fff'}; margin: 15px 0;">
-                    ${isWin ? '+' : ''}KES ${(winAmount - betAmount).toFixed(2)}
+                    ${isWin ? '+' : '-'}${this.formatCurrency(Math.abs(winAmount - betAmount))}
                 </div>
                 <p style="font-size: 20px; opacity: 0.8;">
                     ${isWin ? 'Nice drop!' : 'Try again!'}
@@ -245,7 +255,7 @@ class PlinkoGame extends CasinoGame {
         this.stats.biggestWin = Math.max(this.stats.biggestWin, multiplier);
 
         document.getElementById('totalDrops').textContent = this.stats.totalDrops;
-        document.getElementById('totalWon').textContent = `KES ${this.stats.totalWon.toFixed(2)}`;
+        document.getElementById('totalWon').textContent = this.formatCurrency(this.stats.totalWon);
         document.getElementById('biggestWin').textContent = this.stats.biggestWin.toFixed(1) + 'x';
 
         // Add to recent drops

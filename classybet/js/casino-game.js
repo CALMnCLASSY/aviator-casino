@@ -3,6 +3,11 @@
  * Handles generic bet placement and results for non-Aviator games.
  */
 
+/**
+ * ClassyBet Casino Game Logic
+ * Handles generic bet placement and results for non-Aviator games.
+ */
+
 class CasinoGame {
     constructor(gameId, gameName) {
         this.gameId = gameId;
@@ -11,6 +16,7 @@ class CasinoGame {
         this.token = localStorage.getItem('user_token');
         const userData = localStorage.getItem('userData');
         this.userId = userData ? JSON.parse(userData)._id : null;
+        this.balance = 0;
 
         if (!this.token) {
             window.location.href = 'index.html';
@@ -29,6 +35,12 @@ class CasinoGame {
         this.fetchBalance();
         this.setupEventListeners();
         this.checkFirstTimeUser();
+        this.replaceKESInDOM();
+        
+        // Periodic replacement in case content is loaded dynamically
+        setTimeout(() => this.replaceKESInDOM(), 500);
+        setTimeout(() => this.replaceKESInDOM(), 1500);
+        setTimeout(() => this.replaceKESInDOM(), 3000);
     }
 
     checkFirstTimeUser() {
@@ -74,18 +86,46 @@ class CasinoGame {
             });
             const data = await response.json();
             if (data.balance !== undefined) {
+                this.balance = data.balance;
                 this.updateBalanceUI(data.balance);
+                this.updateUserDataBalance(data.balance);
             }
         } catch (error) {
             console.error('Failed to fetch balance:', error);
+            // Fallback to local stored balance if server is offline
+            const userDataStr = localStorage.getItem('userData');
+            if (userDataStr) {
+                const userData = JSON.parse(userDataStr);
+                if (userData.balance !== undefined) {
+                    this.balance = userData.balance;
+                    this.updateBalanceUI(this.balance);
+                }
+            }
         }
     }
 
-
     updateBalanceUI(amount) {
+        this.balance = parseFloat(amount) || 0;
         const balanceEl = document.getElementById('headerBalance');
         if (balanceEl) {
-            balanceEl.textContent = `KES ${parseFloat(amount).toFixed(2)}`;
+            balanceEl.textContent = this.formatCurrency(amount);
+        }
+        const otherBalances = document.querySelectorAll('.balance-amount, #balance, #user-balance');
+        otherBalances.forEach(el => {
+            el.textContent = this.formatCurrency(amount);
+        });
+    }
+
+    updateUserDataBalance(newBalance) {
+        try {
+            const userDataStr = localStorage.getItem('userData');
+            if (userDataStr) {
+                const userData = JSON.parse(userDataStr);
+                userData.balance = newBalance;
+                localStorage.setItem('userData', JSON.stringify(userData));
+            }
+        } catch (e) {
+            console.error('Failed to update userData balance in localStorage:', e);
         }
     }
 
@@ -97,9 +137,207 @@ class CasinoGame {
         }
     }
 
+    getUserCurrency() {
+        try {
+            const userData = localStorage.getItem('userData');
+            if (userData) {
+                const user = JSON.parse(userData);
+                return user.currency || 'KES';
+            }
+        } catch (error) {
+            console.warn('Error getting user currency:', error);
+        }
+        return 'KES';
+    }
+
+    getCurrencySymbol(currencyCode) {
+        const symbols = {
+            KES: 'KSh',
+            NGN: '₦',
+            GHS: 'GH₵',
+            ZAR: 'R',
+            USD: '$',
+            GBP: '£',
+            EUR: '€',
+            XAF: 'FCFA',
+            XOF: 'CFA',
+            UGX: 'USh',
+            TZS: 'TSh',
+            RWF: 'FRw'
+        };
+        return symbols[currencyCode] || currencyCode;
+    }
+
+    formatCurrency(amount) {
+        const currency = this.getUserCurrency();
+        const symbol = this.getCurrencySymbol(currency);
+        const numAmount = parseFloat(amount) || 0;
+        const formattedAmount = numAmount.toLocaleString('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+        return `${symbol} ${formattedAmount}`;
+    }
+
+    replaceKESInDOM() {
+        try {
+            const currency = this.getUserCurrency();
+            const symbol = this.getCurrencySymbol(currency);
+            
+            // 1. Walk through the document text nodes and replace "KES" or "KSh"
+            const walker = document.createTreeWalker(
+                document.body,
+                NodeFilter.SHOW_TEXT,
+                null,
+                false
+            );
+
+            let node;
+            while (node = walker.nextNode()) {
+                if (node.nodeValue.includes('KES')) {
+                    node.nodeValue = node.nodeValue.replace(/KES/g, symbol);
+                }
+                if (node.nodeValue.includes('KSh')) {
+                    node.nodeValue = node.nodeValue.replace(/KSh/g, symbol);
+                }
+            }
+
+            // 2. Replace placeholders in input fields
+            const inputs = document.querySelectorAll('input, textarea');
+            inputs.forEach(input => {
+                if (input.placeholder && input.placeholder.includes('KES')) {
+                    input.placeholder = input.placeholder.replace(/KES/g, symbol);
+                }
+                if (input.placeholder && input.placeholder.includes('KSh')) {
+                    input.placeholder = input.placeholder.replace(/KSh/g, symbol);
+                }
+            });
+        } catch (e) {
+            console.error('Error replacing KES in DOM:', e);
+        }
+    }
+
+    // Client-authoritative updates for interactive games
+    async placeBetOnGame(amount, description = '') {
+        const floatAmount = parseFloat(amount);
+        if (isNaN(floatAmount) || floatAmount <= 0) return false;
+
+        // Fetch latest balance first to avoid discrepancies
+        await this.fetchBalance();
+
+        if (this.balance < floatAmount) {
+            this.showNotification('Insufficient balance', 'error');
+            return false;
+        }
+
+        // Deduct balance locally
+        const newBalance = this.balance - floatAmount;
+        this.updateBalanceUI(newBalance);
+        this.updateUserDataBalance(newBalance);
+
+        // Send balance update to backend
+        try {
+            const updateResponse = await fetch(`${this.apiBase}/api/user/balance/update`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.token}`
+                },
+                body: JSON.stringify({
+                    balance: newBalance,
+                    reason: 'game_bet'
+                })
+            });
+
+            if (!updateResponse.ok) {
+                console.error('Failed to update balance on backend');
+            }
+        } catch (error) {
+            console.error('Error updating balance on backend:', error);
+        }
+
+        // Record transaction on backend
+        try {
+            const desc = description || `Bet placed in ${this.gameName}`;
+            await fetch(`${this.apiBase}/api/game/record-transaction`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.token}`
+                },
+                body: JSON.stringify({
+                    type: 'bet',
+                    amount: -floatAmount,
+                    description: desc,
+                    game: this.gameId
+                })
+            });
+        } catch (error) {
+            console.error('Error recording transaction:', error);
+        }
+
+        return true;
+    }
+
+    async winBetOnGame(winAmount, description = '') {
+        const floatWinAmount = parseFloat(winAmount);
+        if (isNaN(floatWinAmount) || floatWinAmount <= 0) return false;
+
+        // Fetch latest balance first to get up-to-date baseline
+        await this.fetchBalance();
+
+        // Add to local balance
+        const newBalance = this.balance + floatWinAmount;
+        this.updateBalanceUI(newBalance);
+        this.updateUserDataBalance(newBalance);
+
+        // Send balance update to backend
+        try {
+            const updateResponse = await fetch(`${this.apiBase}/api/user/balance/update`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.token}`
+                },
+                body: JSON.stringify({
+                    balance: newBalance,
+                    reason: 'game_win'
+                })
+            });
+
+            if (!updateResponse.ok) {
+                console.error('Failed to update balance on backend');
+            }
+        } catch (error) {
+            console.error('Error updating balance on backend:', error);
+        }
+
+        // Record transaction on backend
+        try {
+            const desc = description || `Won in ${this.gameName}`;
+            await fetch(`${this.apiBase}/api/game/record-transaction`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.token}`
+                },
+                body: JSON.stringify({
+                    type: 'win',
+                    amount: floatWinAmount,
+                    description: desc,
+                    game: this.gameId
+                })
+            });
+        } catch (error) {
+            console.error('Error recording transaction:', error);
+        }
+
+        return true;
+    }
+
     async placeBet(amount) {
         if (amount < 10) {
-            alert('Minimum bet is KES 10');
+            alert('Minimum bet is ' + this.formatCurrency(10));
             return;
         }
 
@@ -125,6 +363,7 @@ class CasinoGame {
             }
 
             this.updateBalanceUI(data.balance);
+            this.updateUserDataBalance(data.balance);
             this.handleResult(data);
 
             // Refresh balance after a short delay to ensure backend has processed
@@ -159,13 +398,11 @@ class CasinoGame {
     }
 
     showWinAnimation(amount, multiplier) {
-        // Generic win animation - can be overridden
-        const message = `YOU WON! <br> <span style="font-size: 1.5em; color: #36cb12;">KES ${amount}</span> <br> (${multiplier}x)`;
+        const message = `YOU WON! <br> <span style="font-size: 1.5em; color: #36cb12;">${this.formatCurrency(amount)}</span> <br> (${multiplier}x)`;
         this.showOverlay(message, 'win');
     }
 
     showLossAnimation() {
-        // Generic loss animation
         this.showOverlay('Better luck next time!', 'loss');
     }
 
@@ -209,4 +446,35 @@ class CasinoGame {
             });
         }
     }
+
+    showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: ${type === 'success' ? '#36cb12' : type === 'error' ? '#d32f2f' : '#ffa726'};
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            z-index: 10000;
+            font-weight: bold;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            animation: slideIn 0.3s ease-out;
+        `;
+
+        notification.textContent = message;
+        document.body.appendChild(notification);
+
+        setTimeout(() => {
+            notification.style.opacity = '0';
+            notification.style.transition = 'opacity 0.3s ease';
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
+    }
+
+    delay(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
 }
+

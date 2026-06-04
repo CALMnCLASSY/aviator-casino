@@ -41,12 +41,12 @@ class BaccaratGame extends CasinoGame {
 
     selectBet(betType) {
         this.selectedBet = betType;
-        
+
         // Update UI
         document.querySelectorAll('.bet-button').forEach(btn => {
             btn.classList.remove('selected');
         });
-        
+
         const selectedBtn = document.querySelector(`[data-bet="${betType}"]`);
         if (selectedBtn) {
             selectedBtn.classList.add('selected');
@@ -65,7 +65,7 @@ class BaccaratGame extends CasinoGame {
 
         const betAmount = parseFloat(document.getElementById('betAmount').value);
         if (betAmount < 10) {
-            alert('Minimum bet is KES 10');
+            alert('Minimum bet is ' + this.formatCurrency(10));
             return;
         }
 
@@ -181,7 +181,7 @@ class BaccaratGame extends CasinoGame {
             setTimeout(() => {
                 const cardEl = document.createElement('div');
                 cardEl.className = 'card';
-                
+
                 // Red suits: hearts and diamonds
                 if (card.suit === '♥' || card.suit === '♦') {
                     cardEl.classList.add('red');
@@ -221,18 +221,25 @@ class BaccaratGame extends CasinoGame {
                 throw new Error(data.error || 'Bet failed');
             }
 
+            // Update balance immediately with backend response
             this.updateBalanceUI(data.balance);
             this.handleBaccaratResult(data);
 
+            // Refresh balance after result animation to ensure sync
+            setTimeout(() => {
+                this.fetchBalance();
+            }, 3500);
+
         } catch (error) {
-            // Fallback to client-side simulation if API fails
-            this.simulateResult(amount);
+            console.error('Backend bet failed:', error);
+            alert('Error placing bet: ' + error.message);
+            this.setGameState(false);
         }
     }
 
     simulateResult(amount) {
         const { playerTotal, bankerTotal } = this.currentHands;
-        
+
         let winner;
         if (playerTotal > bankerTotal) {
             winner = 'player';
@@ -271,7 +278,7 @@ class BaccaratGame extends CasinoGame {
 
     handleBaccaratResult(data) {
         const { playerTotal, bankerTotal } = this.currentHands;
-        
+
         // Highlight winner
         if (playerTotal > bankerTotal) {
             document.getElementById('playerSection').classList.add('winner');
@@ -315,7 +322,7 @@ class BaccaratGame extends CasinoGame {
         const message = `
             <h2>YOU WIN!</h2>
             <div class="result-amount" style="color: #36cb12;">
-                +KES ${amount.toFixed(2)}
+                +${this.formatCurrency(amount)}
             </div>
             <p style="font-size: 24px;">Multiplier: ${multiplier}x</p>
         `;
@@ -337,7 +344,7 @@ class BaccaratGame extends CasinoGame {
 
         dealBtn.disabled = isPlaying;
         betInput.disabled = isPlaying;
-        
+
         betButtons.forEach(btn => {
             btn.style.pointerEvents = isPlaying ? 'none' : 'auto';
         });

@@ -14,6 +14,7 @@ const affiliateRoutes = require('./routes/affiliate');
 
 const roundRoutes = require('./routes/rounds');
 const casinoRoutes = require('./routes/casino');
+const userRoutes = require('./routes/users');
 
 // Import models
 const User = require('./models/User');
@@ -524,6 +525,7 @@ app.use('/api/game', gameRoutes);
 app.use('/api/affiliates', affiliateRoutes);
 app.use('/api/rounds', roundRoutes);
 app.use('/api/casino', casinoRoutes);
+app.use('/api/user', userRoutes);
 
 // Serve static files for admin and profile pages
 app.use('/admin', express.static('public/admin'));

@@ -65,7 +65,7 @@ class BaccaratGame extends CasinoGame {
 
         const betAmount = parseFloat(document.getElementById('betAmount').value);
         if (betAmount < 10) {
-            alert('Minimum bet is KES 10');
+            alert('Minimum bet is ' + this.formatCurrency(10));
             return;
         }
 
@@ -322,7 +322,7 @@ class BaccaratGame extends CasinoGame {
         const message = `
             <h2>YOU WIN!</h2>
             <div class="result-amount" style="color: #36cb12;">
-                +KES ${amount.toFixed(2)}
+                +${this.formatCurrency(amount)}
             </div>
             <p style="font-size: 24px;">Multiplier: ${multiplier}x</p>
         `;

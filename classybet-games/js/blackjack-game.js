@@ -113,7 +113,12 @@ class BlackjackGame extends CasinoGame {
         const betAmount = parseFloat(document.getElementById('betAmount').value);
         
         if (betAmount < 10) {
-            alert('Minimum bet is KES 10');
+            alert('Minimum bet is ' + this.formatCurrency(10));
+            return;
+        }
+
+        const success = await this.placeBetOnGame(betAmount, `Placed bet of ${this.formatCurrency(betAmount)} on Blackjack`);
+        if (!success) {
             return;
         }
 
@@ -121,7 +126,7 @@ class BlackjackGame extends CasinoGame {
         this.gameActive = true;
 
         // Update UI
-        document.getElementById('currentBet').textContent = `KES ${betAmount}`;
+        document.getElementById('currentBet').textContent = this.formatCurrency(betAmount);
         this.setButtonsState('dealing');
 
         // Clear previous hands
@@ -280,9 +285,17 @@ class BlackjackGame extends CasinoGame {
     }
 
     async double() {
-        // Double the bet
+        // Double bet requires extra balance
+        const additionalBet = this.currentBet;
+        const success = await this.placeBetOnGame(additionalBet, `Doubled down with extra bet of ${this.formatCurrency(additionalBet)} on Blackjack`);
+        if (!success) {
+            alert('Insufficient balance to double!');
+            return;
+        }
+
+        // Double the bet locally
         this.currentBet *= 2;
-        document.getElementById('currentBet').textContent = `KES ${this.currentBet}`;
+        document.getElementById('currentBet').textContent = this.formatCurrency(this.currentBet);
 
         // Take one more card
         const newCard = this.drawCard();
@@ -332,7 +345,7 @@ class BlackjackGame extends CasinoGame {
         }
     }
 
-    endRound(result, message) {
+    async endRound(result, message) {
         this.gameActive = false;
         this.setButtonsState('finished');
 
@@ -356,6 +369,10 @@ class BlackjackGame extends CasinoGame {
             overlayClass = 'push';
         }
 
+        if (winAmount > 0) {
+            await this.winBetOnGame(winAmount, `Returned/Won ${this.formatCurrency(winAmount)} in Blackjack (${result})`);
+        }
+
         this.updateStats();
         this.showResult(message, winAmount, overlayClass);
     }
@@ -376,7 +393,7 @@ class BlackjackGame extends CasinoGame {
         let html = `<h2>${message}</h2>`;
         
         if (winAmount > 0) {
-            html += `<div style="font-size: 48px; margin: 20px 0; color: #36cb12;">+KES ${winAmount.toFixed(2)}</div>`;
+            html += `<div style="font-size: 48px; margin: 20px 0; color: #36cb12;">+${this.formatCurrency(winAmount)}</div>`;
         }
 
         content.innerHTML = html;

@@ -3170,7 +3170,7 @@ async function checkAuthenticationOnLoad() {
                     const isLocal = window.location.hostname === 'localhost' ||
                         window.location.hostname === '127.0.0.1' ||
                         window.location.protocol === 'file:';
-                    const apiBase = isLocal ? 'http://localhost:3001' : 'https://back.classybetaviator.com';
+                    const apiBase = isLocal ? 'http://localhost:4000' : 'https://back.classybetaviator.com';
                     console.log('Profile API Base URL:', apiBase);
                     const response = await fetch(`${apiBase}/api/auth/profile`, {
                         headers: {

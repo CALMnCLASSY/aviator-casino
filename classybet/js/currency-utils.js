@@ -10,7 +10,12 @@ const CURRENCY_SYMBOLS = {
     ZAR: 'R',
     USD: '$',
     GBP: '£',
-    EUR: '€'
+    EUR: '€',
+    XAF: 'FCFA',
+    XOF: 'CFA',
+    UGX: 'USh',
+    TZS: 'TSh',
+    RWF: 'FRw'
 };
 
 // Deposit limits for each currency (min and max amounts)

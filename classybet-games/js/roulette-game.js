@@ -88,7 +88,7 @@ class RouletteGame extends CasinoGame {
             total += amount;
         });
 
-        document.getElementById('totalBetDisplay').textContent = `KES ${total}`;
+        document.getElementById('totalBetDisplay').textContent = this.formatCurrency(total);
     }
 
     clearBets() {
@@ -122,6 +122,20 @@ class RouletteGame extends CasinoGame {
         document.getElementById('spinBtn').disabled = true;
         document.getElementById('spinBtn').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Spinning...';
 
+        // Calculate total bet amount
+        let totalBet = 0;
+        this.bets.forEach(amount => {
+            totalBet += amount;
+        });
+
+        const success = await this.placeBetOnGame(totalBet, `Placed total bet of ${this.formatCurrency(totalBet)} on Roulette`);
+        if (!success) {
+            this.isSpinning = false;
+            document.getElementById('spinBtn').disabled = false;
+            document.getElementById('spinBtn').innerHTML = '<i class="fas fa-play-circle"></i> Spin';
+            return;
+        }
+
         // Animate wheel
         const wheel = document.getElementById('rouletteWheel');
         const wheelInner = document.getElementById('wheelInner');
@@ -152,7 +166,7 @@ class RouletteGame extends CasinoGame {
 
         // Show result
         await this.delay(500);
-        this.showResult(result, winningNumber);
+        await this.showResult(result, winningNumber);
 
         // Add to recent numbers
         this.addRecentNumber(winningNumber);
@@ -235,7 +249,7 @@ class RouletteGame extends CasinoGame {
         });
     }
 
-    showResult(result, winningNumber) {
+    async showResult(result, winningNumber) {
         const numberColor = winningNumber === 0 ? 'green' : 
                            this.redNumbers.includes(winningNumber) ? 'red' : 'black';
         
@@ -252,10 +266,12 @@ class RouletteGame extends CasinoGame {
         `;
 
         if (result.isWin) {
+            // Credit winnings on backend
+            await this.winBetOnGame(result.totalWin, `Won ${this.formatCurrency(result.totalWin)} on Roulette number ${winningNumber}`);
             message += `
                 <h3 style="color: #36cb12; font-size: 48px; margin: 20px 0;">YOU WIN!</h3>
                 <div style="font-size: 42px; color: #36cb12; margin: 15px 0;">
-                    +KES ${result.totalWin.toFixed(2)}
+                    +${this.formatCurrency(result.totalWin)}
                 </div>
             `;
         } else {

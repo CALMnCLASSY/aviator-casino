@@ -83,7 +83,7 @@ class UltimateHotGame extends CasinoGame {
         const lines = parseInt(document.getElementById('linesCount').value) || 5;
         const total = betPerLine * lines;
         
-        document.getElementById('totalBet').value = `KES ${total}`;
+        document.getElementById('totalBet').value = this.formatCurrency(total);
     }
 
     getRandomSymbol() {
@@ -98,13 +98,21 @@ class UltimateHotGame extends CasinoGame {
         const totalBet = betPerLine * lines;
 
         if (totalBet < 10) {
-            alert('Minimum total bet is KES 10');
+            alert('Minimum total bet is ' + this.formatCurrency(10));
             return;
         }
 
         this.isSpinning = true;
         document.getElementById('spinBtn').disabled = true;
         document.getElementById('spinBtn').innerHTML = '<i class="fas fa-spinner fa-spin"></i> SPINNING...';
+
+        const success = await this.placeBetOnGame(totalBet, `Placed bet of ${this.formatCurrency(totalBet)} on Ultimate Hot Slots`);
+        if (!success) {
+            this.isSpinning = false;
+            document.getElementById('spinBtn').disabled = false;
+            document.getElementById('spinBtn').innerHTML = '<i class="fas fa-sync-alt"></i> SPIN';
+            return;
+        }
 
         // Clear previous winning highlights
         document.querySelectorAll('.symbol').forEach(symbol => {
@@ -136,15 +144,16 @@ class UltimateHotGame extends CasinoGame {
         // Check for wins
         const result = this.checkWins(finalReels, lines, betPerLine);
 
-        // Update stats
-        this.updateStats(result);
-
         // Show result
         if (result.totalWin > 0) {
+            await this.winBetOnGame(result.totalWin, `Won ${this.formatCurrency(result.totalWin)} in Ultimate Hot Slots`);
             this.highlightWinningSymbols(result.winningLines);
             await this.delay(500);
             this.showWinDisplay(result.totalWin);
         }
+
+        // Update stats
+        this.updateStats(result);
 
         // Reset for next spin
         setTimeout(() => {
@@ -250,7 +259,7 @@ class UltimateHotGame extends CasinoGame {
         const winDisplay = document.getElementById('winDisplay');
         const winAmountEl = document.getElementById('winAmount');
 
-        winAmountEl.textContent = `+KES ${winAmount.toFixed(2)}`;
+        winAmountEl.textContent = `+${this.formatCurrency(winAmount)}`;
         winDisplay.classList.add('active');
 
         setTimeout(() => {
@@ -268,8 +277,8 @@ class UltimateHotGame extends CasinoGame {
         }
 
         document.getElementById('totalSpins').textContent = this.stats.totalSpins;
-        document.getElementById('totalWon').textContent = `KES ${this.stats.totalWon.toFixed(2)}`;
-        document.getElementById('biggestWin').textContent = `KES ${this.stats.biggestWin.toFixed(2)}`;
+        document.getElementById('totalWon').textContent = this.formatCurrency(this.stats.totalWon);
+        document.getElementById('biggestWin').textContent = this.formatCurrency(this.stats.biggestWin);
         
         const winRate = this.stats.totalSpins > 0 
             ? ((this.stats.wins / this.stats.totalSpins) * 100).toFixed(1)

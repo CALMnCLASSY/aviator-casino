@@ -38,11 +38,16 @@ class JetXGame extends CasinoGame {
         setTimeout(() => this.startRound(), 2000);
     }
 
-    placeBet() {
+    async placeBet() {
         const amount = parseFloat(document.getElementById('betAmount').value);
         
         if (amount < 10) {
-            alert('Minimum bet is KES 10');
+            alert('Minimum bet is ' + this.formatCurrency(10));
+            return;
+        }
+
+        const success = await this.placeBetOnGame(amount, `Placed bet of ${this.formatCurrency(amount)} on JetX`);
+        if (!success) {
             return;
         }
 
@@ -123,13 +128,16 @@ class JetXGame extends CasinoGame {
         }
     }
 
-    cashOut() {
+    async cashOut() {
         if (!this.betPlaced || this.gameState !== 'flying') return;
 
         clearInterval(this.multiplierInterval);
 
         const winAmount = this.betAmount * this.currentMultiplier;
         
+        // Credit winnings on backend
+        await this.winBetOnGame(winAmount, `Won ${this.formatCurrency(winAmount)} (${this.currentMultiplier.toFixed(2)}x) in JetX`);
+
         // Show win message
         this.showWinMessage(winAmount, this.currentMultiplier);
 
@@ -243,6 +251,10 @@ class JetXGame extends CasinoGame {
     }
 
     addLiveBet(playerName, betAmount, multiplier, winAmount, cashed) {
+        const floatBetAmount = parseFloat(betAmount) || 0;
+        const floatMultiplier = parseFloat(multiplier) || 0;
+        const floatWinAmount = parseFloat(winAmount) || 0;
+
         const liveBetsList = document.getElementById('liveBetsList');
         
         const betItem = document.createElement('div');
@@ -252,12 +264,12 @@ class JetXGame extends CasinoGame {
         betItem.innerHTML = `
             <div class="player-info">
                 <div class="player-name">${playerName}</div>
-                <div class="bet-amount">KES ${betAmount.toFixed(2)}</div>
+                <div class="bet-amount">${this.formatCurrency(floatBetAmount)}</div>
             </div>
             <div class="bet-result">
                 ${cashed ? `
-                    <div class="multiplier">${multiplier}x</div>
-                    <div class="win-amount">+KES ${winAmount.toFixed(2)}</div>
+                    <div class="multiplier">${floatMultiplier.toFixed(2)}x</div>
+                    <div class="win-amount">+${this.formatCurrency(floatWinAmount)}</div>
                 ` : `
                     <div style="color: #d32f2f;">Lost</div>
                 `}
@@ -276,7 +288,7 @@ class JetXGame extends CasinoGame {
         const message = `
             <h2 style="color: #36cb12; font-size: 48px;">CASHED OUT!</h2>
             <div style="font-size: 36px; color: #36cb12; margin: 20px 0;">
-                +KES ${amount.toFixed(2)}
+                +${this.formatCurrency(amount)}
             </div>
             <p style="font-size: 24px;">at ${multiplier.toFixed(2)}x</p>
         `;

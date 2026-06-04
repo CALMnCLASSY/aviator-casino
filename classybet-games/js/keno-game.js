@@ -139,14 +139,14 @@ class KenoGame extends CasinoGame {
         const betAmount = parseFloat(document.getElementById('betAmount').value) || 0;
         const selectedCount = this.selectedNumbers.size;
         
-        document.getElementById('displayBet').textContent = `KES ${betAmount}`;
+        document.getElementById('displayBet').textContent = this.formatCurrency(betAmount);
 
         if (selectedCount > 0 && this.payoutTable[selectedCount]) {
             const maxMultiplier = this.payoutTable[selectedCount][selectedCount] || 0;
             const potentialWin = betAmount * maxMultiplier;
-            document.getElementById('potentialWin').textContent = `KES ${potentialWin}`;
+            document.getElementById('potentialWin').textContent = this.formatCurrency(potentialWin);
         } else {
-            document.getElementById('potentialWin').textContent = 'KES 0';
+            document.getElementById('potentialWin').textContent = this.formatCurrency(0);
         }
     }
 
@@ -158,7 +158,12 @@ class KenoGame extends CasinoGame {
 
         const betAmount = parseFloat(document.getElementById('betAmount').value);
         if (betAmount < 10) {
-            alert('Minimum bet is KES 10');
+            alert('Minimum bet is ' + this.formatCurrency(10));
+            return;
+        }
+
+        const success = await this.placeBetOnGame(betAmount, `Placed bet of ${this.formatCurrency(betAmount)} on Keno`);
+        if (!success) {
             return;
         }
 
@@ -247,6 +252,7 @@ class KenoGame extends CasinoGame {
 
         // Show result
         if (winAmount > 0) {
+            await this.winBetOnGame(winAmount, `Won ${this.formatCurrency(winAmount)} (${multiplier}x) in Keno`);
             this.showWinResult(hits, selectedCount, winAmount, multiplier);
         } else {
             this.showLossResult(hits, selectedCount);
@@ -262,7 +268,7 @@ class KenoGame extends CasinoGame {
         const message = `
             <h2>YOU WIN!</h2>
             <div style="font-size: 48px; color: #36cb12; margin: 20px 0;">
-                +KES ${winAmount.toFixed(2)}
+                +${this.formatCurrency(winAmount)}
             </div>
             <p style="font-size: 24px;">
                 ${hits} out of ${selected} numbers matched!

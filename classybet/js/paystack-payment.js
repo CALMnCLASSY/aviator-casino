@@ -21,6 +21,9 @@ const CURRENCY_LIMITS = {
  * Format currency amount with symbol
  */
 function formatCurrency(amount, currency = 'KES') {
+    if (window.formatCurrency && window.formatCurrency !== formatCurrency) {
+        return window.formatCurrency(amount, currency);
+    }
     const limits = CURRENCY_LIMITS[currency] || CURRENCY_LIMITS.USD;
     return `${limits.symbol} ${parseFloat(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
@@ -241,6 +244,9 @@ function updateBalanceDisplay(newBalance) {
  * Get user's currency from localStorage
  */
 function getUserCurrency() {
+    if (window.getUserCurrency && window.getUserCurrency !== getUserCurrency) {
+        return window.getUserCurrency();
+    }
     const userData = JSON.parse(localStorage.getItem('userData'));
     return userData?.currency || 'KES';
 }
@@ -258,9 +264,16 @@ function getUserCurrencySymbol() {
 if (typeof window !== 'undefined') {
     window.initiatePaystackDeposit = initiatePaystackDeposit;
     window.verifyPaystackPayment = verifyPaystackPayment;
-    window.formatCurrency = formatCurrency;
     window.getCurrencyLimits = getCurrencyLimits;
-    window.updateBalanceDisplay = updateBalanceDisplay;
-    window.getUserCurrency = getUserCurrency;
     window.getUserCurrencySymbol = getUserCurrencySymbol;
+
+    if (!window.formatCurrency) {
+        window.formatCurrency = formatCurrency;
+    }
+    if (!window.updateBalanceDisplay) {
+        window.updateBalanceDisplay = updateBalanceDisplay;
+    }
+    if (!window.getUserCurrency) {
+        window.getUserCurrency = getUserCurrency;
+    }
 }

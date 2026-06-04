@@ -68,11 +68,16 @@ class MinesGame extends CasinoGame {
         this.updateNextMultiplier();
     }
 
-    startGame() {
+    async startGame() {
         const betAmount = parseFloat(document.getElementById('betAmount').value);
         
         if (betAmount < 10) {
-            alert('Minimum bet is KES 10');
+            alert('Minimum bet is ' + this.formatCurrency(10));
+            return;
+        }
+
+        const success = await this.placeBetOnGame(betAmount, `Placed bet of ${this.formatCurrency(betAmount)} on Mines`);
+        if (!success) {
             return;
         }
 
@@ -185,7 +190,7 @@ class MinesGame extends CasinoGame {
         document.getElementById('currentMultiplier').textContent = this.currentMultiplier.toFixed(2) + 'x';
         
         const potentialWin = this.currentBet * this.currentMultiplier;
-        document.getElementById('potentialWin').textContent = `KES ${potentialWin.toFixed(2)}`;
+        document.getElementById('potentialWin').textContent = this.formatCurrency(potentialWin);
 
         this.updateNextMultiplier();
     }
@@ -223,6 +228,7 @@ class MinesGame extends CasinoGame {
         await this.delay(500);
         
         const winAmount = this.currentBet * this.currentMultiplier;
+        await this.winBetOnGame(winAmount, `Won ${this.formatCurrency(winAmount)} (${this.currentMultiplier.toFixed(2)}x) in Mines`);
         this.showWinResult(winAmount);
 
         setTimeout(() => {
@@ -230,7 +236,7 @@ class MinesGame extends CasinoGame {
         }, 3000);
     }
 
-    cashOut() {
+    async cashOut() {
         if (!this.gameActive || this.revealedTiles.length === 0) {
             return;
         }
@@ -241,6 +247,7 @@ class MinesGame extends CasinoGame {
         this.revealAllMines();
 
         const winAmount = this.currentBet * this.currentMultiplier;
+        await this.winBetOnGame(winAmount, `Cashed out ${this.formatCurrency(winAmount)} (${this.currentMultiplier.toFixed(2)}x) in Mines`);
         this.showWinResult(winAmount);
 
         setTimeout(() => {
@@ -252,7 +259,7 @@ class MinesGame extends CasinoGame {
         const message = `
             <h2>CASHED OUT!</h2>
             <div style="font-size: 48px; color: #36cb12; margin: 20px 0;">
-                +KES ${winAmount.toFixed(2)}
+                +${this.formatCurrency(winAmount)}
             </div>
             <p style="font-size: 24px;">
                 ${this.revealedTiles.length} gems found!
