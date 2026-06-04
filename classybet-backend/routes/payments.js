@@ -593,19 +593,20 @@ router.post('/flw-deposit-initialize',
       }
 
       // Create pending transaction (stored in user's original currency)
+      const parsedAmount = parseFloat(amount);
       const transaction = new Transaction({
         user:          user._id,
         type:          'deposit',
-        amount:        parseFloat(amount),
+        amount:        parsedAmount,
         currency:      user.currency,
         balanceBefore: user.balance,
         balanceAfter:  user.balance, // updated on confirmation
         status:        'pending',
-        description:   `Flutterwave deposit of ${formatCurrency(amount, user.currency)}`,
+        description:   `Flutterwave deposit of ${formatCurrency(parsedAmount, user.currency)}`,
         paymentProvider: 'flutterwave',
         metadata: {
           originalCurrency: user.currency,
-          originalAmount:   parseFloat(amount)
+          originalAmount:   parsedAmount
         }
       });
       await transaction.save();
@@ -623,7 +624,7 @@ router.post('/flw-deposit-initialize',
       const redirectUrl = `${process.env.FRONTEND_URL || 'https://classybetaviator.com'}/flw-success.html?reference=${transaction.reference}`;
 
       const flwResult = await flutterwaveService.initializeTransaction({
-        amount:        parseFloat(amount),
+        amount:        parsedAmount,
         currency:      user.currency,
         email:         user.email || `${user.username}@ClassyBet.com`,
         reference:     transaction.reference,
@@ -632,8 +633,8 @@ router.post('/flw-deposit-initialize',
         customerPhone: user.phone || '',
         description:   `ClassyBet deposit – ${user.username}`,
         meta: {
-          userId:      user._id.toString(),
-          username:    user.username,
+          userId:        user._id.toString(),
+          username:      user.username,
           transactionId: transaction._id.toString()
         }
       });
@@ -645,7 +646,7 @@ router.post('/flw-deposit-initialize',
         await transaction.save();
 
         // --- PAYSTACK FALLBACK ---
-        const conversion = convertToPaystackCurrency(amount, user.currency);
+        const conversion = convertToPaystackCurrency(parsedAmount, user.currency);
         if (conversion.error) {
           return res.status(400).json({ error: 'Both Flutterwave and Paystack are unavailable: ' + conversion.error });
         }
@@ -653,12 +654,12 @@ router.post('/flw-deposit-initialize',
         const fallbackTx = new Transaction({
           user:          user._id,
           type:          'deposit',
-          amount:        parseFloat(amount),
+          amount:        parsedAmount,
           currency:      user.currency,
           balanceBefore: user.balance,
           balanceAfter:  user.balance,
           status:        'pending',
-          description:   `Paystack fallback deposit of ${formatCurrency(amount, user.currency)}`,
+          description:   `Paystack fallback deposit of ${formatCurrency(parsedAmount, user.currency)}`,
           paymentProvider: 'paystack',
           metadata: {
             paystackCurrency:  conversion.paystackCurrency,
