@@ -93,21 +93,21 @@ class FlutterwaveService {
         const cur            = (currency || 'USD').toUpperCase();
         const paymentOptions = this.getPaymentOptions(cur);
 
-        console.log(`🔄 FLW widget params: ${reference} | ${cur} ${amount} | options: [${paymentOptions}]`);
+        console.log(`🔄 FLW widget params: ${reference} | ${cur} ${amount}`);
 
         return {
             success: true,
             data: {
-                authorization_url: null,   // not used in inline mode
+                authorization_url: null,
                 reference,
                 inlineMode: true,
                 widgetParams: {
-                    public_key:      (this.publicKey || process.env.FLUTTERWAVE_PUBLIC_KEY || '').trim(),
-                    tx_ref:          reference,
+                    public_key:   (this.publicKey || process.env.FLUTTERWAVE_PUBLIC_KEY || '').trim(),
+                    tx_ref:       reference,
                     amount,
-                    currency:        cur,
-                    redirect_url:    redirectUrl,
-                    payment_options: paymentOptions,
+                    currency:     cur,
+                    redirect_url: redirectUrl,
+                    // payment_options intentionally omitted — Flutterwave auto-detects from currency
                     customer: {
                         email:       email,
                         phonenumber: customerPhone || '',
