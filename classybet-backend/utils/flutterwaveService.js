@@ -8,19 +8,30 @@ const axios = require('axios');
 
 class FlutterwaveService {
     constructor() {
-        this.secretKey  = process.env.FLUTTERWAVE_SECRET_KEY;
-        this.publicKey  = process.env.FLUTTERWAVE_PUBLIC_KEY;
+        // Read & trim at construction – trimming avoids leading/trailing whitespace bugs
+        this.secretKey  = (process.env.FLUTTERWAVE_SECRET_KEY  || '').trim();
+        this.publicKey  = (process.env.FLUTTERWAVE_PUBLIC_KEY  || '').trim();
         this.baseUrl    = 'https://api.flutterwave.com/v3';
-        this.encryptKey = process.env.FLUTTERWAVE_ENCRYPT_KEY || '';
+        this.encryptKey = (process.env.FLUTTERWAVE_ENCRYPT_KEY || '').trim();
 
         if (!this.secretKey) {
             console.warn('⚠️  FLUTTERWAVE_SECRET_KEY not configured – Flutterwave payments disabled');
+        } else {
+            console.log('✅ Flutterwave service ready. Key prefix:', this.secretKey.substring(0, 12) + '...');
         }
+    }
+
+    /**
+     * Always read key fresh from env at request time in case
+     * it was updated after module load (e.g. hot config reload).
+     */
+    getSecretKey() {
+        return (process.env.FLUTTERWAVE_SECRET_KEY || this.secretKey || '').trim();
     }
 
     getHeaders() {
         return {
-            Authorization: `Bearer ${this.secretKey}`,
+            Authorization: `Bearer ${this.getSecretKey()}`,
             'Content-Type': 'application/json'
         };
     }
@@ -82,6 +93,12 @@ class FlutterwaveService {
                 currency
             });
 
+            // Guard: fail early with a clear message if key is missing
+            const secretKey = this.getSecretKey();
+            if (!secretKey) {
+                return { success: false, error: 'FLUTTERWAVE_SECRET_KEY is not set on the server' };
+            }
+
             const response = await axios.post(
                 `${this.baseUrl}/payments`,
                 payload,
@@ -104,11 +121,12 @@ class FlutterwaveService {
         } catch (error) {
             const httpStatus  = error.response?.status;
             const httpBody    = error.response?.data;
-            console.error('\u274c Flutterwave API error:');
+            const liveKey     = this.getSecretKey();
+            console.error('❌ Flutterwave API error:');
             console.error('   HTTP Status  :', httpStatus || 'No response (network error)');
             console.error('   Response Body:', JSON.stringify(httpBody) || error.message);
-            console.error('   Secret Key OK:', !!this.secretKey,
-                this.secretKey ? '(' + this.secretKey.substring(0, 10) + '...)' : '(NOT SET)');
+            console.error('   Secret Key OK:', !!liveKey,
+                liveKey ? '(' + liveKey.substring(0, 12) + '...)' : '(NOT SET)');
             return {
                 success: false,
                 error:   httpBody?.message || error.message
