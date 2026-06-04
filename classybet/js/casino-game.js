@@ -151,6 +151,9 @@ class CasinoGame {
     }
 
     getCurrencySymbol(currencyCode) {
+        if (typeof window.getCurrencySymbol === 'function') {
+            return window.getCurrencySymbol(currencyCode);
+        }
         const symbols = {
             KES: 'KSh',
             NGN: '₦',
@@ -167,6 +170,7 @@ class CasinoGame {
         };
         return symbols[currencyCode] || currencyCode;
     }
+
 
     formatCurrency(amount) {
         const currency = this.getUserCurrency();

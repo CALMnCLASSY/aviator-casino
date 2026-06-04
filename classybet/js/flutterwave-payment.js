@@ -13,6 +13,8 @@
 
 'use strict';
 
+(function () {
+
 const FLW_PUBLIC_KEY = 'FLWPUBK-e450961746a39675aadee69fea53e983-X';
 
 // ─── Currency helpers ──────────────────────────────────────────────────────
@@ -28,6 +30,9 @@ const FLW_CURRENCY_LIMITS = {
 };
 
 function flwFormatCurrency(amount, currency) {
+    if (typeof window.formatCurrency === 'function') {
+        return window.formatCurrency(amount, currency);
+    }
     currency = currency || 'KES';
     const limits = FLW_CURRENCY_LIMITS[currency] || FLW_CURRENCY_LIMITS.USD;
     return `${limits.symbol} ${parseFloat(amount).toLocaleString('en-US', {
@@ -91,7 +96,6 @@ async function initiateFlutterwaveDeposit(amount) {
     _showFlwLoading(true);
 
     try {
-        // Step 1: backend creates pending DB record, returns widget params (no FLW API call)
         var initResp = await fetch(API_BASE + '/api/payments/flw-deposit-initialize', {
             method: 'POST',
             headers: {
@@ -109,14 +113,12 @@ async function initiateFlutterwaveDeposit(amount) {
 
         _showFlwLoading(false);
 
-        // Step 2a: Paystack fallback (only if FLW init itself failed on backend)
         if (initData.provider === 'paystack' || initData.fallback) {
             console.log('⚠️  Falling back to Paystack');
             _openPaystackFallback(initData.data, userData, initData.data.currency);
             return;
         }
 
-        // Step 2b: Open Flutterwave inline widget — backend supplies all params
         var ref          = initData.data.reference;
         var widgetParams = initData.data.widgetParams;
 
@@ -149,7 +151,6 @@ function _openFlutterwaveWidget(reference, widgetParams) {
         return;
     }
 
-    // Merge backend params; always override callbacks so we control them
     FlutterwaveCheckout(Object.assign({}, widgetParams, {
         public_key: widgetParams.public_key || FLW_PUBLIC_KEY,
         tx_ref:     widgetParams.tx_ref     || reference,
@@ -157,7 +158,6 @@ function _openFlutterwaveWidget(reference, widgetParams) {
         callback: function (data) {
             console.log('✅ FLW callback status:', data.status, '| tx_id:', data.transaction_id);
             if (data.status === 'successful' || data.status === 'completed') {
-                // Try API verify first (needs secret key). On fail, webhook will confirm.
                 verifyFlutterwavePayment(reference, data.transaction_id)
                     .catch(function () {
                         _showFlwNotification('✅ Payment received! Balance updating shortly…', 'success');
@@ -169,7 +169,6 @@ function _openFlutterwaveWidget(reference, widgetParams) {
         },
 
         onclose: function () {
-            // Silently poll — webhook may fire before or after this
             console.log('FLW popup closed, polling for confirmation…');
             _pollTransactionStatus(reference, 0);
         }
@@ -178,55 +177,78 @@ function _openFlutterwaveWidget(reference, widgetParams) {
 
 // ─── Poll until webhook confirms ──────────────────────────────────────────
 
-async function _pollTransactionStatus(reference, attempts) {
-    attempts = attempts || 0;
-    if (attempts >= 10) return; // 30 seconds max
+function _pollTransactionStatus(reference, attempt) {
+    var maxAttempts = 12; // 12 * 5s = 60s
+    if (attempt >= maxAttempts) {
+        console.log('⏳ Polling timed out. Assuming webhook will process it.');
+        return;
+    }
 
-    try {
-        var token = localStorage.getItem('user_token');
-        var resp  = await fetch(
-            API_BASE + '/api/payments/flw-deposit-status?reference=' + encodeURIComponent(reference),
-            { headers: { 'Authorization': 'Bearer ' + token } }
-        );
-        if (!resp.ok) throw new Error('poll failed');
-        var data = await resp.json();
+    console.log('🔍 Polling transaction status (' + (attempt + 1) + '/' + maxAttempts + ')…');
 
-        if (data.status === 'completed') {
-            _applyBalanceUpdate(data.newBalance);
-            _showFlwNotification(
-                '✅ Deposit confirmed! New balance: ' + flwFormatCurrency(data.newBalance, data.currency),
-                'success'
-            );
-            var modal = document.getElementById('deposit-modal');
-            if (modal) modal.style.display = 'none';
-            return;
+    var token = localStorage.getItem('user_token');
+    if (!token) return;
+
+    setTimeout(async function () {
+        try {
+            var res = await fetch(API_BASE + '/api/payments/flw-deposit-status?reference=' + reference, {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            var data = await res.json();
+
+            if (res.ok && data.success && data.status === 'completed') {
+                console.log('🎉 Polling confirmed payment success!');
+                _applyBalanceUpdate(data.newBalance);
+
+                var userData = (function () {
+                    try { return JSON.parse(localStorage.getItem('userData')); } catch (e) { return null; }
+                }());
+                var currency = (userData && userData.currency) || 'KES';
+
+                _showFlwNotification(
+                    '✅ Deposit successful! New balance: ' + flwFormatCurrency(data.newBalance, currency),
+                    'success'
+                );
+
+                if (typeof loadUserProfile === 'function') {
+                    await loadUserProfile();
+                }
+
+                var depositModal = document.getElementById('deposit-modal');
+                if (depositModal) depositModal.style.display = 'none';
+                return;
+            }
+
+            _pollTransactionStatus(reference, attempt + 1);
+
+        } catch (e) {
+            console.error('Polling error:', e);
+            _pollTransactionStatus(reference, attempt + 1);
         }
-    } catch (e) { /* silent */ }
-
-    setTimeout(function () { _pollTransactionStatus(reference, attempts + 1); }, 3000);
+    }, 5000);
 }
 
-// ─── Verify via backend (secret key path, optional) ───────────────────────
+// ─── Verify transaction (API fallback) ────────────────────────────────────
 
 async function verifyFlutterwavePayment(reference, transactionId) {
     var token = localStorage.getItem('user_token');
-    _showFlwLoading(true);
-    console.log('🔍 Verifying Flutterwave payment:', reference, transactionId);
+    if (!token) throw new Error('Auth token missing');
 
-    var response = await fetch(API_BASE + '/api/payments/flw-deposit-verify', {
+    console.log('🔍 Verifying payment with backend:', reference);
+
+    var res = await fetch(API_BASE + '/api/payments/flw-deposit-verify', {
         method: 'POST',
         headers: {
             'Authorization': 'Bearer ' + token,
             'Content-Type':  'application/json'
         },
-        body: JSON.stringify({ reference: reference, transaction_id: String(transactionId) })
+        body: JSON.stringify({ reference: reference, transactionId: transactionId })
     });
 
-    var data = await response.json();
-    _showFlwLoading(false);
+    var data = await res.json();
 
-    if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Payment verification failed');
+    if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Verification endpoint failed');
     }
 
     console.log('✅ Flutterwave payment verified');
@@ -293,28 +315,35 @@ function _openPaystackFallback(paymentData, userData, currency) {
         script.src    = 'https://js.paystack.co/v1/inline.js';
         script.onload = function () { _openPaystackFallback(paymentData, userData, currency); };
         script.onerror = function () {
-            _showFlwNotification('Both payment providers unavailable. Please try again later.', 'error');
+            _showFlwLoading(false);
+            _showFlwNotification('Failed to load Paystack SDK fallback.', 'error');
         };
         document.head.appendChild(script);
         return;
     }
 
-    var PAYSTACK_PUBLIC_KEY_FB = 'pk_live_4b4f3a0ed97c13680b6a29897e6624734c072f54';
-    var amountInMinor = Math.round(parseFloat(paymentData.amount) * 100);
+    console.log('💳 Opening Paystack fallback popup...');
+    var amountInKobo = Math.round(parseFloat(paymentData.amount) * 100);
     var channels = (currency === 'KES')
         ? ['card', 'bank', 'ussd', 'qr', 'mobile_money', 'bank_transfer', 'eft']
         : ['card', 'bank'];
 
     var handler = PaystackPop.setup({
-        key:      PAYSTACK_PUBLIC_KEY_FB,
+        key:      paymentData.public_key || 'pk_live_4b4f3a0ed97c13680b6a29897e6624734c072f54',
         email:    userData.email || (userData.username + '@ClassyBet.com'),
-        amount:   amountInMinor,
+        amount:   amountInKobo,
         currency: currency,
         ref:      paymentData.reference,
         channels: channels,
+        metadata: {
+            custom_fields: [
+                { display_name: 'Username', variable_name: 'username', value: userData.username },
+                { display_name: 'User ID',  variable_name: 'user_id',  value: userData.userId || userData.id }
+            ]
+        },
         callback: function (response) {
-            console.log('✅ Paystack fallback:', response.reference);
-            _verifyPaystackFallback(response.reference);
+            console.log('✅ Paystack fallback successful:', response.reference);
+            verifyPaystackFallback(response.reference);
         },
         onClose: function () {
             _showFlwNotification('Payment cancelled', 'warning');
@@ -323,12 +352,12 @@ function _openPaystackFallback(paymentData, userData, currency) {
     handler.openIframe();
 }
 
-async function _verifyPaystackFallback(reference) {
-    try {
-        var token = localStorage.getItem('user_token');
-        _showFlwLoading(true);
+async function verifyPaystackFallback(reference) {
+    var token = localStorage.getItem('user_token');
+    if (!token) return;
 
-        var response = await fetch(API_BASE + '/api/payments/deposit-verify', {
+    try {
+        var res = await fetch(API_BASE + '/api/payments/deposit-verify', {
             method: 'POST',
             headers: {
                 'Authorization': 'Bearer ' + token,
@@ -336,47 +365,42 @@ async function _verifyPaystackFallback(reference) {
             },
             body: JSON.stringify({ reference: reference })
         });
+        var data = await res.json();
+        if (res.ok && data.success) {
+            console.log('✅ Paystack fallback payment verified');
+            _applyBalanceUpdate(data.newBalance);
 
-        var data = await response.json();
-        _showFlwLoading(false);
+            var userData = (function () {
+                try { return JSON.parse(localStorage.getItem('userData')); } catch (e) { return null; }
+            }());
+            var currency = (userData && userData.currency) || 'KES';
 
-        if (!response.ok || !data.success) {
-            throw new Error(data.error || 'Verification failed');
+            _showFlwNotification(
+                '✅ Deposit successful! New balance: ' + flwFormatCurrency(data.newBalance, currency),
+                'success'
+            );
+
+            if (typeof loadUserProfile === 'function') {
+                await loadUserProfile();
+            }
+
+            var depositModal = document.getElementById('deposit-modal');
+            if (depositModal) depositModal.style.display = 'none';
         }
-
-        _applyBalanceUpdate(data.newBalance);
-
-        var userData = (function () {
-            try { return JSON.parse(localStorage.getItem('userData')); } catch (e) { return null; }
-        }());
-        var currency = (userData && userData.currency) || 'KES';
-
-        _showFlwNotification(
-            '✅ Deposit successful! New balance: ' + flwFormatCurrency(data.newBalance, currency),
-            'success'
-        );
-
-        var modal = document.getElementById('deposit-modal');
-        if (modal) modal.style.display = 'none';
-
-    } catch (error) {
-        _showFlwLoading(false);
-        _showFlwNotification(error.message || 'Verification failed', 'error');
+    } catch (e) {
+        console.error('Fallback verification failed:', e);
     }
 }
 
-// ─── Toast notification ───────────────────────────────────────────────────
+// ─── Toast System ──────────────────────────────────────────────────────────
 
 function _showFlwNotification(message, type) {
-    type = type || 'info';
-    var colorMap = { success: '#30fcbe', error: '#ff4757', warning: '#ffa502', info: '#fff' };
-
-    if (type === 'success' && typeof showSuccess === 'function') {
-        return showSuccess('deposit-success', message);
-    }
-    if (type === 'error' && typeof showError === 'function') {
-        return showError('deposit-error', message);
-    }
+    var colorMap = {
+        success: '#30fcbe',
+        error:   '#ff4d4d',
+        warning: '#ffc107',
+        info:    '#00bcd4'
+    };
 
     var toast = document.getElementById('flw-toast');
     if (!toast) {
@@ -413,3 +437,5 @@ if (typeof window !== 'undefined') {
     // automatically route through Flutterwave first.
     window.initiatePaystackDeposit = initiateFlutterwaveDeposit;
 }
+
+})();

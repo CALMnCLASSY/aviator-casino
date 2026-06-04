@@ -4,6 +4,7 @@
  * Note: Requires global API_BASE to be defined before this script loads
  */
 
+(function () {
 const PAYSTACK_PUBLIC_KEY = 'pk_live_4b4f3a0ed97c13680b6a29897e6624734c072f54';
 
 // Currency limits (from backend currencyConfig)
@@ -277,3 +278,4 @@ if (typeof window !== 'undefined') {
         window.getUserCurrency = getUserCurrency;
     }
 }
+})();

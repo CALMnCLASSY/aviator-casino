@@ -1016,8 +1016,12 @@
 
         // Currency formatting helper
         function formatCurrency(amount, currency = 'KES') {
+            if (window.formatCurrency && window.formatCurrency !== formatCurrency) {
+                return window.formatCurrency(amount, currency);
+            }
             return `${currency} ${parseFloat(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
         }
+
 
         // Currency limits helper
         function getCurrencyLimits(currency = 'KES') {
