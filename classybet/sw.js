@@ -1,4 +1,4 @@
-﻿const CACHE_NAME = 'aviator-cache-v3';
+const CACHE_NAME = 'aviator-cache-v4';
 
 // Only pre-cache truly static/immutable assets (images, icons)
 const urlsToCache = [
@@ -20,17 +20,28 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('fetch', event => {
-  const requestUrl = new URL(event.request.url);
+  const request = event.request;
+  const requestUrl = new URL(request.url);
 
-  // Exclude API calls and socket.io from caching entirely
-  if (requestUrl.pathname.startsWith('/api/') || requestUrl.pathname.includes('socket.io')) {
+  // Exclude non-GET requests (like POST), non-HTTP protocols (chrome-extension://),
+  // API calls, socket.io, and third-party scripts from caching entirely.
+  if (
+    request.method !== 'GET' ||
+    !requestUrl.protocol.startsWith('http') ||
+    requestUrl.pathname.startsWith('/api/') || 
+    requestUrl.pathname.includes('socket.io') ||
+    requestUrl.hostname.includes('flutterwave.com') ||
+    requestUrl.hostname.includes('paystack.co') ||
+    requestUrl.hostname.includes('posthog.com')
+  ) {
+    // Let the browser handle these normally (don't intercept)
     return;
   }
 
-  // Network First for everything (HTML, CSS, JS)
+  // Network First for everything else (HTML, CSS, JS)
   // Try network first, fall back to cache, and update cache on success
   event.respondWith(
-    fetch(event.request)
+    fetch(request)
       .then(response => {
         // Don't cache non-ok responses
         if (!response || response.status !== 200 || response.type === 'opaque') {
@@ -39,13 +50,13 @@ self.addEventListener('fetch', event => {
         // Update cache with fresh version
         const responseToCache = response.clone();
         caches.open(CACHE_NAME).then(cache => {
-          cache.put(event.request, responseToCache);
+          cache.put(request, responseToCache).catch(err => console.error('SW cache error:', err));
         });
         return response;
       })
       .catch(() => {
         // Network failed — fall back to cache (offline support)
-        return caches.match(event.request);
+        return caches.match(request);
       })
   );
 });
