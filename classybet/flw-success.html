@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deposit Successful - ClassyBet</title>
+    <style>
+        body {
+            background-color: #080c18;
+            color: #fff;
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            text-align: center;
+        }
+        .container {
+            background: #111827;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            max-width: 400px;
+            width: 90%;
+        }
+        .icon {
+            font-size: 60px;
+            color: #30fcbe;
+            margin-bottom: 20px;
+            animation: bounceIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        h1 {
+            color: #30fcbe;
+            margin-bottom: 10px;
+        }
+        p {
+            color: #aaa;
+            margin-bottom: 30px;
+            line-height: 1.5;
+        }
+        .btn {
+            background: #30fcbe;
+            color: #000;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            display: inline-block;
+            transition: opacity 0.2s;
+        }
+        .btn:hover {
+            opacity: 0.9;
+        }
+        #loading {
+            margin-top: 20px;
+            color: #30fcbe;
+            display: none;
+        }
+        @keyframes bounceIn {
+            0% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon">✓</div>
+        <h1 id="status-title">Verifying...</h1>
+        <p id="status-message">Please wait while we confirm your deposit with Flutterwave.</p>
+        
+        <div id="loading">Checking payment status...</div>
+        
+        <div id="action-container" style="display: none;">
+            <a href="dashboard.html" class="btn">Return to Dashboard</a>
+        </div>
+    </div>
+
+    <script>
+        // Use global API_BASE logic
+        const API_BASE = (() => {
+            const isLocalhost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+            return isLocalhost ? 'http://localhost:4000' : 'https://back.classybetaviator.com';
+        })();
+
+        async function verifyPayment() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const reference = urlParams.get('reference');
+            const transaction_id = urlParams.get('transaction_id');
+            const status = urlParams.get('status');
+
+            const titleEl = document.getElementById('status-title');
+            const messageEl = document.getElementById('status-message');
+            const actionEl = document.getElementById('action-container');
+            const loadingEl = document.getElementById('loading');
+
+            if (status && status !== 'successful' && status !== 'completed') {
+                titleEl.textContent = 'Payment Not Successful';
+                titleEl.style.color = '#ff4757';
+                document.querySelector('.icon').textContent = '✗';
+                document.querySelector('.icon').style.color = '#ff4757';
+                messageEl.textContent = 'Your payment was not completed or failed. Please try again.';
+                actionEl.style.display = 'block';
+                return;
+            }
+
+            if (!reference || !transaction_id) {
+                titleEl.textContent = 'Verification Failed';
+                titleEl.style.color = '#ff4757';
+                document.querySelector('.icon').textContent = '✗';
+                document.querySelector('.icon').style.color = '#ff4757';
+                messageEl.textContent = 'Missing transaction details in URL.';
+                actionEl.style.display = 'block';
+                return;
+            }
+
+            loadingEl.style.display = 'block';
+            
+            try {
+                const token = localStorage.getItem('user_token');
+                
+                const response = await fetch(`${API_BASE}/api/payments/flw-deposit-verify`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ reference, transaction_id })
+                });
+
+                const data = await response.json();
+                loadingEl.style.display = 'none';
+
+                if (response.ok && data.success) {
+                    titleEl.textContent = 'Deposit Successful!';
+                    messageEl.textContent = `Your deposit has been confirmed. Your new balance is being updated.`;
+                    
+                    // Update local storage balance
+                    try {
+                        const userData = JSON.parse(localStorage.getItem('userData'));
+                        if (userData && data.newBalance) {
+                            userData.balance = data.newBalance;
+                            localStorage.setItem('userData', JSON.stringify(userData));
+                        }
+                    } catch (e) {}
+
+                    // Redirect after a short delay
+                    setTimeout(() => {
+                        window.location.href = 'dashboard.html';
+                    }, 3000);
+                } else {
+                    throw new Error(data.error || 'Verification failed');
+                }
+            } catch (error) {
+                loadingEl.style.display = 'none';
+                titleEl.textContent = 'Verification Error';
+                titleEl.style.color = '#ff4757';
+                document.querySelector('.icon').textContent = '✗';
+                document.querySelector('.icon').style.color = '#ff4757';
+                messageEl.textContent = error.message || 'An error occurred while verifying your payment. If funds were deducted, please contact support.';
+                actionEl.style.display = 'block';
+            }
+        }
+
+        // Run on load
+        window.addEventListener('DOMContentLoaded', verifyPayment);
+    </script>
+</body>
+</html>
