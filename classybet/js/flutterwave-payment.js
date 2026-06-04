@@ -145,7 +145,16 @@ function _openFlutterwaveWidget(reference, widgetParams) {
         script.onload = function () { _openFlutterwaveWidget(reference, widgetParams); };
         script.onerror = function () {
             _showFlwLoading(false);
-            _showFlwNotification('Failed to load Flutterwave SDK. Please refresh.', 'error');
+            console.warn('⚠️ Flutterwave SDK failed to load. Attempting Paystack fallback...');
+            _showFlwNotification('Switching to alternative secure payment checkout...', 'info');
+            if (typeof window.initiateOriginalPaystackDeposit === 'function') {
+                window.initiateOriginalPaystackDeposit(widgetParams.amount)
+                    .catch(function (err) {
+                        _showFlwNotification('Payment initialization failed. Please try again.', 'error');
+                    });
+            } else {
+                _showFlwNotification('Failed to load payment checkout. Please refresh.', 'error');
+            }
         };
         document.head.appendChild(script);
         return;

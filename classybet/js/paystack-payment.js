@@ -264,6 +264,7 @@ function getUserCurrencySymbol() {
 // Export functions for global use
 if (typeof window !== 'undefined') {
     window.initiatePaystackDeposit = initiatePaystackDeposit;
+    window.initiateOriginalPaystackDeposit = initiatePaystackDeposit;
     window.verifyPaystackPayment = verifyPaystackPayment;
     window.getCurrencyLimits = getCurrencyLimits;
     window.getUserCurrencySymbol = getUserCurrencySymbol;
