@@ -37,101 +37,50 @@ class FlutterwaveService {
     }
 
     /**
-     * Initialize a Flutterwave hosted payment link.
-     * Returns a redirect URL that opens Flutterwave's hosted payment page.
+     * Prepare transaction metadata for the frontend Flutterwave inline widget.
+     * No Flutterwave API call is made – the frontend opens the widget directly
+     * using the public key. Balance is credited via webhook on payment success.
      *
      * @param {object} params
-     *   amount            {number}  – amount in user's currency
-     *   currency          {string}  – ISO 4217 code (e.g. KES, USD, NGN, GHS)
-     *   email             {string}
-     *   reference         {string}  – our internal transaction reference
-     *   redirectUrl       {string}  – where Flutterwave redirects after payment
-     *   customerName      {string}
-     *   customerPhone     {string}
-     *   description       {string}
-     *   meta              {object}  – arbitrary key-value pairs
+     * @returns {{ success: boolean, data: object }}
      */
     async initializeTransaction(params) {
-        try {
-            const {
-                amount,
-                currency,
-                email,
-                reference,
-                redirectUrl,
-                customerName,
-                customerPhone,
-                description,
-                meta = {}
-            } = params;
+        // No secret key needed – just return the params for the frontend widget
+        const {
+            amount, currency, email, reference,
+            redirectUrl, customerName, customerPhone, description, meta = {}
+        } = params;
 
-            const payload = {
-                tx_ref:           reference,
-                amount:           amount,          // Flutterwave uses major units (no *100)
-                currency:         currency.toUpperCase(),
-                redirect_url:     redirectUrl,
-                payment_options:  'card,mobilemoney,ussd,banktransfer,mpesa,barter,nqr',
-                customer: {
-                    email:        email,
-                    phonenumber:  customerPhone || '',
-                    name:         customerName  || email
-                },
-                customizations: {
-                    title:        'ClassyBet Deposit',
-                    description:  description || `Deposit of ${currency} ${amount}`,
-                    logo:         'https://classybetaviator.com/images/classybetcasino-logo.jpeg'
-                },
-                meta: {
-                    ...meta,
-                    source: 'classybet'
+        console.log('🔄 Preparing Flutterwave widget payload:', { reference, amount, currency });
+
+        return {
+            success: true,
+            data: {
+                // The frontend widget only needs a payment_link-style flag and the tx_ref
+                authorization_url: null,         // not used in inline widget mode
+                reference,
+                inlineMode: true,                // tells frontend to open FlutterwaveCheckout()
+                widgetParams: {
+                    public_key:      this.publicKey || process.env.FLUTTERWAVE_PUBLIC_KEY,
+                    tx_ref:          reference,
+                    amount,
+                    currency:        currency.toUpperCase(),
+                    redirect_url:    redirectUrl,
+                    payment_options: 'card,mobilemoney,ussd,banktransfer,mpesa,barter',
+                    customer: {
+                        email:       email,
+                        phonenumber: customerPhone || '',
+                        name:        customerName  || email
+                    },
+                    customizations: {
+                        title:       'ClassyBet Deposit',
+                        description: description || `Deposit of ${currency} ${amount}`,
+                        logo:        'https://classybetaviator.com/images/classybetcasino-logo.jpeg'
+                    },
+                    meta: { ...meta, source: 'classybet' }
                 }
-            };
-
-            console.log('🔄 Initializing Flutterwave transaction:', {
-                reference,
-                amount,
-                currency
-            });
-
-            // Guard: fail early with a clear message if key is missing
-            const secretKey = this.getSecretKey();
-            if (!secretKey) {
-                return { success: false, error: 'FLUTTERWAVE_SECRET_KEY is not set on the server' };
             }
-
-            const response = await axios.post(
-                `${this.baseUrl}/payments`,
-                payload,
-                { headers: this.getHeaders() }
-            );
-
-            if (response.data.status === 'success') {
-                console.log('✅ Flutterwave transaction initialized:', reference);
-                return {
-                    success:  true,
-                    data: {
-                        authorization_url: response.data.data.link,
-                        reference:         reference
-                    }
-                };
-            } else {
-                throw new Error(response.data.message || 'Flutterwave initialization failed');
-            }
-
-        } catch (error) {
-            const httpStatus  = error.response?.status;
-            const httpBody    = error.response?.data;
-            const liveKey     = this.getSecretKey();
-            console.error('❌ Flutterwave API error:');
-            console.error('   HTTP Status  :', httpStatus || 'No response (network error)');
-            console.error('   Response Body:', JSON.stringify(httpBody) || error.message);
-            console.error('   Secret Key OK:', !!liveKey,
-                liveKey ? '(' + liveKey.substring(0, 12) + '...)' : '(NOT SET)');
-            return {
-                success: false,
-                error:   httpBody?.message || error.message
-            };
-        }
+        };
     }
 
     /**

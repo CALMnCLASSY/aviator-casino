@@ -927,6 +927,29 @@ router.post('/flutterwave-webhook', async (req, res) => {
   }
 });
 
+// Poll transaction status (frontend polls after widget closes)
+router.get('/flw-deposit-status', authenticateToken, async (req, res) => {
+  try {
+    const { reference } = req.query;
+    if (!reference) return res.status(400).json({ error: 'reference required' });
+
+    const transaction = await Transaction.findOne({ reference, user: req.userId });
+    if (!transaction) return res.status(404).json({ error: 'Transaction not found' });
+
+    const user = await User.findById(req.userId);
+    return res.json({
+      status:     transaction.status,
+      newBalance: transaction.status === 'completed' ? user.balance : null,
+      currency:   user.currency,
+      amount:     transaction.amount,
+      reference:  transaction.reference
+    });
+  } catch (error) {
+    console.error('FLW status poll error:', error);
+    res.status(500).json({ error: 'Status check failed' });
+  }
+});
+
 // ==================== PAYSTACK ENDPOINTS (FALLBACK) ====================
 
 // Initialize Paystack deposit
