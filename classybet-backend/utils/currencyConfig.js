@@ -410,3 +410,44 @@ module.exports = {
     validateWithdrawalAmount,
     convertToPaystackCurrency
 };
+
+const FLUTTERWAVE_CURRENCIES = ['NGN', 'KES', 'GHS', 'UGX', 'TZS', 'RWF', 'XAF', 'XOF', 'ZAR', 'ZMW', 'MWK', 'ETB', 'SLL', 'USD', 'GBP', 'EUR'];
+
+function isFlutterwaveSupported(currency) {
+    return FLUTTERWAVE_CURRENCIES.includes((currency || '').toUpperCase());
+}
+
+function convertToFlutterwaveCurrency(amount, fromCurrency) {
+    const cur = (fromCurrency || '').toUpperCase();
+    if (FLUTTERWAVE_CURRENCIES.includes(cur)) {
+        return {
+            flwAmount: amount,
+            flwCurrency: cur,
+            converted: false,
+            originalAmount: amount,
+            originalCurrency: fromCurrency
+        };
+    }
+    const ExchangeRateService = require('../services/ExchangeRateService');
+    const localToUsdRate = ExchangeRateService.getRate(cur);
+    if (!localToUsdRate) {
+        return {
+            flwAmount: null,
+            flwCurrency: null,
+            converted: false,
+            error: `Currency ${fromCurrency} is not supported or rates unavailable`
+        };
+    }
+    const usdAmount = parseFloat((amount / localToUsdRate).toFixed(2));
+    return {
+        flwAmount: usdAmount,
+        flwCurrency: 'USD',
+        converted: true,
+        originalAmount: amount,
+        originalCurrency: fromCurrency,
+        exchangeRate: 1 / localToUsdRate
+    };
+}
+
+module.exports.isFlutterwaveSupported = isFlutterwaveSupported;
+module.exports.convertToFlutterwaveCurrency = convertToFlutterwaveCurrency;

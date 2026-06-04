@@ -9,7 +9,7 @@ const { sendSlackMessage } = require('../utils/slack');
 const { recordAffiliateDeposit } = require('../utils/affiliate');
 const paystackService = require('../utils/paystackService');
 const flutterwaveService = require('../utils/flutterwaveService');
-const { validateDepositAmount, formatCurrency, convertToPaystackCurrency } = require('../utils/currencyConfig');
+const { validateDepositAmount, formatCurrency, convertToPaystackCurrency, convertToFlutterwaveCurrency } = require('../utils/currencyConfig');
 
 const router = express.Router();
 
@@ -592,8 +592,14 @@ router.post('/flw-deposit-initialize',
         return res.status(400).json({ error: validation.error });
       }
 
-      // Create pending transaction (stored in user's original currency)
+      // Convert to a currency supported by Flutterwave (e.g. USD if original is PKR)
       const parsedAmount = parseFloat(amount);
+      const conversion = convertToFlutterwaveCurrency(parsedAmount, user.currency);
+      if (conversion.error) {
+        return res.status(400).json({ error: conversion.error });
+      }
+
+      // Create pending transaction (stored in user's original currency)
       const transaction = new Transaction({
         user:          user._id,
         type:          'deposit',
@@ -606,7 +612,11 @@ router.post('/flw-deposit-initialize',
         paymentProvider: 'flutterwave',
         metadata: {
           originalCurrency: user.currency,
-          originalAmount:   parsedAmount
+          originalAmount:   parsedAmount,
+          flwCurrency:      conversion.flwCurrency,
+          flwAmount:        conversion.flwAmount,
+          converted:        conversion.converted,
+          exchangeRate:     conversion.exchangeRate || null
         }
       });
       await transaction.save();
@@ -616,7 +626,7 @@ router.post('/flw-deposit-initialize',
         process.env.SLACK_WEBHOOK_DEPOSIT_REQUEST,
         `:flutterwave: *Flutterwave Deposit Initiated (Pending)*\n` +
         `User: ${user.username}\n` +
-        `Requested: ${formatCurrency(parseFloat(amount), user.currency)}\n` +
+        `Requested: ${formatCurrency(parsedAmount, user.currency)}${conversion.converted ? ` (Converted to ${conversion.flwCurrency} ${conversion.flwAmount})` : ''}\n` +
         `Reference: ${transaction.reference}\n` +
         `Time: ${new Date().toLocaleString('en-KE', { timeZone: 'Africa/Nairobi' })}`
       );
@@ -624,8 +634,8 @@ router.post('/flw-deposit-initialize',
       const redirectUrl = `${process.env.FRONTEND_URL || 'https://classybetaviator.com'}/flw-success.html?reference=${transaction.reference}`;
 
       const flwResult = await flutterwaveService.initializeTransaction({
-        amount:        parsedAmount,
-        currency:      user.currency,
+        amount:        conversion.flwAmount,
+        currency:      conversion.flwCurrency,
         email:         user.email || `${user.username}@ClassyBet.com`,
         reference:     transaction.reference,
         redirectUrl,
@@ -635,7 +645,9 @@ router.post('/flw-deposit-initialize',
         meta: {
           userId:        user._id.toString(),
           username:      user.username,
-          transactionId: transaction._id.toString()
+          transactionId: transaction._id.toString(),
+          originalCurrency: user.currency,
+          originalAmount:  parsedAmount
         }
       });
 
@@ -654,9 +666,9 @@ router.post('/flw-deposit-initialize',
         await transaction.save();
 
         // --- PAYSTACK FALLBACK ---
-        const conversion = convertToPaystackCurrency(parsedAmount, user.currency);
-        if (conversion.error) {
-          return res.status(400).json({ error: 'Both Flutterwave and Paystack are unavailable: ' + conversion.error });
+        const conversionPs = convertToPaystackCurrency(parsedAmount, user.currency);
+        if (conversionPs.error) {
+          return res.status(400).json({ error: 'Both Flutterwave and Paystack are unavailable: ' + conversionPs.error });
         }
 
         const fallbackTx = new Transaction({
@@ -670,10 +682,10 @@ router.post('/flw-deposit-initialize',
           description:   `Paystack fallback deposit of ${formatCurrency(parsedAmount, user.currency)}`,
           paymentProvider: 'paystack',
           metadata: {
-            paystackCurrency:  conversion.paystackCurrency,
-            paystackAmount:    conversion.paystackAmount,
-            converted:         conversion.converted,
-            exchangeRate:      conversion.exchangeRate || null,
+            paystackCurrency:  conversionPs.paystackCurrency,
+            paystackAmount:    conversionPs.paystackAmount,
+            converted:         conversionPs.converted,
+            exchangeRate:      conversionPs.exchangeRate || null,
             originalCurrency:  user.currency,
             originalAmount:    parseFloat(amount),
             flwFallback:       true,
@@ -684,8 +696,8 @@ router.post('/flw-deposit-initialize',
 
         const psResult = await paystackService.initializeTransaction({
           email:     user.email || `${user.username}@ClassyBet.com`,
-          amount:    conversion.paystackAmount,
-          currency:  conversion.paystackCurrency,
+          amount:    conversionPs.paystackAmount,
+          currency:  conversionPs.paystackCurrency,
           reference: fallbackTx.reference,
           channels:  ['card', 'bank', 'ussd', 'qr', 'mobile_money', 'bank_transfer', 'eft'],
           metadata: {
@@ -718,8 +730,8 @@ router.post('/flw-deposit-initialize',
             access_code:       psResult.data.access_code,
             reference:         fallbackTx.reference,
             transactionId:     fallbackTx.reference,
-            amount:            conversion.paystackAmount,
-            currency:          conversion.paystackCurrency,
+            amount:            conversionPs.paystackAmount,
+            currency:          conversionPs.paystackCurrency,
             originalAmount:    parseFloat(amount),
             originalCurrency:  user.currency
           }
@@ -734,8 +746,8 @@ router.post('/flw-deposit-initialize',
           authorization_url: flwResult.data.authorization_url,
           reference:         transaction.reference,
           transactionId:     transaction.reference,
-          amount:            parseFloat(amount),
-          currency:          user.currency,
+          amount:            conversion.flwAmount,
+          currency:          conversion.flwCurrency,
           widgetParams:      flwResult.data.widgetParams
         }
       });
@@ -787,6 +799,15 @@ router.post('/flw-deposit-verify',
       // Ensure this transaction_id matches our reference
       if (paymentData.reference !== reference) {
         return res.status(400).json({ error: 'Reference mismatch – possible fraud attempt' });
+      }
+
+      // Check amount and currency matches what was billed
+      const expectedAmount = transaction.metadata?.flwAmount || transaction.amount;
+      const expectedCurrency = transaction.metadata?.flwCurrency || transaction.currency;
+
+      if (paymentData.amount < expectedAmount || paymentData.currency !== expectedCurrency) {
+        console.error(`Fraud attempt detected on verify: paid ${paymentData.currency} ${paymentData.amount}, expected ${expectedCurrency} ${expectedAmount}`);
+        return res.status(400).json({ error: 'Amount or currency mismatch – possible fraud attempt' });
       }
 
       if (paymentData.status !== 'successful') {
@@ -880,6 +901,18 @@ router.post('/flutterwave-webhook', async (req, res) => {
 
       if (transaction.status === 'completed') {
         return res.json({ message: 'Already processed' });
+      }
+
+      // Verify amount and currency matches what was billed
+      const expectedAmount = transaction.metadata?.flwAmount || transaction.amount;
+      const expectedCurrency = transaction.metadata?.flwCurrency || transaction.currency;
+
+      if (data.amount < expectedAmount || data.currency !== expectedCurrency) {
+        console.error(`Fraud/Mismatch attempt detected on webhook: paid ${data.currency} ${data.amount}, expected ${expectedCurrency} ${expectedAmount}`);
+        transaction.status = 'failed';
+        transaction.metadata = { ...transaction.metadata, fraudAttempt: true, webhookAmount: data.amount, webhookCurrency: data.currency };
+        await transaction.save();
+        return res.status(400).json({ error: 'Amount or currency mismatch – possible fraud attempt' });
       }
 
       const user = await User.findById(transaction.user);

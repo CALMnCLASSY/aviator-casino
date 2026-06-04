@@ -476,6 +476,37 @@
         sessionId = sessionStorage.getItem('chatSessionId') || generateSessionId();
         sessionStorage.setItem('chatSessionId', sessionId);
 
+        let lastMessageTime = new Date(0).toISOString();
+        let pollInterval = null;
+
+        function startPolling() {
+            if (pollInterval) clearInterval(pollInterval);
+            const intervalTime = isOpen ? 3000 : 10000;
+            pollInterval = setInterval(pollNewMessages, intervalTime);
+        }
+
+        async function pollNewMessages() {
+            if (!conversationId) return;
+            try {
+                const token = localStorage.getItem('token');
+                const headers = { 'Content-Type': 'application/json' };
+                if (token) headers['Authorization'] = `Bearer ${token}`;
+
+                const response = await fetch(`${API_ROOT}/support/conversation/${conversationId}/updates?since=${lastMessageTime}`, {
+                    headers
+                });
+                const data = await response.json();
+                if (data.messages && data.messages.length > 0) {
+                    data.messages.forEach(msg => {
+                        displayMessage(msg.from, msg.text, new Date(msg.createdAt));
+                        showNotification();
+                    });
+                }
+            } catch (error) {
+                console.error('Error polling messages:', error);
+            }
+        }
+
         // Toggle chat window
         function toggleChat() {
             const chatWindow = document.getElementById('chatWindow');
@@ -484,9 +515,13 @@
             if (isOpen) {
                 chatWindow.classList.add('open');
                 document.getElementById('chatBadge').classList.remove('show');
-                loadConversation();
+                messageCount = 0;
+                loadConversation().then(() => {
+                    startPolling();
+                });
             } else {
                 chatWindow.classList.remove('open');
+                startPolling();
             }
         }
 
@@ -503,8 +538,12 @@
                 
                 const data = await response.json();
                 
-                if (data.conversationId && data.messages.length > 0) {
+                if (data.conversationId) {
                     conversationId = data.conversationId;
+                    startPolling();
+                }
+
+                if (data.conversationId && data.messages.length > 0) {
                     const messagesContainer = document.getElementById('chatMessages');
                     const welcomeMessage = messagesContainer.querySelector('.welcome-message');
                     
@@ -557,6 +596,13 @@
             
             messagesContainer.insertBefore(messageDiv, typingIndicator);
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+            if (timestamp) {
+                const msgDate = new Date(timestamp);
+                if (msgDate > new Date(lastMessageTime)) {
+                    lastMessageTime = msgDate.toISOString();
+                }
+            }
         }
 
         // Show/hide typing indicator
@@ -613,6 +659,7 @@
                 if (data.success) {
                     conversationId = data.conversationId;
                     showTyping(false);
+                    startPolling();
                     
                     // Display AI response (last message which should be from agent)
                     const messages = data.messages;
