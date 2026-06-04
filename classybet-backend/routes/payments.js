@@ -735,7 +735,8 @@ router.post('/flw-deposit-initialize',
           reference:         transaction.reference,
           transactionId:     transaction.reference,
           amount:            parseFloat(amount),
-          currency:          user.currency
+          currency:          user.currency,
+          widgetParams:      flwResult.data.widgetParams
         }
       });
 

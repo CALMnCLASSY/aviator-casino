@@ -118,7 +118,12 @@ async function initiateFlutterwaveDeposit(amount) {
 
         // Step 2b: Open Flutterwave inline widget — backend supplies all params
         var ref          = initData.data.reference;
-        var widgetParams = initData.data.widgetParams || {};
+        var widgetParams = initData.data.widgetParams;
+
+        if (!widgetParams || !widgetParams.amount) {
+            console.error('❌ Invalid Flutterwave configuration received:', initData);
+            throw new Error('Server returned incomplete Flutterwave configuration.');
+        }
 
         _openFlutterwaveWidget(ref, widgetParams);
 
