@@ -640,6 +640,14 @@ router.post('/flw-deposit-initialize',
       });
 
       if (!flwResult.success) {
+        // 🔍 Log full Flutterwave failure details for diagnosis
+        console.error('❌ Flutterwave FAILED – falling back to Paystack.');
+        console.error('   FLW Error:', flwResult.error);
+        console.error('   FLW Secret Key configured:', !!process.env.FLUTTERWAVE_SECRET_KEY);
+        console.error('   FLW Secret Key preview:', process.env.FLUTTERWAVE_SECRET_KEY
+          ? process.env.FLUTTERWAVE_SECRET_KEY.substring(0, 12) + '...'
+          : 'NOT SET');
+
         // Mark transaction failed and fall back to Paystack
         transaction.status = 'failed';
         transaction.metadata = { ...transaction.metadata, flwInitError: flwResult.error };

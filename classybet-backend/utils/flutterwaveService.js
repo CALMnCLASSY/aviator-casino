@@ -102,10 +102,16 @@ class FlutterwaveService {
             }
 
         } catch (error) {
-            console.error('❌ Flutterwave initialization error:', error.response?.data || error.message);
+            const httpStatus  = error.response?.status;
+            const httpBody    = error.response?.data;
+            console.error('\u274c Flutterwave API error:');
+            console.error('   HTTP Status  :', httpStatus || 'No response (network error)');
+            console.error('   Response Body:', JSON.stringify(httpBody) || error.message);
+            console.error('   Secret Key OK:', !!this.secretKey,
+                this.secretKey ? '(' + this.secretKey.substring(0, 10) + '...)' : '(NOT SET)');
             return {
                 success: false,
-                error:   error.response?.data?.message || error.message
+                error:   httpBody?.message || error.message
             };
         }
     }

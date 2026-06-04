@@ -367,16 +367,6 @@ class GameStateManager {
     if (!this.io) return;
 
     const statePayload = this.getCurrentState();
-    
-    // Log nextRound availability for debugging
-    if (this.currentState === 'countdown' || this.currentState === 'flying') {
-      if (statePayload.nextRound) {
-        console.log(`📡 Broadcasting: Round ${statePayload.roundId} | Next: ${statePayload.nextRound.roundId} (${statePayload.nextRound.multiplier}x)`);
-      } else {
-        console.warn(`⚠️ Broadcasting: Round ${statePayload.roundId} | Next: NOT AVAILABLE`);
-      }
-    }
-
     this.io.emit('game-state', statePayload);
   }
 
