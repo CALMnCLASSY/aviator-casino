@@ -143,7 +143,7 @@ class AuthManager {
         if (!token) return;
 
         try {
-            const response = await fetch(`${this.apiBase}/api/users/balance`, {
+            const response = await fetch(`${this.apiBase}/api/user/balance`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }

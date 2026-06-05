@@ -3062,6 +3062,51 @@ async function initializeWebSocket() {
             }
         };
 
+        // Listen for real-time balance updates (e.g., from successful deposits/refunds)
+        if (gameSocket.socket) {
+            gameSocket.socket.on('balance-update', (data) => {
+                console.log('💰 Real-time balance update received:', data);
+                if (data.newBalance !== undefined) {
+                    const balance = Number(data.newBalance);
+                    
+                    // Sync localStorage
+                    try {
+                        const userData = localStorage.getItem('userData');
+                        if (userData) {
+                            const user = JSON.parse(userData);
+                            user.balance = balance;
+                            localStorage.setItem('userData', JSON.stringify(user));
+                        }
+                    } catch (e) {
+                        console.error('Error syncing balance to localStorage:', e);
+                    }
+
+                    // Update game playerBalance
+                    if (game) {
+                        game.playerBalance = balance;
+                        game.updateBalance();
+                    }
+
+                    // Update any other DOM elements displaying balance
+                    const currency = (game && game.currentUser && game.currentUser.currency) || 'KES';
+                    const formattedBalance = (game && typeof game.formatCurrency === 'function')
+                        ? game.formatCurrency(balance, currency)
+                        : `${currency} ${balance.toFixed(2)}`;
+
+                    [
+                        document.getElementById('headerBalance'),
+                        document.getElementById('balance-amount'),
+                        document.getElementById('nav-balance'),
+                        document.getElementById('mobile-balance'),
+                        document.getElementById('message-balance'),
+                        document.querySelector('.balance-amount')
+                    ].forEach((el) => {
+                        if (el) el.textContent = formattedBalance;
+                    });
+                }
+            });
+        }
+
         // Listen for connection status changes
         gameSocket.onConnectionStatusChange = (status) => {
             updateConnectionStatus(status);

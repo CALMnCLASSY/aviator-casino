@@ -486,6 +486,19 @@ router.post('/users/:userId/balance', authenticateToken, requireAdmin, async (re
     user.balance = balanceAfter;
     await user.save();
 
+    // Emit balance update via socket
+    try {
+      const io = req.app.get('socketio');
+      if (io) {
+        io.to(`user:${user.username}`).emit('balance-update', {
+          newBalance: Number(balanceAfter)
+        });
+        console.log(`📡 WebSocket manual balance-update emitted for user:${user.username} -> ${balanceAfter}`);
+      }
+    } catch (err) {
+      console.error('❌ Failed to emit balance update:', err);
+    }
+
     const transaction = await Transaction.create({
       user: user._id,
       type: type === 'add' ? 'bonus' : 'withdrawal',
@@ -576,6 +589,18 @@ router.post('/transactions/cancel-all-pending-withdrawals', authenticateToken, r
       // Refund the balance to user
       tx.user.balance += tx.amount;
       await tx.user.save();
+
+      // Emit balance update via socket
+      try {
+        const io = req.app.get('socketio');
+        if (io) {
+          io.to(`user:${tx.user.username}`).emit('balance-update', {
+            newBalance: Number(tx.user.balance)
+          });
+        }
+      } catch (err) {
+        console.error('❌ Failed to emit bulk balance update:', err);
+      }
 
       bulkOps.push({
         updateOne: {

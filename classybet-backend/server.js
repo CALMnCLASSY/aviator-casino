@@ -628,9 +628,21 @@ const io = new Server(server, {
   }
 });
 
+// Attach socket.io to app to allow access in routes
+app.set('socketio', io);
+
 // WebSocket connection handling
 io.on('connection', (socket) => {
   console.log('🔌 Client connected: ' + socket.id);
+
+  // Handle client registration to join username-specific room
+  socket.on('register', (username) => {
+    if (username) {
+      socket.username = username;
+      socket.join(`user:${username}`);
+      console.log(`👤 Socket ${socket.id} joined room user:${username}`);
+    }
+  });
 
   // Send current game state immediately
   socket.emit('game-state', gameStateManager.getCurrentState());

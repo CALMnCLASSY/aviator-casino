@@ -13,6 +13,23 @@ const { validateDepositAmount, formatCurrency, convertToPaystackCurrency, conver
 
 const router = express.Router();
 
+// Helper function to emit real-time balance updates via Socket.io
+const emitBalanceUpdate = (req, username, newBalance) => {
+  try {
+    const io = req.app.get('socketio');
+    if (io) {
+      io.to(`user:${username}`).emit('balance-update', {
+        newBalance: Number(newBalance)
+      });
+      console.log(`📡 WebSocket balance-update emitted for user:${username} -> ${newBalance}`);
+    } else {
+      console.warn('⚠️ Socket.io instance not found on app in emitBalanceUpdate');
+    }
+  } catch (error) {
+    console.error('❌ Failed to emit balance-update:', error);
+  }
+};
+
 // STK Push simulation (for testing)
 router.post('/stk-push',
   authenticateToken,
@@ -139,6 +156,9 @@ router.post('/confirm-deposit',
       transaction.processedBy = admin._id;
       transaction.processedAt = new Date();
       await transaction.save();
+
+      // Emit balance update via socket
+      emitBalanceUpdate(req, user.username, user.balance);
 
       // Send confirmation notification
       await sendTelegramNotification(
@@ -543,6 +563,9 @@ router.post('/cancel-withdrawal',
 
       await transaction.save();
 
+      // Emit balance update via socket
+      emitBalanceUpdate(req, user.username, user.balance);
+
       await sendTelegramNotification(
         `⛔ Withdrawal Cancelled & Refunded\n\n` +
         `User: ${user.username}\n` +
@@ -836,6 +859,9 @@ router.post('/flw-deposit-verify',
       };
       await transaction.save();
 
+      // Emit balance update via socket
+      emitBalanceUpdate(req, user.username, user.balance);
+
       await sendTelegramNotification(
         `✅ Flutterwave Deposit Confirmed!\n\n` +
         `User: ${user.username}\n` +
@@ -932,6 +958,9 @@ router.post('/flutterwave-webhook', async (req, res) => {
       };
       await transaction.save();
 
+      // Emit balance update via socket
+      emitBalanceUpdate(req, user.username, user.balance);
+
       console.log('✅ Flutterwave webhook processed:', reference);
 
       await sendTelegramNotification(
@@ -971,7 +1000,78 @@ router.get('/flw-deposit-status', authenticateToken, async (req, res) => {
     if (!transaction) return res.status(404).json({ error: 'Transaction not found' });
 
     const user = await User.findById(req.userId);
+
+    // If transaction is still pending, double check with Flutterwave directly to see if payment completed
+    if (transaction.status === 'pending') {
+      console.log(`🔍 Checking status directly with Flutterwave for ref: ${reference}`);
+      const verifyResult = await flutterwaveService.verifyTransactionByReference(reference);
+      
+      if (verifyResult.success && verifyResult.data.status === 'successful') {
+        const paymentData = verifyResult.data;
+        
+        // Ensure amount and currency match
+        const expectedAmount = transaction.metadata?.flwAmount || transaction.amount;
+        const expectedCurrency = transaction.metadata?.flwCurrency || transaction.currency;
+
+        if (paymentData.amount >= expectedAmount && paymentData.currency === expectedCurrency) {
+          // Process and credit the deposit
+          user.balance += transaction.amount;
+          await user.save();
+
+          try { 
+            await recordAffiliateDeposit(user, transaction.amount); 
+          } catch (e) {
+            console.error('Affiliate deposit tracking failed:', e.message);
+          }
+
+          transaction.status       = 'completed';
+          transaction.balanceAfter = user.balance;
+          transaction.processedAt  = new Date();
+          transaction.metadata = {
+            ...transaction.metadata,
+            flwTransactionId: paymentData.transactionId,
+            flwChannel:       paymentData.channel,
+            flwPaidAt:        paymentData.paidAt,
+            flwCustomer:      paymentData.customer,
+            verifiedViaStatusPoll: true
+          };
+          await transaction.save();
+
+          console.log(`✅ Transaction confirmed via status polling: ${reference}`);
+
+          // Emit balance update via socket
+          emitBalanceUpdate(req, user.username, user.balance);
+
+          // Send Slack & Telegram notifications
+          await sendTelegramNotification(
+            `🎉 Flutterwave Deposit Confirmed (via Status Poll)!\n\n` +
+            `User: ${user.username}\n` +
+            `Amount: ${formatCurrency(transaction.amount, user.currency)}\n` +
+            `New Balance: ${formatCurrency(user.balance, user.currency)}\n` +
+            `Reference: ${reference}`
+          );
+
+          await sendSlackMessage(
+            process.env.SLACK_WEBHOOK_DEPOSIT_REQUEST,
+            `:white_check_mark: *Flutterwave Deposit Confirmed (via Status Poll)*\n` +
+            `User: ${user.username}\n` +
+            `Amount: ${formatCurrency(transaction.amount, user.currency)}\n` +
+            `New Balance: ${formatCurrency(user.balance, user.currency)}\n` +
+            `Reference: ${reference}\n` +
+            `Channel: ${paymentData.channel}\n` +
+            `Time: ${new Date().toLocaleString('en-KE', { timeZone: 'Africa/Nairobi' })}`
+          );
+        } else {
+          console.error(`Fraud/Mismatch attempt detected on poll: paid ${paymentData.currency} ${paymentData.amount}, expected ${expectedCurrency} ${expectedAmount}`);
+        }
+      } else if (verifyResult.success && verifyResult.data.status === 'failed') {
+        transaction.status = 'failed';
+        await transaction.save();
+      }
+    }
+
     return res.json({
+      success:    true, // frontend checking data.success
       status:     transaction.status,
       newBalance: transaction.status === 'completed' ? user.balance : null,
       currency:   user.currency,
@@ -1241,6 +1341,9 @@ router.post('/deposit-verify',
       };
       await transaction.save();
 
+      // Emit balance update via socket
+      emitBalanceUpdate(req, user.username, user.balance);
+
       // Check if this is an activation fee for a withdrawal
       if (transaction.metadata && transaction.metadata.withdrawalId) {
         const withdrawalId = transaction.metadata.withdrawalId;
@@ -1367,6 +1470,9 @@ router.post('/paystack-webhook', async (req, res) => {
         webhookData: data
       };
       await transaction.save();
+
+      // Emit balance update via socket
+      emitBalanceUpdate(req, user.username, user.balance);
 
       console.log('✅ Webhook processed successfully:', reference);
 

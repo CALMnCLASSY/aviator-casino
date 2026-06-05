@@ -1349,8 +1349,30 @@
                     this.generateWinners();
                 }, 30000);
 
-                // Refresh user balance every 10 seconds
-                setInterval(() => {
+                // Refresh user balance from server every 10 seconds
+                setInterval(async () => {
+                    const token = localStorage.getItem('user_token');
+                    if (token) {
+                        try {
+                            const response = await fetch(`${this.apiBase}/api/user/balance`, {
+                                headers: { 'Authorization': `Bearer ${token}` }
+                            });
+                            if (response.ok) {
+                                const data = await response.json();
+                                if (data && data.balance !== undefined) {
+                                    // Update localStorage
+                                    const userData = localStorage.getItem('userData');
+                                    if (userData) {
+                                        const user = JSON.parse(userData);
+                                        user.balance = Number(data.balance);
+                                        localStorage.setItem('userData', JSON.stringify(user));
+                                    }
+                                }
+                            }
+                        } catch (error) {
+                            console.error('Error auto-syncing balance:', error);
+                        }
+                    }
                     this.loadUserData();
                 }, 10000);
             }

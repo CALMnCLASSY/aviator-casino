@@ -59,6 +59,18 @@ class GameSocketClient {
             console.log('🔌 Connected to game server');
             this.connected = true;
             this.emitConnectionStatus('connected');
+            
+            // Auto-register user to username-specific room for real-time balance updates
+            try {
+                const userData = JSON.parse(localStorage.getItem('userData'));
+                if (userData && userData.username) {
+                    console.log('👤 Auto-registering socket room for user:', userData.username);
+                    this.socket.emit('register', userData.username);
+                }
+            } catch (e) {
+                console.error('Error auto-registering socket room:', e);
+            }
+
             this.startPing();
         });
 
@@ -122,6 +134,16 @@ class GameSocketClient {
         this.socket.on('pong', () => {
             this.handlePong();
         });
+    }
+
+    /**
+     * Register username for room-specific emissions
+     */
+    registerUser(username) {
+        if (this.socket && this.connected && username) {
+            console.log('👤 Registering username room via method:', username);
+            this.socket.emit('register', username);
+        }
     }
 
     /**

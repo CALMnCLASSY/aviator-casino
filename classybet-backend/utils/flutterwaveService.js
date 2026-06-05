@@ -178,6 +178,58 @@ class FlutterwaveService {
     }
 
     /**
+     * Verify a transaction using its tx_ref (reference).
+     *
+     * @param {string} txRef – Transaction reference string
+     */
+    async verifyTransactionByReference(txRef) {
+        try {
+            console.log('🔍 Verifying Flutterwave transaction by reference:', txRef);
+
+            const response = await axios.get(
+                `${this.baseUrl}/transactions/verify_by_reference?tx_ref=${txRef}`,
+                { headers: this.getHeaders() }
+            );
+
+            if (response.data.status === 'success') {
+                const data = response.data.data;
+                console.log('✅ Flutterwave transaction verified by ref:', {
+                    id:       data.id,
+                    status:   data.status,
+                    amount:   data.amount,
+                    currency: data.currency
+                });
+
+                return {
+                    success: true,
+                    data: {
+                        transactionId: data.id,
+                        reference:     data.tx_ref,
+                        amount:        data.amount,
+                        currency:      data.currency,
+                        status:        data.status,   // 'successful' | 'failed' | 'pending'
+                        paidAt:        data.created_at,
+                        channel:       data.payment_type,
+                        customer:      data.customer,
+                        metadata:      data.meta
+                    }
+                };
+            } else {
+                throw new Error(response.data.message || 'Flutterwave verification failed');
+            }
+
+        } catch (error) {
+            const httpStatus = error.response?.status;
+            const httpBody   = error.response?.data;
+            console.error('❌ Flutterwave verify error:', httpStatus, JSON.stringify(httpBody) || error.message);
+            return {
+                success: false,
+                error:   httpBody?.message || error.message
+            };
+        }
+    }
+
+    /**
      * Verify Flutterwave webhook signature.
      * Uses the verif-hash header — does NOT require secret key.
      *
