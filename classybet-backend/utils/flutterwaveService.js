@@ -125,6 +125,65 @@ class FlutterwaveService {
     }
 
     /**
+     * Call Flutterwave Standard Payment API to generate a hosted checkout payment link
+     * @param {object} params
+     * @returns {Promise<object>}
+     */
+    async createStandardPaymentLink(params) {
+        try {
+            const {
+                amount, currency, email, reference,
+                redirectUrl, customerName, customerPhone, description, meta = {}
+            } = params;
+
+            const cur = (currency || 'USD').toUpperCase();
+            const payload = {
+                tx_ref: reference,
+                amount: amount,
+                currency: cur,
+                redirect_url: redirectUrl,
+                customer: {
+                    email: email,
+                    phonenumber: customerPhone || '',
+                    name: customerName || email
+                },
+                customizations: {
+                    title: 'ClassyBet Deposit',
+                    description: description || `Deposit of ${cur} ${amount}`,
+                    logo: 'https://classybetaviator.com/images/classybetcasino-logo.jpeg'
+                },
+                meta: { ...meta, source: 'classybet' }
+            };
+
+            console.log('🔄 Requesting FLW standard checkout payment link:', payload);
+
+            const response = await axios.post(
+                `${this.baseUrl}/payments`,
+                payload,
+                { headers: this.getHeaders() }
+            );
+
+            if (response.data.status === 'success') {
+                console.log('✅ FLW hosted link generated:', response.data.data.link);
+                return {
+                    success: true,
+                    link: response.data.data.link
+                };
+            } else {
+                throw new Error(response.data.message || 'Failed to generate payment link');
+            }
+        } catch (error) {
+            const httpStatus = error.response?.status;
+            const httpBody = error.response?.data;
+            console.error('❌ FLW payment link error:', httpStatus, JSON.stringify(httpBody) || error.message);
+            return {
+                success: false,
+                error: httpBody?.message || error.message
+            };
+        }
+    }
+
+    /**
      * Verify a completed transaction using the secret key.
      * Called from /flw-deposit-verify after the widget's callback fires.
      *

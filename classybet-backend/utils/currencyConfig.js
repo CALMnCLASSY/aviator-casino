@@ -1,4 +1,4 @@
-const PAYSTACK_CURRENCIES = ['KES', 'USD'];
+
 
 const CURRENCY_SYMBOLS = {
     'AFN': '؋',
@@ -321,9 +321,7 @@ function formatCurrency(amount, currency) {
     return `${symbol} ${amount.toFixed(2)}`;
 }
 
-function isPaystackSupported(currency) {
-    return PAYSTACK_CURRENCIES.includes(currency);
-}
+
 
 function getDepositLimits(currency) {
     const ExchangeRateService = require('../services/ExchangeRateService');
@@ -363,39 +361,8 @@ function validateWithdrawalAmount(amount, currency) {
     return { valid: true };
 }
 
-function convertToPaystackCurrency(amount, fromCurrency) {
-    if (PAYSTACK_CURRENCIES.includes(fromCurrency)) {
-        return {
-            paystackAmount: amount,
-            paystackCurrency: fromCurrency,
-            converted: false,
-            originalAmount: amount,
-            originalCurrency: fromCurrency
-        };
-    }
-    const ExchangeRateService = require('../services/ExchangeRateService');
-    const localToUsdRate = ExchangeRateService.getRate(fromCurrency);
-    if (!localToUsdRate) {
-        return {
-            paystackAmount: null,
-            paystackCurrency: null,
-            converted: false,
-            error: `Currency ${fromCurrency} is not supported or rates unavailable`
-        };
-    }
-    const usdAmount = parseFloat((amount / localToUsdRate).toFixed(2));
-    return {
-        paystackAmount: usdAmount,
-        paystackCurrency: 'USD',
-        converted: true,
-        originalAmount: amount,
-        originalCurrency: fromCurrency,
-        exchangeRate: 1 / localToUsdRate
-    };
-}
 
 module.exports = {
-    PAYSTACK_CURRENCIES,
     CURRENCY_SYMBOLS,
     CURRENCY_NAMES,
     COUNTRY_CURRENCY_MAP,
@@ -403,12 +370,10 @@ module.exports = {
     getCurrencySymbol,
     getCurrencyName,
     formatCurrency,
-    isPaystackSupported,
     getDepositLimits,
     getWithdrawalLimits,
     validateDepositAmount,
-    validateWithdrawalAmount,
-    convertToPaystackCurrency
+    validateWithdrawalAmount
 };
 
 const FLUTTERWAVE_CURRENCIES = ['NGN', 'KES', 'GHS', 'UGX', 'TZS', 'RWF', 'XAF', 'XOF', 'ZAR', 'ZMW', 'MWK', 'ETB', 'SLL', 'USD', 'GBP', 'EUR'];

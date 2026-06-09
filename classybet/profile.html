@@ -7,8 +7,6 @@
     <title>ClassyBet Profile</title>
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <!-- Paystack SDK -->
-    <script src="https://js.paystack.co/v1/inline.js"></script>
     <style>
         * {
             margin: 0;
@@ -1167,7 +1165,7 @@
                             style="display: none; color: #30fcbe; padding: 10px; border: 1px solid #30fcbe; border-radius: 8px; margin-bottom: 1rem; text-align: center; background: rgba(48, 252, 190, 0.1);">
                         </div>
 
-                        <form id="deposit-form" onsubmit="handlePaystackDeposit(event)">
+                        <form id="deposit-form" onsubmit="handleFlutterwaveDeposit(event)">
                             <div class="form-group">
                                 <label for="deposit-amount">Amount (<span id="currency-code">KES</span>)</label>
                                 <input type="number" id="deposit-amount" class="form-control" min="5" max="150000"
@@ -1205,7 +1203,7 @@
                                     <li>🔐 Secure & Instant Processing</li>
                                 </ul>
                                 <p style="color: #999; font-size: 0.85rem; margin-top: 0.75rem; margin-bottom: 0;">
-                                    <i class="fas fa-shield-alt"></i> Powered by Paystack - Payment methods vary by
+                                    <i class="fas fa-shield-alt"></i> Powered by Flutterwave - Payment methods vary by
                                     country
                                 </p>
                             </div>
@@ -1929,6 +1927,7 @@ Support: support@classybetaviator.com`;
         // Check if already logged in
         if (authToken) {
             loadUserProfile();
+            checkFlutterwaveRedirect();
         } else {
             showLoginForm();
             // Check for referral code after showing login
@@ -2011,8 +2010,8 @@ Support: support@classybetaviator.com`;
             }
         });
 
-        // Paystack Deposit form handler
-        async function handlePaystackDeposit(event) {
+        // Flutterwave Deposit form handler
+        async function handleFlutterwaveDeposit(event) {
             event.preventDefault();
 
             const amount = document.getElementById('deposit-amount').value;
@@ -2024,7 +2023,7 @@ Support: support@classybetaviator.com`;
             successDiv.style.display = 'none';
 
             try {
-                await initiatePaystackDeposit(parseFloat(amount));
+                await initiateFlutterwaveDeposit(parseFloat(amount));
             } catch (error) {
                 errorDiv.textContent = error.message;
                 errorDiv.style.display = 'block';
@@ -2527,8 +2526,8 @@ Support: support@classybetaviator.com`;
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Initializing...';
 
             try {
-                // Initialize Paystack deposit with special metadata
-                const response = await fetch(`${API_BASE}/api/payments/deposit-initialize`, {
+                // Initialize Flutterwave deposit with special metadata
+                const response = await fetch(`${API_BASE}/api/payments/flw-deposit-initialize`, {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${authToken}`,
@@ -2542,42 +2541,9 @@ Support: support@classybetaviator.com`;
 
                 const data = await response.json();
 
-                if (response.ok) {
-                    const amountInMinorUnits = Math.round(data.data.amount * 100);
-                    const popupCurrency = data.data.currency;
-
-                    // Only KES supports African payment methods (M-Pesa, USSD, etc.)
-                    // All other currencies go through USD and only support card + bank
-                    const popupChannels = (popupCurrency === 'KES')
-                        ? ['card', 'bank', 'ussd', 'qr', 'mobile_money', 'bank_transfer', 'eft']
-                        : ['card', 'bank'];
-
-                    console.log('💳 Opening Paystack popup for activation fee:', {
-                        reference: data.data.reference,
-                        amount: data.data.amount,
-                        amountInMinorUnits: amountInMinorUnits,
-                        currency: popupCurrency,
-                        channels: popupChannels
-                    });
-
-                    // Open Paystack checkout
-                    const handler = PaystackPop.setup({
-                        key: (typeof PAYSTACK_PUBLIC_KEY !== 'undefined') ? PAYSTACK_PUBLIC_KEY : 'pk_live_4b4f3a0ed97c13680b6a29897e6624734c072f54',
-                        email: currentUser.email || `${currentUser.username}@classybet.com`,
-                        amount: amountInMinorUnits,
-                        currency: popupCurrency,
-                        ref: data.data.reference,
-                        channels: popupChannels,
-                        callback: function (response) {
-                            // Verify payment on backend
-                            verifyActivationPayment(response.reference);
-                        },
-                        onClose: function () {
-                            btn.disabled = false;
-                            btn.innerHTML = '<i class="fas fa-rocket"></i> Activate Now';
-                        }
-                    });
-                    handler.openIframe();
+                if (response.ok && data.success && data.data.payment_link) {
+                    console.log('💳 Redirecting to Flutterwave hosted link for activation fee:', data.data.payment_link);
+                    window.location.href = data.data.payment_link;
                 } else {
                     alert(data.error || 'Failed to initialize payment');
                     btn.disabled = false;
@@ -2591,33 +2557,62 @@ Support: support@classybetaviator.com`;
             }
         }
 
-        async function verifyActivationPayment(reference) {
-            closeReactivationModal();
-            // Show a global loading/processing UI if available, or just alert
-            const btn = document.getElementById('activate-btn');
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying...';
+        async function checkFlutterwaveRedirect() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const status = urlParams.get('status');
+            const txRef = urlParams.get('tx_ref');
+            const transactionId = urlParams.get('transaction_id') || urlParams.get('id');
 
-            try {
-                const response = await fetch(`${API_BASE}/api/payments/deposit-verify`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${authToken}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ reference })
-                });
+            if (status && txRef) {
+                // Clear the query params from URL without refreshing the page
+                const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+                window.history.replaceState({ path: newUrl }, '', newUrl);
 
-                const data = await response.json();
+                if (status === 'successful' || status === 'completed') {
+                    closeReactivationModal();
+                    
+                    // Show activation button as verifying
+                    const btn = document.getElementById('activate-btn');
+                    if (btn) {
+                        btn.disabled = true;
+                        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying...';
+                    }
 
-                if (response.ok) {
-                    alert('Success! Your account has been reactivated and your withdrawal has been approved.');
-                    loadUserProfile(); // Refresh all data
+                    try {
+                        const response = await fetch(`${API_BASE}/api/payments/flw-deposit-verify`, {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${authToken}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                reference: txRef,
+                                transaction_id: parseInt(transactionId) || undefined
+                            })
+                        });
+
+                        const data = await response.json();
+
+                        if (response.ok && data.success) {
+                            alert('Success! Your activation fee has been processed, your account reactivated, and your withdrawal approved.');
+                            if (authToken) {
+                                loadUserProfile();
+                            }
+                        } else {
+                            alert('Verification failed: ' + (data.error || 'Unknown error'));
+                        }
+                    } catch (error) {
+                        console.error('Verification error:', error);
+                        alert('Connection error during verification. Your payment was successful, please check your profile or refresh the page.');
+                    } finally {
+                        if (btn) {
+                            btn.disabled = false;
+                            btn.innerHTML = '<i class="fas fa-rocket"></i> Activate Now';
+                        }
+                    }
                 } else {
-                    alert('Verification failed: ' + (data.error || 'Unknown error'));
+                    alert('Reactivation payment failed or was cancelled.');
                 }
-            } catch (error) {
-                console.error('Verification error:', error);
-                alert('Connection error during verification. Your payment was successful, please refresh in a moment.');
             }
         }
 
@@ -3601,9 +3596,6 @@ Support: support@classybetaviator.com`;
 
     <!-- Currency Utils -->
     <script src="js/currency-utils.js"></script>
-    <!-- Paystack Payment Integration -->
-    <script src="https://js.paystack.co/v1/inline.js"></script>
-    <script src="js/paystack-payment.js"></script>
     <script src="https://checkout.flutterwave.com/v3.js"></script>
     <script src="js/flutterwave-payment.js"></script>
 </body>

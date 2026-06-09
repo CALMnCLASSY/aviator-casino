@@ -1,6 +1,6 @@
 /**
  * Flutterwave Payment Integration – Frontend
- * Primary payment provider. Paystack is the automatic fallback.
+ * Primary and sole payment provider.
  *
  * Architecture: No secret key needed.
  *   - Backend creates a pending DB transaction and returns widget params
@@ -113,12 +113,6 @@ async function initiateFlutterwaveDeposit(amount) {
 
         _showFlwLoading(false);
 
-        if (initData.provider === 'paystack' || initData.fallback) {
-            console.log('⚠️  Falling back to Paystack');
-            _openPaystackFallback(initData.data, userData, initData.data.currency);
-            return;
-        }
-
         var ref          = initData.data.reference;
         var widgetParams = initData.data.widgetParams;
 
@@ -145,16 +139,8 @@ function _openFlutterwaveWidget(reference, widgetParams) {
         script.onload = function () { _openFlutterwaveWidget(reference, widgetParams); };
         script.onerror = function () {
             _showFlwLoading(false);
-            console.warn('⚠️ Flutterwave SDK failed to load. Attempting Paystack fallback...');
-            _showFlwNotification('Switching to alternative secure payment checkout...', 'info');
-            if (typeof window.initiateOriginalPaystackDeposit === 'function') {
-                window.initiateOriginalPaystackDeposit(widgetParams.amount)
-                    .catch(function (err) {
-                        _showFlwNotification('Payment initialization failed. Please try again.', 'error');
-                    });
-            } else {
-                _showFlwNotification('Failed to load payment checkout. Please refresh.', 'error');
-            }
+            console.error('❌ Flutterwave SDK failed to load.');
+            _showFlwNotification('Failed to load payment checkout. Please check your internet connection or refresh the page.', 'error');
         };
         document.head.appendChild(script);
         return;
@@ -316,91 +302,6 @@ function _applyBalanceUpdate(newBalance) {
     }
 }
 
-// ─── Paystack fallback ─────────────────────────────────────────────────────
-
-function _openPaystackFallback(paymentData, userData, currency) {
-    if (typeof PaystackPop === 'undefined') {
-        var script    = document.createElement('script');
-        script.src    = 'https://js.paystack.co/v1/inline.js';
-        script.onload = function () { _openPaystackFallback(paymentData, userData, currency); };
-        script.onerror = function () {
-            _showFlwLoading(false);
-            _showFlwNotification('Failed to load Paystack SDK fallback.', 'error');
-        };
-        document.head.appendChild(script);
-        return;
-    }
-
-    console.log('💳 Opening Paystack fallback popup...');
-    var amountInKobo = Math.round(parseFloat(paymentData.amount) * 100);
-    var channels = (currency === 'KES')
-        ? ['card', 'bank', 'ussd', 'qr', 'mobile_money', 'bank_transfer', 'eft']
-        : ['card', 'bank'];
-
-    var handler = PaystackPop.setup({
-        key:      paymentData.public_key || 'pk_live_4b4f3a0ed97c13680b6a29897e6624734c072f54',
-        email:    userData.email || (userData.username + '@ClassyBet.com'),
-        amount:   amountInKobo,
-        currency: currency,
-        ref:      paymentData.reference,
-        channels: channels,
-        metadata: {
-            custom_fields: [
-                { display_name: 'Username', variable_name: 'username', value: userData.username },
-                { display_name: 'User ID',  variable_name: 'user_id',  value: userData.userId || userData.id }
-            ]
-        },
-        callback: function (response) {
-            console.log('✅ Paystack fallback successful:', response.reference);
-            verifyPaystackFallback(response.reference);
-        },
-        onClose: function () {
-            _showFlwNotification('Payment cancelled', 'warning');
-        }
-    });
-    handler.openIframe();
-}
-
-async function verifyPaystackFallback(reference) {
-    var token = localStorage.getItem('user_token');
-    if (!token) return;
-
-    try {
-        var res = await fetch(API_BASE + '/api/payments/deposit-verify', {
-            method: 'POST',
-            headers: {
-                'Authorization': 'Bearer ' + token,
-                'Content-Type':  'application/json'
-            },
-            body: JSON.stringify({ reference: reference })
-        });
-        var data = await res.json();
-        if (res.ok && data.success) {
-            console.log('✅ Paystack fallback payment verified');
-            _applyBalanceUpdate(data.newBalance);
-
-            var userData = (function () {
-                try { return JSON.parse(localStorage.getItem('userData')); } catch (e) { return null; }
-            }());
-            var currency = (userData && userData.currency) || 'KES';
-
-            _showFlwNotification(
-                '✅ Deposit successful! New balance: ' + flwFormatCurrency(data.newBalance, currency),
-                'success'
-            );
-
-            if (typeof loadUserProfile === 'function') {
-                await loadUserProfile();
-            }
-
-            var depositModal = document.getElementById('deposit-modal');
-            if (depositModal) depositModal.style.display = 'none';
-        }
-    } catch (e) {
-        console.error('Fallback verification failed:', e);
-    }
-}
-
 // ─── Toast System ──────────────────────────────────────────────────────────
 
 function _showFlwNotification(message, type) {
@@ -441,10 +342,6 @@ if (typeof window !== 'undefined') {
     window.verifyFlutterwavePayment   = verifyFlutterwavePayment;
     window.flwFormatCurrency          = flwFormatCurrency;
     window.flwGetCurrencyLimits       = flwGetCurrencyLimits;
-
-    // Alias — all existing call-sites that use initiatePaystackDeposit now
-    // automatically route through Flutterwave first.
-    window.initiatePaystackDeposit = initiateFlutterwaveDeposit;
 }
 
 })();

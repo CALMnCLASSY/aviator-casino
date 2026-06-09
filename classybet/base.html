@@ -651,7 +651,7 @@
                             <li>🔐 Secure & Instant Processing</li>
                         </ul>
                         <p style="color: #999; font-size: 0.85rem; margin-top: 0.75rem; margin-bottom: 0;">
-                            <i class="fas fa-shield-alt"></i> Powered by Paystack - Payment methods vary by country
+                            <i class="fas fa-shield-alt"></i> Powered by Flutterwave - Payment methods vary by country
                         </p>
                     </div>
                 </form>
@@ -1599,14 +1599,11 @@ Support: support@classybetaviator.com`;
         }
     </style>
 
-    <!-- Paystack SDK -->
-    <script src="https://js.paystack.co/v1/inline.js"></script>
     <!-- Currency Utils (must load first) -->
     <script src="./js/currency-utils.js"></script>
     <script src="./api.js?v=2.4"></script>
     <script src="./gameSocket.js?v=2.5"></script>
     <script src="./script.js?v=2.5"></script>
-    <script src="./js/paystack-payment.js"></script>
     <script src="https://checkout.flutterwave.com/v3.js"></script>
     <script src="./js/flutterwave-payment.js"></script>
     <script>
@@ -1669,7 +1666,7 @@ Support: support@classybetaviator.com`;
             observer.observe(depositModal, { attributes: true });
         }
 
-        // Deposit form handler for Paystack
+        // Deposit form handler for Flutterwave
         function handleDepositSubmit(event) {
             event.preventDefault();
             const amount = document.getElementById('deposit-amount').value;
@@ -1700,9 +1697,9 @@ Support: support@classybetaviator.com`;
                 return;
             }
 
-            // Call Paystack integration
-            if (typeof initiatePaystackDeposit === 'function') {
-                initiatePaystackDeposit(parseFloat(amount))
+            // Call Flutterwave integration
+            if (typeof initiateFlutterwaveDeposit === 'function') {
+                initiateFlutterwaveDeposit(parseFloat(amount))
                     .catch(error => {
                         console.error('Deposit error:', error);
                         if (errorEl) {

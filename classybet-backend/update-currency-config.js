@@ -89,49 +89,7 @@ newContent = newContent.replace(
 }`
 );
 
-// We need to also update convertToPaystackCurrency 
-// Actually, convertToPaystackCurrency relies on USD_EXCHANGE_RATES statically
-newContent = newContent.replace(
-    /function convertToPaystackCurrency\(amount, fromCurrency\) \{[\s\S]*?module\.exports = \{/m,
-    `function convertToPaystackCurrency(amount, fromCurrency) {
-    // KES and USD are natively supported — pass through
-    if (PAYSTACK_CURRENCIES.includes(fromCurrency)) {
-        return {
-            paystackAmount: amount,
-            paystackCurrency: fromCurrency,
-            converted: false,
-            originalAmount: amount,
-            originalCurrency: fromCurrency
-        };
-    }
 
-    const ExchangeRateService = require('../services/ExchangeRateService');
-    // We need the rate to convert FROM local TO USD. 
-    // Since rate is 1 USD = X local, then local -> USD is 1 / rate
-    const localToUsdRate = ExchangeRateService.getRate(fromCurrency);
-
-    if (!localToUsdRate) {
-        return {
-            paystackAmount: null,
-            paystackCurrency: null,
-            converted: false,
-            error: \`Currency \${fromCurrency} is not supported or rates unavailable\`
-        };
-    }
-
-    const usdAmount = parseFloat((amount / localToUsdRate).toFixed(2));
-    return {
-        paystackAmount: usdAmount,
-        paystackCurrency: 'USD',
-        converted: true,
-        originalAmount: amount,
-        originalCurrency: fromCurrency,
-        exchangeRate: 1 / localToUsdRate
-    };
-}
-
-module.exports = {`
-);
 
 fs.writeFileSync('utils/currencyConfig.js', newContent);
 console.log('Successfully updated utils/currencyConfig.js');

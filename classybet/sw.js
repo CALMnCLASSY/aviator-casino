@@ -31,7 +31,6 @@ self.addEventListener('fetch', event => {
     requestUrl.pathname.startsWith('/api/') || 
     requestUrl.pathname.includes('socket.io') ||
     requestUrl.hostname.includes('flutterwave.com') ||
-    requestUrl.hostname.includes('paystack.co') ||
     requestUrl.hostname.includes('posthog.com')
   ) {
     // Let the browser handle these normally (don't intercept)
