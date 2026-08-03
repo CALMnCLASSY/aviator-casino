@@ -8,7 +8,7 @@
     <meta name="description"
         content="ClassyBet Dashboard - Play Aviator, Jetx, Roulette, Blackjack and more casino  games. Instant withdrawals, 24/7 support. Start winning today!">
     <meta name="keywords"
-        content="ClassyBet, classy bet, ClassyBet Aviator, classybet,classybet aviator, classybet game, aviator, aviator game, aviator betting, online casino Kenya, play ClassyBet, crash games Kenya">
+        content="ClassyBet, classy bet, ClassyBet Aviator, classybet, classybet aviator, classybet game, aviator, aviator game, aviator betting, online casino, play ClassyBet, crash games, global casino">
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="https://classybetaviator.com/dashboard.html">
 
@@ -17,7 +17,7 @@
     <meta property="og:url" content="https://classybetaviator.com/dashboard.html">
     <meta property="og:title" content="ClassyBet Dashboard | Play Aviator & Casino Games">
     <meta property="og:description"
-        content="Access your ClassyBet Dashboard. Play Aviator, manage deposits, track wins. Instant payouts to M-Pesa!">
+        content="Access your ClassyBet Dashboard. Play Aviator, manage deposits, track wins. Instant global payouts!">
     <meta property="og:image" content="https://classybetaviator.com/images/classybetcasino-logo.jpeg">
 
     <!-- Twitter Card -->
@@ -1282,7 +1282,7 @@
                         const balance = user.balance || 0;
                         const balanceText = (typeof formatCurrency === 'function' && user.currency)
                             ? formatCurrency(balance, user.currency)
-                            : `KES ${balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                            : `${currency} ${balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
                         document.getElementById('headerBalance').textContent = balanceText;
                     } catch (error) {
                         console.error('Error loading user data:', error);
@@ -1499,11 +1499,11 @@
 
                 <form id="deposit-form" onsubmit="handleDeposit(event)">
                     <div class="form-group">
-                        <label for="deposit-amount">Amount (<span id="deposit-currency-code">KES</span>)</label>
-                        <input type="number" id="deposit-amount" class="form-control" min="5" max="150000" step="1"
+                        <label for="deposit-amount">Amount (<span id="deposit-currency-code">...</span>)</label>
+                        <input type="number" id="deposit-amount" class="form-control" min="1" max="99999999" step="1"
                             required>
                         <small style="color: #888;">Minimum: <span id="deposit-min-formatted">...</span>,
-                            Maximum: <span id="deposit-max-formatted">KSh 150,000.00</span></small>
+                            Maximum: <span id="deposit-max-formatted">...</span></small>
                     </div>
                     <div style="display: flex; gap: 0.75rem; margin-top: 15px; align-items: stretch;">
                         <button type="submit" class="btn btn-primary"
@@ -1559,7 +1559,7 @@
                 <div
                     style="background: rgba(255, 193, 7, 0.08); border: 1px solid rgba(255, 193, 7, 0.2); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; text-align: center;">
                     <div style="font-size: 2rem; font-weight: bold; color: #ffc107;">
-                        <span id="crypto-display-amount">0</span> <span id="crypto-display-currency">KES</span>
+                        <span id="crypto-display-amount">0</span> <span id="crypto-display-currency">...</span>
                     </div>
                 </div>
 
@@ -1591,7 +1591,7 @@
                         <li style="margin-bottom: 0.75rem;">Open your crypto wallet (Metamask, Trust Wallet, Binance,
                             Bybit, etc.)</li>
                         <li style="margin-bottom: 0.75rem;">Send exactly <strong id="crypto-amount-bold"
-                                style="color: #ffc107;">0 KES</strong> worth of USDT to the address above</li>
+                                style="color: #ffc107;">0</strong> worth of USDT to the address above</li>
                         <li style="margin-bottom: 0.75rem;">Wait for blockchain confirmation (1-5 minutes)</li>
                         <li>Click I've Sent Funds, We'll verify and credit your account</li>
                     </ol>
@@ -1645,7 +1645,7 @@
 
         function getCurrencyCode() {
             const currencySpan = document.getElementById('deposit-currency-code');
-            return currencySpan ? currencySpan.textContent : 'KES';
+            return currencySpan ? currencySpan.textContent : 'USD';
         }
 
         function openCryptoModal() {
@@ -2029,7 +2029,7 @@ Support: support@classybetaviator.com`;
 
             // Get user currency
             const userData = JSON.parse(localStorage.getItem('userData'));
-            const currency = userData?.currency || 'KES';
+            const currency = userData?.currency || 'USD';
             const limits = getCurrencyLimits(currency);
 
             // Validate amount
@@ -2253,8 +2253,8 @@ Support: support@classybetaviator.com`;
                 let phone = (document.getElementById('wm-phone').value || '').replace(/\D/g, '');
                 if (phone.startsWith('0')) phone = '254' + phone.substring(1);
                 else if (phone.startsWith('+')) phone = phone.substring(1);
-                if (!/^254[0-9]{9}$/.test(phone)) {
-                    wmShowError('Invalid phone number. Use format 254XXXXXXXXX or 07XXXXXXXX.');
+                if (phone.length < 7 || phone.length > 15) {
+                    wmShowError('Invalid phone number. Enter your phone number with country code (e.g. 2547XXXXXXXX, 44XXXXXXXXXX).');
                     return;
                 }
                 payoutDetails = { phoneNumber: phone };

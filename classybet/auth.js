@@ -51,13 +51,16 @@ class AuthManager {
         countrySelect.innerHTML = '';
 
         const sortedCountries = [...window.countryCodes].sort((a, b) => a.name.localeCompare(b.name));
-        const kenyaIndex = sortedCountries.findIndex(country => country.name === 'Kenya');
-        if (kenyaIndex > 0) {
-            const [kenya] = sortedCountries.splice(kenyaIndex, 1);
-            sortedCountries.unshift(kenya);
-        }
 
-        // Add country codes
+        // Add a blank "Select Country" placeholder
+        const placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.textContent = '🌍 Select Country';
+        placeholder.disabled = true;
+        placeholder.selected = true;
+        countrySelect.appendChild(placeholder);
+
+        // Add country codes (alphabetical)
         sortedCountries.forEach(country => {
             const option = document.createElement('option');
             option.value = country.code;
@@ -66,11 +69,6 @@ class AuthManager {
             option.setAttribute('data-placeholder', country.placeholder);
             countrySelect.appendChild(option);
         });
-
-        const kenyaOption = countrySelect.querySelector('option[value="+254"]');
-        if (kenyaOption) {
-            kenyaOption.selected = true;
-        }
 
         // Update phone input when country changes
         countrySelect.addEventListener('change', () => {

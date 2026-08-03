@@ -3686,9 +3686,9 @@ document.getElementById('deposit-form').addEventListener('submit', async (e) => 
         phoneNumber = phoneNumber.substring(1);
     }
 
-    // Validate phone number format
-    if (!/^254[0-9]{9}$/.test(phoneNumber)) {
-        showError('deposit-error', 'Invalid phone number format. Use format: 254XXXXXXXXX or 07XXXXXXXX');
+    // Validate phone number format (international - 7 to 15 digits)
+    if (phoneNumber.length < 7 || phoneNumber.length > 15) {
+        showError('deposit-error', 'Invalid phone number. Enter your phone number with country code (e.g. 2547XXXXXXXX, 44XXXXXXXXXX)');
         return;
     }
 

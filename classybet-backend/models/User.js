@@ -39,7 +39,7 @@ const userSchema = new mongoose.Schema({
   countryCode: {
     type: String,
     required: true,
-    default: '+254'
+    default: ''
   },
   fullPhone: {
     type: String,
@@ -50,12 +50,12 @@ const userSchema = new mongoose.Schema({
   country: {
     type: String,
     required: true,
-    default: 'Kenya'
+    default: ''
   },
   currency: {
     type: String,
     required: true,
-    default: 'KES'
+    default: 'USD'
   },
   isDemo: {
     type: Boolean,

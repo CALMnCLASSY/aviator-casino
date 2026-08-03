@@ -56,7 +56,7 @@
                         <img src="images/logo.svg" alt="Aviator" height="35" class="aviator-logo-image">
                     </div>
                     <div class="balance-info">
-                        <div id="balance-amount">KES 3,000.00</div>
+                        <div id="balance-amount">0.00</div>
                         <div class="header-controls">
                             <div class="game-menu-container">
                                 <button id="game-menu-btn" class="game-menu-btn">
@@ -309,7 +309,7 @@
                                         </div>
                                         <div class="stat-item">
                                             <span class="stat-label">Profit:</span>
-                                            <span class="stat-value" id="auto-profit-1">KES 0.00</span>
+                                            <span class="stat-value" id="auto-profit-1">0.00</span>
                                         </div>
                                     </div>
                                 </div>
@@ -385,7 +385,7 @@
                                         </div>
                                         <div class="stat-item">
                                             <span class="stat-label">Profit:</span>
-                                            <span class="stat-value" id="auto-profit-2">KES 0.00</span>
+                                            <span class="stat-value" id="auto-profit-2">0.00</span>
                                         </div>
                                     </div>
                                 </div>
@@ -585,8 +585,8 @@
                         <input type="email" id="register-email" class="form-control" required>
                     </div>
                     <div class="form-group">
-                        <label for="register-phone">Phone (254XXXXXXXXX)</label>
-                        <input type="tel" id="register-phone" class="form-control" placeholder="254700000000" required>
+                        <label for="register-phone">Phone Number (with country code)</label>
+                        <input type="tel" id="register-phone" class="form-control" placeholder="e.g. +12025551234" required>
                     </div>
                     <div class="form-group">
                         <label for="register-password">Password</label>
@@ -622,11 +622,11 @@
 
                 <form id="deposit-form" onsubmit="handleDepositSubmit(event)">
                     <div class="form-group">
-                        <label for="deposit-amount">Amount (<span id="deposit-currency-code">KES</span>)</label>
+                        <label for="deposit-amount">Amount (<span id="deposit-currency-code">...</span>)</label>
                         <input type="number" id="deposit-amount" class="form-control" min="5" max="150000" step="1"
                             required>
                         <small>Minimum: <span id="deposit-min-formatted">...</span>, Maximum: <span
-                                id="deposit-max-formatted">KSh 150,000.00</span></small>
+                                id="deposit-max-formatted">...</span></small>
                     </div>
                     <div style="display: flex; gap: 0.75rem; margin-top: 15px; align-items: stretch;">
                         <button type="submit" class="btn btn-primary"
@@ -681,7 +681,7 @@
                 <div
                     style="background: rgba(255, 193, 7, 0.08); border: 1px solid rgba(255, 193, 7, 0.2); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; text-align: center;">
                     <div style="font-size: 2rem; font-weight: bold; color: #ffc107;">
-                        <span id="crypto-display-amount">0</span> <span id="crypto-display-currency">KES</span>
+                        <span id="crypto-display-amount">0</span> <span id="crypto-display-currency">...</span>
                     </div>
                 </div>
 
@@ -713,7 +713,7 @@
                         <li style="margin-bottom: 0.75rem;">Open your crypto wallet (Metamask, Trust Wallet, Binance,
                             Bybit, etc.)</li>
                         <li style="margin-bottom: 0.75rem;">Send exactly <strong id="crypto-amount-bold"
-                                style="color: #ffc107;">0 KES</strong> worth of USDT to the address above</li>
+                                style="color: #ffc107;">0</strong> worth of USDT to the address above</li>
                         <li style="margin-bottom: 0.75rem;">Wait for blockchain confirmation (1-5 minutes)</li>
                         <li>Click I've Paid, We'll verify and credit your account</li>
                     </ol>
@@ -767,7 +767,7 @@
 
         function getCurrencyCode() {
             const currencySpan = document.getElementById('deposit-currency-code');
-            return currencySpan ? currencySpan.textContent : 'KES';
+            return currencySpan ? currencySpan.textContent : 'USD';
         }
 
         function openCryptoModal() {
@@ -1795,7 +1795,7 @@ Support: support@classybetaviator.com`;
                 'Just doubled up! 🎉', 'Don\'t get greedy guys', 'That 1.00x was brutal',
                 'How do you guys predict?', 'Going all in wish me luck 🍀', 'Legend says someone hit 100x',
                 'Cash out gang 💪', 'This round feels good', 'Trust the process',
-                'My heart is racing 😅', 'Slow and steady wins', '200 KES to 2000 today 📈',
+                'My heart is racing 😅', 'Slow and steady wins', '200 to 2000 today 📈',
                 'Who\'s playing safe?', 'That multiplier was insane!', 'I need to stop but I can\'t 😂',
                 'GG everyone', 'New here, any tips?', '3x minimum or bust',
                 'Late night grind 🌙', 'Morning bets hit different ☀️', 'Another day another cashout',

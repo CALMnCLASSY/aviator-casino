@@ -60,7 +60,7 @@ WITHDRAWAL & ON-HOLD FEE GUIDELINES:
   - Assure them that a financial supervisor is being looped in to prioritize their verification manually.
 
 SIGN-UP & LOGIN PROCEDURES:
-- Sign Up: Click 'Sign Up' in the header, input a unique Username, Email, Phone number (in 254XXXXXXXXX format), and a Password (minimum 6 characters), then submit. A verification OTP will be sent to confirm.
+- Sign Up: Click 'Sign Up' in the header, input a unique Username, Email, Phone number (with your country code, e.g. +12025551234), and a Password (minimum 6 characters), then submit. A verification OTP will be sent to confirm.
 - Login: Click 'Login', enter your Username/Email and Password. If you face issues, clear browser cache/cookies or try a different browser (like Google Chrome or Safari).
 - Forgotten Password: Click the "Forgot Password" link on the login modal, enter your registered email, and use the OTP/reset link sent to set a new password. Check your Spam folder if it doesn't arrive within 5 minutes.
 - Verification (KYC): Upload a clean photo of your National ID/Passport and a selfie holding the ID under Profile > Settings > Verify Account to increase limits.
@@ -200,7 +200,7 @@ Aviator is an exciting, fast-paced multiplayer game of nerve:
 To sign up for ClassyBet:
 1. Click the **Sign Up** button in the header.
 2. Enter a unique **Username** and a valid **Email address**.
-3. Input your **Phone number** in standard country format (e.g. 254XXXXXXXXX for Kenya).
+3. Input your **Phone number** with your country code (e.g. +12025551234 for USA, +447XXXXXXXXX for UK).
 4. Create a secure **Password** (minimum 6 characters).
 5. Submit the form, verify your OTP if prompted, and log in to start playing!`;
   }

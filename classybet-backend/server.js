@@ -250,7 +250,7 @@ io.on('connection', (socket) => {
       });
       await bet.save();
 
-      console.log('💰 Bet placed: ' + userId + ' - ' + amount + ' KES | New balance: ' + user.balance + ' | Round: ' + gameState.roundId);
+      console.log('💰 Bet placed: ' + userId + ' - ' + amount + ' | New balance: ' + user.balance + ' | Round: ' + gameState.roundId);
 
       // Increment shared bet counter — triggers broadcast to all clients
       gameStateManager.incrementActiveBets();
@@ -315,7 +315,7 @@ io.on('connection', (socket) => {
       bet.cashedOutAt = new Date();  // ✅ Added timestamp
       await bet.save();
 
-      console.log('💸 Cashout: ' + userId + ' - ' + winAmount + ' KES at ' + currentMultiplier.toFixed(2) + 'x | New balance: ' + user.balance + ' | Round: ' + bet.gameRound);
+      console.log('💸 Cashout: ' + userId + ' - ' + winAmount + ' at ' + currentMultiplier.toFixed(2) + 'x | New balance: ' + user.balance + ' | Round: ' + bet.gameRound);
 
       // Decrement shared bet counter
       gameStateManager.decrementActiveBets();
