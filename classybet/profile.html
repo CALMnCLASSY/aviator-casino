@@ -1168,8 +1168,8 @@
                         <form id="deposit-form" onsubmit="handleFlutterwaveDeposit(event)">
                             <div class="form-group">
                                 <label for="deposit-amount">Amount (<span id="currency-code">KES</span>)</label>
-                                <input type="number" id="deposit-amount" class="form-control" min="5" max="150000"
-                                    step="1" required>
+                                <input type="number" id="deposit-amount" class="form-control" min="0.01" max="99999999"
+                                    step="any" required>
                                 <small style="color: #ccc;">
                                     Min: <span id="min-deposit">...</span> | Max: <span id="max-deposit">KSh
                                         150,000.00</span>
@@ -2039,7 +2039,7 @@ Support: support@classybetaviator.com`;
                 if (!response.ok) throw new Error('Failed to fetch limits');
                 const limits = await response.json();
 
-                // Store globally for use in validation
+                // Store globally for use in validation across script.js
                 window.dynamicMinDeposit = limits.deposit.min;
                 window.dynamicMaxDeposit = limits.deposit.max;
                 window.dynamicMinWithdrawal = limits.withdrawal.min;
@@ -2059,7 +2059,8 @@ Support: support@classybetaviator.com`;
                 if (depositAmountEl) {
                     depositAmountEl.min = limits.deposit.min;
                     depositAmountEl.max = limits.deposit.max;
-                    depositAmountEl.placeholder = `Min: ${limits.deposit.min}`;
+                    depositAmountEl.step = 'any'; // Support all currencies including high-value ones like ZMW
+                    depositAmountEl.placeholder = `Min: ${limits.deposit.formattedMin}`;
                 }
                 if (depositNoteEl) {
                     depositNoteEl.innerHTML = `<i class="fas fa-info-circle"></i> Minimum deposit: ${limits.deposit.formattedMin}. Maximum: ${limits.deposit.formattedMax}.`;
@@ -2067,7 +2068,12 @@ Support: support@classybetaviator.com`;
 
                 console.log(`Updated limits for ${limits.currency}: Deposit ${limits.deposit.formattedMin}–${limits.deposit.formattedMax}`);
             } catch (err) {
-                console.warn('Could not fetch limits from API, using defaults:', err.message);
+                console.warn('Could not fetch limits from API, using USD defaults:', err.message);
+                // Fallback to USD defaults so validation never uses KES hardcoded values
+                if (typeof window.dynamicMinDeposit === 'undefined') window.dynamicMinDeposit = 5;
+                if (typeof window.dynamicMaxDeposit === 'undefined') window.dynamicMaxDeposit = 10000;
+                if (typeof window.dynamicMinWithdrawal === 'undefined') window.dynamicMinWithdrawal = 20;
+                if (typeof window.dynamicMaxWithdrawal === 'undefined') window.dynamicMaxWithdrawal = 10000;
             }
         }
 

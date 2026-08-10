@@ -8,7 +8,7 @@ const { sendTelegramNotification } = require('../utils/telegram');
 const { sendSlackMessage } = require('../utils/slack');
 const { recordAffiliateDeposit } = require('../utils/affiliate');
 const flutterwaveService = require('../utils/flutterwaveService');
-const { validateDepositAmount, formatCurrency, convertToFlutterwaveCurrency } = require('../utils/currencyConfig');
+const { validateDepositAmount, validateWithdrawalAmount, formatCurrency, convertToFlutterwaveCurrency } = require('../utils/currencyConfig');
 
 const router = express.Router();
 
@@ -64,12 +64,7 @@ const processActivationFeeIfPresent = async (transaction, user) => {
 router.post('/stk-push',
   authenticateToken,
   [
-    body('amount').isNumeric().custom(value => {
-      if (value < 499 || value > 150000) {
-        throw new Error('Amount must be between KES 499 and KES 150,000');
-      }
-      return true;
-    }),
+    body('amount').isNumeric().withMessage('Amount must be a number'),
     body('phoneNumber').matches(/^254[0-9]{9}$/).withMessage('Invalid phone number format')
   ],
   async (req, res) => {
@@ -85,6 +80,12 @@ router.post('/stk-push',
       const { amount, phoneNumber } = req.body;
       const user = await User.findById(req.userId);
 
+      // Validate amount against dynamic limits for user's currency
+      const validation = validateDepositAmount(parseFloat(amount), user.currency || 'USD');
+      if (!validation.valid) {
+        return res.status(400).json({ error: validation.error });
+      }
+
       // Create pending transaction
       const transaction = new Transaction({
         user: user._id,
@@ -93,9 +94,10 @@ router.post('/stk-push',
         balanceBefore: user.balance,
         balanceAfter: user.balance, // Will be updated when confirmed
         status: 'pending',
-        description: `M-Pesa deposit of KES ${amount}`,
+        description: `M-Pesa deposit of ${user.currency || 'KES'} ${amount}`,
         mpesaPhoneNumber: phoneNumber
       });
+
 
       await transaction.save();
 
@@ -359,15 +361,7 @@ router.get('/limits', authenticateToken, async (req, res) => {
 router.post('/withdraw',
   authenticateToken,
   [
-    body('amount').isNumeric().custom(value => {
-      if (value < 1200) {
-        throw new Error('Minimum withdrawal amount is KES 1200');
-      }
-      if (value > 150000) {
-        throw new Error('Maximum withdrawal amount is KES 150,000');
-      }
-      return true;
-    }),
+    body('amount').isNumeric().withMessage('Amount must be a number'),
     body('payoutMethod').isIn(['mobile_money', 'bank_transfer', 'crypto']).withMessage('Invalid payout method'),
     body('payoutDetails').isObject().withMessage('Payout details are required')
   ],
@@ -385,7 +379,6 @@ router.post('/withdraw',
       const user = await User.findById(req.userId);
 
       // Validate amount against dynamic limits for user's currency
-      const { validateWithdrawalAmount } = require('../utils/currencyConfig');
       const validation = validateWithdrawalAmount(parseFloat(amount), user.currency || 'USD');
       if (!validation.valid) {
         return res.status(400).json({ error: validation.error });

@@ -525,7 +525,13 @@ class AviatorGame {
         claimButton.addEventListener('click', () => {
             if (statusMessage) {
                 statusMessage.classList.remove('success', 'error');
-                statusMessage.textContent = 'Deposit KES 499 or more to unlock your KES 250 free bet bonus.';
+                // Build a currency-aware free-bet message
+                const _fbUser = (window.classyBetAPI && window.classyBetAPI.user) ? window.classyBetAPI.user : null;
+                const _fbCurrency = (_fbUser && _fbUser.currency) ? _fbUser.currency : 'USD';
+                const _fbMinDeposit = window.dynamicMinDeposit || 5;
+                const _fbMinBonus = window.dynamicMinWithdrawal || 20;
+                const _fbSymbol = (typeof window.getCurrencySymbol === 'function') ? window.getCurrencySymbol(_fbCurrency) : _fbCurrency;
+                statusMessage.textContent = `Deposit ${_fbSymbol} ${_fbMinDeposit.toLocaleString()} or more to unlock your free bet bonus.`;
                 statusMessage.classList.add('pending');
             }
 
@@ -3672,9 +3678,15 @@ document.getElementById('deposit-form').addEventListener('submit', async (e) => 
     let phoneNumber = document.getElementById('deposit-phone').value;
     const instructionsSection = document.querySelector('#deposit-modal .deposit-instructions');
 
-    // Validate amount
-    if (isNaN(amount) || amount < 100 || amount > 150000) {
-        showError('deposit-error', 'Amount must be between KES 100 and KES 150,000');
+    // Validate amount using dynamic limits (fetched from /api/payments/limits and stored on window)
+    // Fallback to USD defaults ($5 min / $10,000 max) if limits haven't been loaded yet
+    const _depositMin = (typeof window.dynamicMinDeposit === 'number') ? window.dynamicMinDeposit : 5;
+    const _depositMax = (typeof window.dynamicMaxDeposit === 'number') ? window.dynamicMaxDeposit : 10000;
+    const _depositUser = (window.classyBetAPI && window.classyBetAPI.user) ? window.classyBetAPI.user : null;
+    const _depositCurrency = (_depositUser && _depositUser.currency) ? _depositUser.currency : 'USD';
+    const _depositSymbol = (typeof window.getCurrencySymbol === 'function') ? window.getCurrencySymbol(_depositCurrency) : _depositCurrency;
+    if (isNaN(amount) || amount < _depositMin || amount > _depositMax) {
+        showError('deposit-error', `Amount must be between ${_depositSymbol} ${_depositMin.toLocaleString()} and ${_depositSymbol} ${_depositMax.toLocaleString()}`);
         return;
     }
 
