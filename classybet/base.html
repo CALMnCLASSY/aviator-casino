@@ -623,7 +623,7 @@
                 <form id="deposit-form" onsubmit="handleDepositSubmit(event)">
                     <div class="form-group">
                         <label for="deposit-amount">Amount (<span id="deposit-currency-code">...</span>)</label>
-                        <input type="number" id="deposit-amount" class="form-control" min="5" max="150000" step="1"
+                        <input type="number" id="deposit-amount" class="form-control" min="0.01" max="99999999" step="any"
                             required>
                         <small>Minimum: <span id="deposit-min-formatted">...</span>, Maximum: <span
                                 id="deposit-max-formatted">...</span></small>
@@ -1643,10 +1643,15 @@ Support: support@classybetaviator.com`;
                 if (amountInput) {
                     amountInput.min = limits.deposit.min;
                     amountInput.max = limits.deposit.max;
-                    amountInput.placeholder = `Min: ${limits.deposit.min}`;
+                    amountInput.step = 'any';
+                    amountInput.placeholder = `Min: ${limits.deposit.formattedMin}`;
                 }
             } catch (err) {
                 console.warn('Could not fetch deposit limits from API:', err.message);
+                if (typeof window.dynamicMinDeposit === 'undefined') window.dynamicMinDeposit = 5;
+                if (typeof window.dynamicMaxDeposit === 'undefined') window.dynamicMaxDeposit = 10000;
+                if (typeof window.dynamicMinWithdrawal === 'undefined') window.dynamicMinWithdrawal = 20;
+                if (typeof window.dynamicMaxWithdrawal === 'undefined') window.dynamicMaxWithdrawal = 10000;
             }
         }
 

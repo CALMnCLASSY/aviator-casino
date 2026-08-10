@@ -1022,7 +1022,10 @@
 
 
         // Currency limits helper
-        function getCurrencyLimits(currency = 'KES') {
+        function getCurrencyLimits(currency = 'USD') {
+            if (typeof window.dynamicMinDeposit === 'number' && typeof window.dynamicMaxDeposit === 'number') {
+                return { min: window.dynamicMinDeposit, max: window.dynamicMaxDeposit };
+            }
             const limits = {
                 'KES': { min: 499, max: 150000 },
                 'USD': { min: 5, max: 10000 },
@@ -1032,7 +1035,7 @@
                 'GBP': { min: 4, max: 8000 },
                 'EUR': { min: 5, max: 9000 }
             };
-            return limits[currency] || limits['KES'];
+            return limits[currency] || limits['USD'];
         }
 
         // Footer modal function
@@ -1844,34 +1847,45 @@ Support: support@classybetaviator.com`;
         <div
             style="background:linear-gradient(135deg,rgba(20,25,40,0.97),rgba(15,20,35,0.97));border:1px solid rgba(251,2,76,0.35);border-radius:16px;max-width:560px;width:92%;max-height:92vh;overflow-y:auto;box-shadow:0 12px 50px rgba(0,0,0,0.6);">
             <!-- Header -->
-            <div style="border-bottom:1px solid rgba(251,2,76,0.2);padding:1.4rem 2rem;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:rgba(20,25,40,0.97);z-index:1;">
+            <div
+                style="border-bottom:1px solid rgba(251,2,76,0.2);padding:1.4rem 2rem;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:rgba(20,25,40,0.97);z-index:1;">
                 <h3 style="margin:0;color:#fb024c;display:flex;align-items:center;gap:0.7rem;">
                     <i class="fas fa-arrow-up"></i> Withdraw Funds
                 </h3>
-                <button onclick="closeWithdrawModal()" style="background:none;border:none;color:#999;font-size:1.5rem;cursor:pointer;line-height:1;">×</button>
+                <button onclick="closeWithdrawModal()"
+                    style="background:none;border:none;color:#999;font-size:1.5rem;cursor:pointer;line-height:1;">×</button>
             </div>
 
             <!-- Body -->
             <div style="padding:1.75rem;">
-                <div id="wm-error" style="display:none;background:rgba(251,2,76,0.12);border:1px solid rgba(251,2,76,0.3);border-radius:8px;padding:0.75rem 1rem;margin-bottom:1rem;color:#fb024c;font-size:0.9rem;"></div>
-                <div id="wm-success" style="display:none;background:rgba(48,252,190,0.1);border:1px solid rgba(48,252,190,0.3);border-radius:8px;padding:0.75rem 1rem;margin-bottom:1rem;color:#30fcbe;font-size:0.9rem;"></div>
+                <div id="wm-error"
+                    style="display:none;background:rgba(251,2,76,0.12);border:1px solid rgba(251,2,76,0.3);border-radius:8px;padding:0.75rem 1rem;margin-bottom:1rem;color:#fb024c;font-size:0.9rem;">
+                </div>
+                <div id="wm-success"
+                    style="display:none;background:rgba(48,252,190,0.1);border:1px solid rgba(48,252,190,0.3);border-radius:8px;padding:0.75rem 1rem;margin-bottom:1rem;color:#30fcbe;font-size:0.9rem;">
+                </div>
 
                 <!-- Method tabs -->
-                <label style="display:block;margin-bottom:0.85rem;color:#30fcbe;font-weight:600;font-size:0.95rem;">Select Payout Method</label>
+                <label
+                    style="display:block;margin-bottom:0.85rem;color:#30fcbe;font-weight:600;font-size:0.95rem;">Select
+                    Payout Method</label>
                 <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.75rem;margin-bottom:1.5rem;">
                     <div id="wm-tab-mobile" class="wm-tab wm-tab-active" onclick="wmSelectMethod('mobile_money')"
                         style="padding:0.85rem;text-align:center;cursor:pointer;border-radius:10px;border:2px solid #30fcbe;background:rgba(48,252,190,0.1);transition:all 0.25s;">
-                        <i class="fas fa-mobile-alt" style="font-size:1.35rem;color:#30fcbe;display:block;margin-bottom:0.4rem;"></i>
+                        <i class="fas fa-mobile-alt"
+                            style="font-size:1.35rem;color:#30fcbe;display:block;margin-bottom:0.4rem;"></i>
                         <div style="font-weight:600;font-size:0.85rem;">Mobile Money</div>
                     </div>
                     <div id="wm-tab-bank" class="wm-tab" onclick="wmSelectMethod('bank_transfer')"
                         style="padding:0.85rem;text-align:center;cursor:pointer;border-radius:10px;border:1px solid rgba(255,255,255,0.12);background:transparent;transition:all 0.25s;">
-                        <i class="fas fa-university" style="font-size:1.35rem;color:#ccc;display:block;margin-bottom:0.4rem;"></i>
+                        <i class="fas fa-university"
+                            style="font-size:1.35rem;color:#ccc;display:block;margin-bottom:0.4rem;"></i>
                         <div style="font-weight:600;font-size:0.85rem;color:#ccc;">Bank Transfer</div>
                     </div>
                     <div id="wm-tab-crypto" class="wm-tab" onclick="wmSelectMethod('crypto')"
                         style="padding:0.85rem;text-align:center;cursor:pointer;border-radius:10px;border:1px solid rgba(255,193,7,0.3);background:transparent;transition:all 0.25s;">
-                        <i class="fab fa-ethereum" style="font-size:1.35rem;color:#ffc107;display:block;margin-bottom:0.4rem;"></i>
+                        <i class="fab fa-ethereum"
+                            style="font-size:1.35rem;color:#ffc107;display:block;margin-bottom:0.4rem;"></i>
                         <div style="font-weight:600;font-size:0.85rem;color:#ffc107;">USDT Crypto</div>
                     </div>
                 </div>
@@ -1888,7 +1902,8 @@ Support: support@classybetaviator.com`;
                 <!-- Mobile Money fields -->
                 <div id="wm-fields-mobile">
                     <div style="margin-bottom:1rem;">
-                        <label style="display:block;margin-bottom:0.4rem;color:#ccc;font-size:0.9rem;">Phone Number</label>
+                        <label style="display:block;margin-bottom:0.4rem;color:#ccc;font-size:0.9rem;">Phone
+                            Number</label>
                         <input type="tel" id="wm-phone"
                             style="width:100%;padding:0.8rem 1rem;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:#fff;font-size:1rem;box-sizing:border-box;"
                             placeholder="254700000000">
@@ -1904,13 +1919,15 @@ Support: support@classybetaviator.com`;
                             placeholder="e.g. Equity Bank">
                     </div>
                     <div style="margin-bottom:1rem;">
-                        <label style="display:block;margin-bottom:0.4rem;color:#ccc;font-size:0.9rem;">Account Number</label>
+                        <label style="display:block;margin-bottom:0.4rem;color:#ccc;font-size:0.9rem;">Account
+                            Number</label>
                         <input type="text" id="wm-acc-number"
                             style="width:100%;padding:0.8rem 1rem;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:#fff;font-size:1rem;box-sizing:border-box;"
                             placeholder="Enter account number">
                     </div>
                     <div style="margin-bottom:1rem;">
-                        <label style="display:block;margin-bottom:0.4rem;color:#ccc;font-size:0.9rem;">Account Name</label>
+                        <label style="display:block;margin-bottom:0.4rem;color:#ccc;font-size:0.9rem;">Account
+                            Name</label>
                         <input type="text" id="wm-acc-name"
                             style="width:100%;padding:0.8rem 1rem;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:#fff;font-size:1rem;box-sizing:border-box;"
                             placeholder="Enter account name">
@@ -1919,31 +1936,39 @@ Support: support@classybetaviator.com`;
 
                 <!-- Crypto (USDT ERC20) fields -->
                 <div id="wm-fields-crypto" style="display:none;">
-                    <div style="background:rgba(255,193,7,0.07);border:1px solid rgba(255,193,7,0.2);border-radius:10px;padding:1rem;margin-bottom:1rem;">
+                    <div
+                        style="background:rgba(255,193,7,0.07);border:1px solid rgba(255,193,7,0.2);border-radius:10px;padding:1rem;margin-bottom:1rem;">
                         <p style="color:#ffa726;margin:0 0 0.5rem;font-size:0.85rem;">
-                            <i class="fas fa-exclamation-circle"></i> <strong>Important:</strong> Withdrawals are sent via USDT on the Ethereum (ERC20) network only. Paste your wallet address carefully — transactions are irreversible.
+                            <i class="fas fa-exclamation-circle"></i> <strong>Important:</strong> Withdrawals are sent
+                            via USDT on the Ethereum (ERC20) network only. Paste your wallet address carefully —
+                            transactions are irreversible.
                         </p>
                     </div>
                     <div style="margin-bottom:1rem;">
-                        <label style="display:block;margin-bottom:0.4rem;color:#ffc107;font-size:0.9rem;font-weight:600;">
+                        <label
+                            style="display:block;margin-bottom:0.4rem;color:#ffc107;font-size:0.9rem;font-weight:600;">
                             <i class="fab fa-ethereum"></i> Your USDT ERC20 Wallet Address
                         </label>
                         <input type="text" id="wm-crypto-address"
                             style="width:100%;padding:0.8rem 1rem;background:rgba(0,0,0,0.35);border:1px solid rgba(255,193,7,0.35);border-radius:8px;color:#30fcbe;font-size:0.88rem;font-family:'Courier New',monospace;box-sizing:border-box;"
                             placeholder="0x... (Paste your ERC20 USDT address)">
-                        <small style="color:#888;font-size:0.8rem;">Only ERC20 (Ethereum) USDT addresses are accepted.</small>
+                        <small style="color:#888;font-size:0.8rem;">Only ERC20 (Ethereum) USDT addresses are
+                            accepted.</small>
                     </div>
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:0.5rem;">
-                        <div style="background:rgba(48,252,190,0.07);border-radius:8px;padding:0.75rem;text-align:center;">
+                        <div
+                            style="background:rgba(48,252,190,0.07);border-radius:8px;padding:0.75rem;text-align:center;">
                             <div style="color:#999;font-size:0.78rem;margin-bottom:0.25rem;">Network</div>
                             <div style="color:#30fcbe;font-weight:bold;font-size:0.95rem;">Ethereum (ERC20)</div>
                         </div>
-                        <div style="background:rgba(48,252,190,0.07);border-radius:8px;padding:0.75rem;text-align:center;">
+                        <div
+                            style="background:rgba(48,252,190,0.07);border-radius:8px;padding:0.75rem;text-align:center;">
                             <div style="color:#999;font-size:0.78rem;margin-bottom:0.25rem;">Token</div>
                             <div style="color:#30fcbe;font-weight:bold;font-size:0.95rem;">USDT (Tether)</div>
                         </div>
                     </div>
-                    <small style="color:#888;font-size:0.8rem;display:block;margin-top:0.5rem;">Processing time: 10–30 minutes after confirmation.</small>
+                    <small style="color:#888;font-size:0.8rem;display:block;margin-top:0.5rem;">Processing time: 10–30
+                        minutes after confirmation.</small>
                 </div>
 
                 <!-- Submit -->
@@ -1955,7 +1980,8 @@ Support: support@classybetaviator.com`;
                 <!-- Notice -->
                 <div style="margin-top:1.25rem;padding:0.85rem;background:rgba(255,165,0,0.09);border-radius:8px;">
                     <h5 style="color:#ffa500;margin:0 0 0.35rem;">⚠️ Withdrawal Notice</h5>
-                    <p style="color:#ccc;font-size:0.85rem;margin:0;">Processing is instant but may take 1–24 hrs. Contact us via +254 770 655 092 for delays.</p>
+                    <p style="color:#ccc;font-size:0.85rem;margin:0;">Processing is instant but may take 1–24 hrs.
+                        Contact us via +254 770 655 092 for delays.</p>
                 </div>
             </div>
         </div>
@@ -2027,14 +2053,16 @@ Support: support@classybetaviator.com`;
                 return;
             }
 
-            // Get user currency
+            // Get user currency & limits
             const userData = JSON.parse(localStorage.getItem('userData'));
             const currency = userData?.currency || 'USD';
             const limits = getCurrencyLimits(currency);
+            const minDep = (typeof window.dynamicMinDeposit === 'number') ? window.dynamicMinDeposit : limits.min;
+            const maxDep = (typeof window.dynamicMaxDeposit === 'number') ? window.dynamicMaxDeposit : limits.max;
 
             // Validate amount
-            if (amount < limits.min || amount > limits.max) {
-                alert(`Amount must be between ${formatCurrency(limits.min, currency)} and ${formatCurrency(limits.max, currency)}`);
+            if (isNaN(amount) || amount < minDep || amount > maxDep) {
+                alert(`Amount must be between ${formatCurrency(minDep, currency)} and ${formatCurrency(maxDep, currency)}`);
                 return;
             }
 
@@ -2095,7 +2123,8 @@ Support: support@classybetaviator.com`;
                 if (amountInput) {
                     amountInput.min = limits.deposit.min;
                     amountInput.max = limits.deposit.max;
-                    amountInput.placeholder = `Min: ${limits.deposit.min}`;
+                    amountInput.step = 'any';
+                    amountInput.placeholder = `Min: ${limits.deposit.formattedMin}`;
                 }
 
                 // Update withdraw modal hint text
@@ -2106,6 +2135,10 @@ Support: support@classybetaviator.com`;
 
             } catch (err) {
                 console.warn('Could not fetch deposit limits:', err.message);
+                if (typeof window.dynamicMinDeposit === 'undefined') window.dynamicMinDeposit = 5;
+                if (typeof window.dynamicMaxDeposit === 'undefined') window.dynamicMaxDeposit = 10000;
+                if (typeof window.dynamicMinWithdrawal === 'undefined') window.dynamicMinWithdrawal = 20;
+                if (typeof window.dynamicMaxWithdrawal === 'undefined') window.dynamicMaxWithdrawal = 10000;
             }
         }
 
@@ -2417,6 +2450,7 @@ Support: support@classybetaviator.com`;
                 opacity: 0;
                 transform: translateY(20px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -2599,10 +2633,14 @@ Support: support@classybetaviator.com`;
         }
 
         @keyframes typing {
-            0%, 60%, 100% {
+
+            0%,
+            60%,
+            100% {
                 transform: translateY(0);
                 opacity: 0.4;
             }
+
             30% {
                 transform: translateY(-8px);
                 opacity: 1;
@@ -2727,7 +2765,8 @@ Support: support@classybetaviator.com`;
                 <div class="welcome-message">
                     <i class="fas fa-headset"></i>
                     <h4>Welcome to ClassyBet Support</h4>
-                    <p>I'm here to help you with deposits, withdrawals, and any other questions you may have. How can I assist you today?</p>
+                    <p>I'm here to help you with deposits, withdrawals, and any other questions you may have. How can I
+                        assist you today?</p>
                 </div>
                 <div class="typing-indicator" id="typingIndicator">
                     <div class="typing-dot"></div>
@@ -2738,7 +2777,8 @@ Support: support@classybetaviator.com`;
 
             <div class="chat-input-container">
                 <div class="chat-input-wrapper">
-                    <input type="text" class="chat-input" id="chatInput" placeholder="Type your message..." onkeypress="handleKeyPress(event)">
+                    <input type="text" class="chat-input" id="chatInput" placeholder="Type your message..."
+                        onkeypress="handleKeyPress(event)">
                     <button class="chat-send" id="chatSend" onclick="sendMessage()">
                         <i class="fas fa-paper-plane"></i>
                     </button>
@@ -2753,7 +2793,7 @@ Support: support@classybetaviator.com`;
     </div>
 
     <script>
-        (function() {
+        (function () {
             const API_ROOT = window.location.hostname === 'localhost'
                 ? 'http://localhost:4000/api'
                 : 'https://back.classybetaviator.com/api';
@@ -2801,7 +2841,7 @@ Support: support@classybetaviator.com`;
                 }
             }
 
-            window.toggleChat = function() {
+            window.toggleChat = function () {
                 const chatWindow = document.getElementById('chatWindow');
                 isOpen = !isOpen;
 
@@ -2906,7 +2946,7 @@ Support: support@classybetaviator.com`;
                 }
             }
 
-            window.sendMessage = async function() {
+            window.sendMessage = async function () {
                 const input = document.getElementById('chatInput');
                 const message = input.value.trim();
 
@@ -2969,7 +3009,7 @@ Support: support@classybetaviator.com`;
                 input.focus();
             };
 
-            window.handleKeyPress = function(event) {
+            window.handleKeyPress = function (event) {
                 if (event.key === 'Enter') {
                     sendMessage();
                 }

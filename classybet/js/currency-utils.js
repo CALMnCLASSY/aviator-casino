@@ -97,7 +97,7 @@ const CURRENCY_SYMBOLS = {
 
 // Deposit limits for each currency (min and max amounts)
 const DEPOSIT_LIMITS = {
-    KES: { min: 499, max: 150000 },
+    KES: { min: 100, max: 150000 },
     NGN: { min: 5000, max: 500000 },
     GHS: { min: 50, max: 5000 },
     ZAR: { min: 100, max: 50000 },
@@ -124,12 +124,12 @@ function getUserCurrency() {
         const userData = localStorage.getItem('userData');
         if (userData) {
             const user = JSON.parse(userData);
-            return user.currency || 'KES';
+            return user.currency || 'USD';
         }
     } catch (error) {
         console.warn('Error getting user currency:', error);
     }
-    return 'KES'; // Default fallback
+    return 'USD'; // Default fallback
 }
 
 /**
@@ -158,8 +158,11 @@ function formatCurrency(amount, currency = null) {
  * @returns {object} Object with min and max deposit amounts
  */
 function getDepositLimits(currency = null) {
+    if (typeof window !== 'undefined' && typeof window.dynamicMinDeposit === 'number' && typeof window.dynamicMaxDeposit === 'number') {
+        return { min: window.dynamicMinDeposit, max: window.dynamicMaxDeposit };
+    }
     const currencyCode = currency || getUserCurrency();
-    return DEPOSIT_LIMITS[currencyCode] || DEPOSIT_LIMITS.KES; // Default to KES if not found
+    return DEPOSIT_LIMITS[currencyCode] || DEPOSIT_LIMITS.USD;
 }
 
 /**
