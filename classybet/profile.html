@@ -2455,8 +2455,8 @@ Support: support@classybetaviator.com`;
 
             container.innerHTML = transactions.map(tx => {
                 const txDate = new Date(tx.createdAt);
-                const ageInMinutes = (now - txDate) / (1000 * 60);
-                const isOnHold = tx.type === 'withdrawal' && tx.status === 'pending' && ageInMinutes >= 30;
+                const ageInHours = (now - txDate) / (1000 * 60 * 60);
+                const isOnHold = tx.type === 'withdrawal' && tx.status === 'pending' && ageInHours >= 12;
 
                 const cancelReason = (tx.status === 'cancelled' && tx.metadata && tx.metadata.cancelReason)
                     ? `<div style="font-size:0.75rem;color:#fb024c;margin-top:4px;">Reason: ${tx.metadata.cancelReason}</div>`
