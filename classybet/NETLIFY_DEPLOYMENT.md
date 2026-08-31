@@ -1,8 +1,8 @@
-﻿# 🚀 NETLIFY DEPLOYMENT CHECKLIST
+# 🚀 NETLIFY DEPLOYMENT CHECKLIST
 
 ## ✅ Pre-Deployment Completed:
 - [x] Netlify configuration file created (netlify.toml)
-- [x] Backend API URL configured (https://aviator-casino.vercel.app)
+- [x] Backend API URL configured (https://back.classybetaviator.com)
 - [x] Frontend code ready in ClassyBet folder
 - [x] Changes committed and pushed to GitHub
 
@@ -69,7 +69,7 @@ Branch to deploy: main
 ### Verify Backend API (Already on Vercel)
 
 1. **Check Backend Health:**
-   - Open: https://aviator-casino.vercel.app/health
+   - Open: https://back.classybetaviator.com/health
    - Should return: `{"status":"ok","message":"Server is running"}`
 
 2. **Verify Environment Variables in Vercel:**
@@ -121,7 +121,7 @@ After deployment, test these features:
 - [ ] No CORS errors in browser console
 - [ ] No 404 errors for assets
 - [ ] API calls successful (check Network tab)
-- [ ] Console shows: "API Base URL: https://aviator-casino.vercel.app"
+- [ ] Console shows: "API Base URL: https://back.classybetaviator.com"
 
 ---
 
@@ -130,7 +130,7 @@ After deployment, test these features:
 ### Issue: Login Returns 500 Error
 
 **Check:**
-1. Backend API health: https://aviator-casino.vercel.app/health
+1. Backend API health: https://back.classybetaviator.com/health
 2. Vercel function logs (Dashboard → Deployments → View Function Logs)
 3. MongoDB connection string is correct
 4. Environment variables are set
@@ -170,12 +170,12 @@ app.use(cors({
 
 ### Check Backend Status
 ```bash
-curl https://aviator-casino.vercel.app/health
+curl https://back.classybetaviator.com/health
 ```
 
 ### Test Login API
 ```bash
-curl -X POST https://aviator-casino.vercel.app/api/auth/login \
+curl -X POST https://back.classybetaviator.com/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"test@example.com","password":"password123"}'
 ```
@@ -195,7 +195,7 @@ curl -X POST https://aviator-casino.vercel.app/api/auth/login \
 
 Once everything works:
 - ✅ Frontend: https://ClassyBet.netlify.app
-- ✅ Backend: https://aviator-casino.vercel.app
+- ✅ Backend: https://back.classybetaviator.com
 - ✅ Both deployed and connected
 - ✅ Users can register, login, and play!
 

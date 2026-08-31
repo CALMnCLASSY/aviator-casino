@@ -28,7 +28,7 @@ const cron = require('node-cron');
 
 const app = express();
 
-// Trust proxy for rate limiting behind reverse proxies (Render, Heroku, Cloudflare, etc.)
+// Trust proxy for rate limiting behind reverse proxies (Coolify/Traefik, Nginx, Cloudflare, etc.)
 app.set('trust proxy', 1);
 
 // CORS configuration with multiple frontend domains

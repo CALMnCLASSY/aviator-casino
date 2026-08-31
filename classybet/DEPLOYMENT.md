@@ -1,4 +1,4 @@
-﻿# ClassyBet Aviator - Frontend Deployment
+# ClassyBet Aviator - Frontend Deployment
 
 ## 🌐 Live URLs
 
@@ -16,13 +16,13 @@
   - ClassyBet.netlify.app
   - ClassyBet-aviator.vercel.app
 
-### Backend (Deployed on Render)
+### Backend (Deployed on Coolify VPS)
 - Express.js API server
 - MongoDB Atlas database
 - JWT authentication
 - Location: `/ClassyBet-backend` folder
-- Platform: VPS
-- URL: back.classybetaviator.com
+- Platform: Coolify VPS (Self-hosted)
+- URL: https://back.classybetaviator.com
 
 ## 🚀 Netlify Deployment Steps
 
@@ -80,9 +80,9 @@ After deployment, verify:
 - [ ] All images and assets load properly
 - [ ] No CORS errors in browser console
 
-## 🔧 Backend Configuration (Already on Render)
+## 🔧 Backend Configuration (Coolify VPS)
 
-Your backend environment variables should be set in Render Dashboard:
+Your backend environment variables in Coolify Dashboard:
 
 **Backend URL:** https://back.classybetaviator.com
 
@@ -92,17 +92,15 @@ JWT_SECRET=your-secret-key
 ADMIN_EMAIL=admin@example.com
 ADMIN_PASSWORD=secure-password
 NODE_ENV=production
-CLIENT_URL=https://ClassyBet.netlify.app
+CLIENT_URL=https://classybetaviator.com
 ```
-
-**Note:** Render free tier spins down after 15 minutes of inactivity. First request may take 30-60 seconds to wake up.
 
 ## 🐛 Troubleshooting
 
-### Login Not Working
-- Check backend API is running: https://back.classybetaviator.com/health
-- **Important:** First request may take 30-60 seconds (Render free tier wake-up)
-- Verify environment variables in Render dashboard
+### Login Not Working / SSL Certificate Error
+- Check backend API health: https://back.classybetaviator.com/health
+- If browser shows `ERR_CERT_DATE_INVALID`: Renew SSL certificate in Coolify dashboard or Traefik proxy.
+- Verify environment variables in Coolify dashboard
 - Check browser console for CORS errors
 
 ### Assets Not Loading
