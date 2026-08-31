@@ -16,6 +16,7 @@ const roundRoutes = require('./routes/rounds');
 const casinoRoutes = require('./routes/casino');
 const userRoutes = require('./routes/users');
 const supportRoutes = require('./routes/support');
+const { findKeywordResponse } = supportRoutes;
 
 // Import models
 const User = require('./models/User');
@@ -27,16 +28,9 @@ const cron = require('node-cron');
 
 const app = express();
 
-// Trust proxy for rate limiting behind reverse proxies (Render, Heroku, etc.)
+// Trust proxy for rate limiting behind reverse proxies (Render, Heroku, Cloudflare, etc.)
 app.set('trust proxy', 1);
 
-// Middleware
-// Capture raw body for Slack signature verification
-app.use(express.json({
-  limit: '1mb',
-  verify: (req, _res, buf) => { req.rawBody = buf.toString(); }
-}));
-app.use(express.urlencoded({ extended: true }));
 // CORS configuration with multiple frontend domains
 const allowedOrigins = [
   'http://localhost:3000',
@@ -54,11 +48,10 @@ const allowedOrigins = [
   'https://classybetaviator.com',
   'https://www.classybetaviator.com',
   'https://avisignalspredictor.netlify.app',
-
   'file://' // For local file access
 ];
 
-app.use(cors({
+const corsOptions = {
   origin: function (origin, callback) {
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
@@ -71,9 +64,22 @@ app.use(cors({
     }
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+  optionsSuccessStatus: 200
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
+
+// Middleware
+// Capture raw body for Slack signature verification
+app.use(express.json({
+  limit: '1mb',
+  verify: (req, _res, buf) => { req.rawBody = buf.toString(); }
 }));
+app.use(express.urlencoded({ extended: true }));
+
 app.use(helmet({
   crossOriginEmbedderPolicy: false,
   contentSecurityPolicy: false

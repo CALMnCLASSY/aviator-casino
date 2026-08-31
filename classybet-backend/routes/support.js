@@ -589,4 +589,5 @@ router.post('/slack-events', async (req, res) => {
   }
 });
 
+router.findKeywordResponse = findKeywordResponse;
 module.exports = router;
