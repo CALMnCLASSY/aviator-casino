@@ -1224,7 +1224,7 @@
                         <div style="margin-bottom: 2rem;">
                             <label style="display: block; margin-bottom: 1rem; color: #30fcbe; font-weight: 600;">Select
                                 Payout Method</label>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
                                 <div id="method-mobile" class="card"
                                     style="padding: 1rem; text-align: center; cursor: pointer; border: 2px solid #30fcbe; background: rgba(48, 252, 190, 0.1);"
                                     onclick="selectPayoutMethod('mobile_money')">
@@ -1254,8 +1254,7 @@
 
                             <div class="form-group">
                                 <label for="withdraw-amount">Amount</label>
-                                <input type="number" id="withdraw-amount" class="form-control" step="1"
-                                    required>
+                                <input type="number" id="withdraw-amount" class="form-control" step="1" required>
                                 <small style="color: #ccc;" id="withdraw-amount-hint">Loading limit...</small>
                             </div>
 
@@ -1289,9 +1288,12 @@
 
                             <!-- Crypto (USDT ERC20) Fields -->
                             <div id="fields-crypto" style="display: none;">
-                                <div style="background:rgba(255,193,7,0.07);border:1px solid rgba(255,193,7,0.2);border-radius:10px;padding:1rem;margin-bottom:1rem;">
+                                <div
+                                    style="background:rgba(255,193,7,0.07);border:1px solid rgba(255,193,7,0.2);border-radius:10px;padding:1rem;margin-bottom:1rem;">
                                     <p style="color:#ffa726;margin:0;font-size:0.85rem;">
-                                        <i class="fas fa-exclamation-circle"></i> <strong>Important:</strong> Withdrawals are sent as USDT on Ethereum (ERC20) only. Verify your address before submitting — transactions are irreversible.
+                                        <i class="fas fa-exclamation-circle"></i> <strong>Important:</strong>
+                                        Withdrawals are sent as USDT on Ethereum (ERC20) only. Verify your address
+                                        before submitting — transactions are irreversible.
                                     </p>
                                 </div>
                                 <div class="form-group">
@@ -1304,16 +1306,19 @@
                                     <small style="color:#888;">Only ERC20 (Ethereum) USDT addresses accepted.</small>
                                 </div>
                                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-top:0.5rem;">
-                                    <div style="background:rgba(48,252,190,0.07);border-radius:8px;padding:0.75rem;text-align:center;">
+                                    <div
+                                        style="background:rgba(48,252,190,0.07);border-radius:8px;padding:0.75rem;text-align:center;">
                                         <div style="color:#999;font-size:0.8rem;">Network</div>
                                         <div style="color:#30fcbe;font-weight:bold;">Ethereum (ERC20)</div>
                                     </div>
-                                    <div style="background:rgba(48,252,190,0.07);border-radius:8px;padding:0.75rem;text-align:center;">
+                                    <div
+                                        style="background:rgba(48,252,190,0.07);border-radius:8px;padding:0.75rem;text-align:center;">
                                         <div style="color:#999;font-size:0.8rem;">Token</div>
                                         <div style="color:#30fcbe;font-weight:bold;">USDT (Tether)</div>
                                     </div>
                                 </div>
-                                <small style="color:#888;display:block;margin-top:0.5rem;">Processing time: 10–30 minutes after confirmation.</small>
+                                <small style="color:#888;display:block;margin-top:0.5rem;">Processing time: 10–30
+                                    minutes after confirmation.</small>
                             </div>
 
                             <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
@@ -1325,7 +1330,7 @@
                             style="margin-top: 2rem; padding: 1rem; background: rgba(255, 165, 0, 0.1); border-radius: 8px;">
                             <h5 style="color: #ffa500; margin-bottom: 0.5rem;">⚠️ Withdrawal Notice</h5>
                             <p style="color: #ccc; font-size: 0.9rem;">Withdrawals processing is instant but may take
-                                1-24 hours to complete. <br> Contact Us via +254 770 655 092 in case of delays.
+                                1-24 hours to complete. <br> Contact Us via +254752776585 in case of delays.
                             </p>
                         </div>
                     </div>
@@ -1646,7 +1651,7 @@
                         <li style="margin-bottom: 0.75rem;">Open your crypto wallet (Metamask, Trust Wallet, Binance,
                             Bybit, etc.)</li>
                         <li style="margin-bottom: 0.75rem;">Send exactly <strong id="crypto-amount-bold"
-                                style="color: #ffc107;">0 KES</strong> worth of USDT to the address above</li>
+                                style="color: #ffc107;">0</strong> worth of USDT to the address above</li>
                         <li style="margin-bottom: 0.75rem;">Wait for blockchain confirmation (1-5 minutes)</li>
                         <li>Click I've Sent Funds, We'll verify and credit your account</li>
                     </ol>
@@ -2576,7 +2581,7 @@ Support: support@classybetaviator.com`;
 
                 if (status === 'successful' || status === 'completed') {
                     closeReactivationModal();
-                    
+
                     // Show activation button as verifying
                     const btn = document.getElementById('activate-btn');
                     if (btn) {
@@ -3087,6 +3092,7 @@ Support: support@classybetaviator.com`;
                 opacity: 0;
                 transform: translateY(20px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -3269,10 +3275,14 @@ Support: support@classybetaviator.com`;
         }
 
         @keyframes typing {
-            0%, 60%, 100% {
+
+            0%,
+            60%,
+            100% {
                 transform: translateY(0);
                 opacity: 0.4;
             }
+
             30% {
                 transform: translateY(-8px);
                 opacity: 1;
@@ -3397,7 +3407,8 @@ Support: support@classybetaviator.com`;
                 <div class="welcome-message">
                     <i class="fas fa-headset"></i>
                     <h4>Welcome to ClassyBet Support</h4>
-                    <p>I'm here to help you with deposits, withdrawals, and any other questions you may have. How can I assist you today?</p>
+                    <p>I'm here to help you with deposits, withdrawals, and any other questions you may have. How can I
+                        assist you today?</p>
                 </div>
                 <div class="typing-indicator" id="typingIndicator">
                     <div class="typing-dot"></div>
@@ -3408,7 +3419,8 @@ Support: support@classybetaviator.com`;
 
             <div class="chat-input-container">
                 <div class="chat-input-wrapper">
-                    <input type="text" class="chat-input" id="chatInput" placeholder="Type your message..." onkeypress="handleKeyPress(event)">
+                    <input type="text" class="chat-input" id="chatInput" placeholder="Type your message..."
+                        onkeypress="handleKeyPress(event)">
                     <button class="chat-send" id="chatSend" onclick="sendMessage()">
                         <i class="fas fa-paper-plane"></i>
                     </button>
@@ -3423,7 +3435,7 @@ Support: support@classybetaviator.com`;
     </div>
 
     <script>
-        (function() {
+        (function () {
             const API_ROOT = window.location.hostname === 'localhost'
                 ? 'http://localhost:4000/api'
                 : 'https://back.classybetaviator.com/api';
@@ -3440,7 +3452,7 @@ Support: support@classybetaviator.com`;
             sessionId = sessionStorage.getItem('chatSessionId') || generateSessionId();
             sessionStorage.setItem('chatSessionId', sessionId);
 
-            window.toggleChat = function() {
+            window.toggleChat = function () {
                 const chatWindow = document.getElementById('chatWindow');
                 isOpen = !isOpen;
 
@@ -3530,7 +3542,7 @@ Support: support@classybetaviator.com`;
                 }
             }
 
-            window.sendMessage = async function() {
+            window.sendMessage = async function () {
                 const input = document.getElementById('chatInput');
                 const message = input.value.trim();
 
@@ -3592,7 +3604,7 @@ Support: support@classybetaviator.com`;
                 input.focus();
             };
 
-            window.handleKeyPress = function(event) {
+            window.handleKeyPress = function (event) {
                 if (event.key === 'Enter') {
                     sendMessage();
                 }
