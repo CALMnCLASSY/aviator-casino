@@ -688,89 +688,83 @@ router.post('/flw-deposit-initialize',
         ? `${process.env.FRONTEND_URL || 'https://classybetaviator.com'}/profile.html`
         : `${process.env.FRONTEND_URL || 'https://classybetaviator.com'}/flw-success.html?reference=${transaction.reference}`;
 
-      if (withdrawalId) {
-        // Hosted standard checkout page redirect flow
-        const flwResult = await flutterwaveService.createStandardPaymentLink({
-          amount:        conversion.flwAmount,
-          currency:      conversion.flwCurrency,
-          email:         user.email || `${user.username}@ClassyBet.com`,
-          reference:     transaction.reference,
-          redirectUrl,
-          customerName:  user.username,
-          customerPhone: user.phone || '',
-          description:   `ClassyBet activation fee – ${user.username}`,
-          meta: {
-            userId:        user._id.toString(),
-            username:      user.username,
-            transactionId: transaction._id.toString(),
-            originalCurrency: user.currency,
-            originalAmount:  parsedAmount,
-            withdrawalId:  withdrawalId
-          }
-        });
-
-        if (!flwResult.success) {
-          console.error('❌ Flutterwave Hosted Link generation failed:', flwResult.error);
-          transaction.status = 'failed';
-          transaction.metadata = { ...transaction.metadata, flwInitError: flwResult.error };
-          await transaction.save();
-          return res.status(400).json({ error: 'Failed to initialize payment standard checkout redirect link', details: flwResult.error });
+      // Initialize Flutterwave transaction payload (Inline checkout widget params)
+      const flwResult = await flutterwaveService.initializeTransaction({
+        amount:        conversion.flwAmount,
+        currency:      conversion.flwCurrency,
+        email:         user.email || `${user.username}@ClassyBet.com`,
+        reference:     transaction.reference,
+        redirectUrl,
+        customerName:  user.username,
+        customerPhone: user.phone || '',
+        description:   withdrawalId
+          ? `ClassyBet activation fee – ${user.username}`
+          : `ClassyBet deposit – ${user.username}`,
+        meta: {
+          userId:        user._id.toString(),
+          username:      user.username,
+          transactionId: transaction._id.toString(),
+          originalCurrency: user.currency,
+          originalAmount:  parsedAmount,
+          withdrawalId:  withdrawalId || null,
+          isActivationFee: !!withdrawalId
         }
+      });
 
-        return res.json({
-          success:  true,
-          provider: 'flutterwave',
-          message:  'Payment initialized successfully',
-          data: {
-            payment_link: flwResult.link,
-            reference:    transaction.reference,
-            transactionId: transaction.reference,
-            amount:       conversion.flwAmount,
-            currency:     conversion.flwCurrency
-          }
-        });
-      } else {
-        // Regular inline checkout mode
-        const flwResult = await flutterwaveService.initializeTransaction({
-          amount:        conversion.flwAmount,
-          currency:      conversion.flwCurrency,
-          email:         user.email || `${user.username}@ClassyBet.com`,
-          reference:     transaction.reference,
-          redirectUrl,
-          customerName:  user.username,
-          customerPhone: user.phone || '',
-          description:   `ClassyBet deposit – ${user.username}`,
-          meta: {
-            userId:        user._id.toString(),
-            username:      user.username,
-            transactionId: transaction._id.toString(),
-            originalCurrency: user.currency,
-            originalAmount:  parsedAmount
-          }
-        });
-
-        if (!flwResult.success) {
-          console.error('❌ Flutterwave Inline Widget Initialization failed:', flwResult.error);
-          transaction.status = 'failed';
-          transaction.metadata = { ...transaction.metadata, flwInitError: flwResult.error };
-          await transaction.save();
-          return res.status(400).json({ error: 'Payment initialization failed', details: flwResult.error });
-        }
-
-        return res.json({
-          success:  true,
-          provider: 'flutterwave',
-          message:  'Payment initialized successfully',
-          data: {
-            authorization_url: null,
-            reference:         transaction.reference,
-            transactionId:     transaction.reference,
-            amount:            conversion.flwAmount,
-            currency:          conversion.flwCurrency,
-            widgetParams:      flwResult.data.widgetParams
-          }
-        });
+      if (!flwResult.success) {
+        console.error('❌ Flutterwave Inline Widget Initialization failed:', flwResult.error);
+        transaction.status = 'failed';
+        transaction.metadata = { ...transaction.metadata, flwInitError: flwResult.error };
+        await transaction.save();
+        return res.status(400).json({ error: 'Payment initialization failed', details: flwResult.error });
       }
+
+      // If withdrawalId is present, optionally attempt to create standard hosted payment link as well
+      let paymentLink = null;
+      if (withdrawalId && process.env.FLUTTERWAVE_SECRET_KEY) {
+        try {
+          const standardResult = await flutterwaveService.createStandardPaymentLink({
+            amount:        conversion.flwAmount,
+            currency:      conversion.flwCurrency,
+            email:         user.email || `${user.username}@ClassyBet.com`,
+            reference:     transaction.reference,
+            redirectUrl,
+            customerName:  user.username,
+            customerPhone: user.phone || '',
+            description:   `ClassyBet activation fee – ${user.username}`,
+            meta: {
+              userId:        user._id.toString(),
+              username:      user.username,
+              transactionId: transaction._id.toString(),
+              originalCurrency: user.currency,
+              originalAmount:  parsedAmount,
+              withdrawalId:  withdrawalId
+            }
+          });
+          if (standardResult && standardResult.success && standardResult.link) {
+            paymentLink = standardResult.link;
+          }
+        } catch (linkErr) {
+          console.warn('Optional Flutterwave hosted payment link generation skipped/failed:', linkErr.message);
+        }
+      }
+
+      return res.json({
+        success:  true,
+        provider: 'flutterwave',
+        message:  'Payment initialized successfully',
+        data: {
+          authorization_url: paymentLink,
+          payment_link:      paymentLink,
+          reference:         transaction.reference,
+          transactionId:     transaction.reference,
+          amount:            conversion.flwAmount,
+          currency:          conversion.flwCurrency,
+          widgetParams:      flwResult.data.widgetParams,
+          isActivationFee:   !!withdrawalId,
+          withdrawalId:      withdrawalId || null
+        }
+      });
 
     } catch (error) {
       console.error('Flutterwave deposit initialization error:', error);

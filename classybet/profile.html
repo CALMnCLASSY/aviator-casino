@@ -2552,20 +2552,95 @@ Support: support@classybetaviator.com`;
 
                 const data = await response.json();
 
-                if (response.ok && data.success && data.data.payment_link) {
-                    console.log('💳 Redirecting to Flutterwave hosted link for activation fee:', data.data.payment_link);
-                    window.location.href = data.data.payment_link;
-                } else {
-                    alert(data.error || 'Failed to initialize payment');
-                    btn.disabled = false;
-                    btn.innerHTML = '<i class="fas fa-rocket"></i> Activate Now';
+                if (response.ok && data.success) {
+                    if (data.data.widgetParams) {
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fas fa-rocket"></i> Activate Now';
+                        _openActivationFlutterwaveWidget(data.data.reference, data.data.widgetParams);
+                        return;
+                    }
+
+                    if (data.data.payment_link) {
+                        console.log('💳 Redirecting to Flutterwave hosted link for activation fee:', data.data.payment_link);
+                        window.location.href = data.data.payment_link;
+                        return;
+                    }
                 }
+
+                alert(data.error || 'Failed to initialize payment');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-rocket"></i> Activate Now';
             } catch (error) {
                 console.error('Activation payment error:', error);
                 alert('Connection error. Please try again.');
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fas fa-rocket"></i> Activate Now';
             }
+        }
+
+        function _openActivationFlutterwaveWidget(reference, widgetParams) {
+            if (typeof FlutterwaveCheckout === 'undefined') {
+                const script = document.createElement('script');
+                script.src = 'https://checkout.flutterwave.com/v3.js';
+                script.onload = () => {
+                    _openActivationFlutterwaveWidget(reference, widgetParams);
+                };
+                script.onerror = () => {
+                    alert('Failed to load Flutterwave checkout. Please check your internet connection or try again.');
+                };
+                document.head.appendChild(script);
+                return;
+            }
+
+            FlutterwaveCheckout({
+                ...widgetParams,
+                callback: async function (response) {
+                    console.log('✅ Activation fee FLW callback:', response);
+                    if (response.status === 'successful' || response.status === 'completed') {
+                        closeReactivationModal();
+
+                        try {
+                            const verifyResp = await fetch(`${API_BASE}/api/payments/flw-deposit-verify`, {
+                                method: 'POST',
+                                headers: {
+                                    'Authorization': `Bearer ${authToken}`,
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    reference: reference,
+                                    transaction_id: response.transaction_id || parseInt(response.id) || undefined
+                                })
+                            });
+
+                            const verifyData = await verifyResp.json();
+                            if (verifyResp.ok && verifyData.success) {
+                                alert('Success! Your activation fee has been processed, your account reactivated, and your withdrawal approved.');
+                            } else {
+                                alert('Payment received! Your account will be reactivated shortly.');
+                            }
+                        } catch (err) {
+                            console.error('Activation verification error:', err);
+                            alert('Payment completed! Refreshing your profile...');
+                        } finally {
+                            if (authToken) {
+                                loadUserProfile();
+                            }
+                        }
+                    } else {
+                        alert('Activation payment was not completed. Please try again.');
+                    }
+                },
+                onclose: function () {
+                    const btn = document.getElementById('activate-btn');
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fas fa-rocket"></i> Activate Now';
+                    }
+                    if (authToken) {
+                        loadUserProfile();
+                    }
+                }
+            });
         }
 
         async function checkFlutterwaveRedirect() {
