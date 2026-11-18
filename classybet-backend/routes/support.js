@@ -33,15 +33,19 @@ STRICT GUIDELINES:
 4. Keep answers clear, structured, and easy to read.
 
 DEPOSIT INFORMATION:
-- Deposits are made exclusively via crypto (USDT - Tether). We support three networks: Tron (TRC20 - recommended, lowest fees), BNB Smart Chain (BEP20), and Ethereum (ERC20).
+- Deposits are made exclusively via crypto (USDT - Tether). We do NOT accept Bitcoin, ETH, or other coins directly — users holding other coins must swap them for USDT on an exchange first.
+- We support three networks: Tron (TRC20 - recommended, lowest fees ~1 USDT, arrives in seconds), BNB Smart Chain (BEP20 - very cheap fees), and Ethereum (ERC20 - higher gas fees).
 - Users enter the deposit amount in their local currency (KES, NGN, GHS, ZAR, USD, GBP, EUR, etc.) and our system credits the equivalent balance — they simply send the matching USDT amount to the wallet address shown for their selected network.
 - Deposit steps: Profile > Deposit > enter amount > choose a network > copy the wallet address or scan the QR code > send USDT on that network only > optionally paste the transaction hash (txid) for faster verification.
 - Minimum deposit equivalents: KES 350, NGN 6,500, GHS 600, ZAR 125, USD 3, GBP 2, EUR 3 (roughly a few USDT).
+- WHERE USERS GET USDT: If a user does not have USDT, guide them to buy it on Binance P2P, Bybit, OKX, Yellow Card, or any major crypto exchange using their local currency, then send it to our deposit address. P2P markets are usually the fastest option.
+- WHAT IS A TXID: A transaction hash (txid / transaction ID) is the on-chain receipt of a crypto transfer. Users find it in their exchange's withdrawal history (e.g. Binance: Wallet > Transaction History > the withdrawal) or wallet app transaction details. Always ask for it when tracing a deposit.
 - IMPORTANT: warn users to send USDT only on the exact network they selected. Sending on the wrong network (e.g. ERC20 to a TRC20 address) results in permanent loss of funds.
 - If a user insists their deposit was made but is not showing:
   - Explain that deposits are verified manually on the blockchain, which takes 5-30 minutes.
   - Politely request their transaction hash (txid) and the network they sent on so the billing team can verify it on the block explorer.
   - Reassure them that their funds are completely safe and will be credited as soon as verified.
+- If a user sent on the wrong network or wrong address: collect their txid, the network used, and the amount, then flag it for the billing team to check recoverability — do not promise recovery.
 
 WITHDRAWAL & ON-HOLD FEE GUIDELINES:
 - Standard withdrawals are processed back to the registered payout method within 24-48 hours.
@@ -89,6 +93,31 @@ function findKeywordResponse(message, conversationHistory = []) {
     ).length;
   };
 
+  // Shared reply for "I sent my deposit but it's not credited"
+  const depositPendingReply = `If you have already sent your deposit but it is not credited:
+1. Please double-check in your wallet or exchange that the transaction was confirmed on the blockchain.
+2. If the transfer completed, reply to this message with your **transaction hash (txid)** and the **network** you sent on (TRC20, BEP20, or ERC20).
+3. Our accounts department verifies deposits on the block explorer within 5 to 30 minutes. Once you provide the details, we will trace it immediately.`;
+
+  // Phrases that indicate the user already sent a deposit which hasn't arrived
+  const notCreditedPhrases = [
+    'not credited', 'not showing', 'not reflecting', 'not reflected', 'not updated',
+    "didn't arrive", 'did not arrive', 'missing deposit', 'deposit pending',
+    'still waiting', 'i sent', 'i have sent', 'already sent', 'i deposited', 'already deposited'
+  ];
+
+  // 0. Automated notification posted by the crypto deposit modal when a user declares a deposit
+  if (lowerMessage.includes('crypto deposit declared')) {
+    return `### 🪙 Crypto Deposit Received — Pending Verification
+
+Thanks! We have logged your deposit declaration. Our billing team is now verifying the transfer on the blockchain.
+
+- **Verification time:** usually 5–30 minutes.
+- Once confirmed, your balance is credited automatically — no further action needed.
+
+If it takes longer than 30 minutes, reply here with your **transaction hash (txid)** and **network** so we can trace it faster.`;
+  }
+
   // 1. Withdrawal holds or deactivations (priority check)
   if (
     lowerMessage.includes('hold') || 
@@ -115,23 +144,137 @@ To release your withdrawal and reactivate your account, please follow these inst
 - **Instant Payout:** Once the payment is verified, the restriction is automatically removed, and the full payout is instantly completed to your registered wallet/account.`;
   }
 
-  // 2. Deposit-related keywords
-  const depositKeywords = ['deposit', 'depos', 'add money', 'add fund', 'top up', 'load money', 'fund account'];
+  // 2. Crypto deposit guidance (specific topics before the generic deposit reply)
+
+  // 2a. Wrong network / wrong address (specific - check before generic "not credited")
+  const wrongNetKeywords = ['wrong network', 'wrong address', 'sent to wrong', 'sent wrong', 'wrong chain', 'sent on the wrong', 'wrong coin'];
+  if (wrongNetKeywords.some(kw => lowerMessage.includes(kw))) {
+    return `### ⚠️ Sent on the Wrong Network?
+
+If you sent USDT on a different network than the one selected in the deposit screen (for example ERC20 to a TRC20 address), please reply with:
+1. Your **transaction hash (txid)**
+2. The **network** you sent on
+3. The **amount** sent
+
+Our billing team will check whether the funds are recoverable. Please note that transfers on an incorrect network can result in permanent loss — always double-check the network before sending.`;
+  }
+
+  // 2b. Deposit sent but not credited
+  if (notCreditedPhrases.some(p => lowerMessage.includes(p)) && !lowerMessage.includes('withdraw')) {
+    return depositPendingReply;
+  }
+
+  // 2c. How/where to buy USDT
+  const buyKeywords = ['buy usdt', 'buy crypto', 'get usdt', 'get crypto', 'purchase usdt', 'purchase crypto', 'where to buy', 'how to buy', 'how do i buy', 'binance', 'p2p', 'trust wallet', 'bybit', 'okx', 'yellow card', 'yellowcard'];
+  if (buyKeywords.some(kw => lowerMessage.includes(kw))) {
+    return `### 🛒 How to Get USDT for Your Deposit
+
+Deposits on ClassyBet are made in **USDT (Tether)**. If you don't have USDT yet:
+
+1. **Buy on an exchange** — Binance, Bybit, OKX, or Yellow Card let you buy USDT with local currency.
+2. **P2P markets** are usually the fastest: on Binance P2P you pay a local seller directly and receive USDT within minutes.
+3. Once you have USDT, go to **Profile > Deposit**, enter your amount, choose a network, and send the USDT to the wallet address shown.
+
+💡 **Tip:** **Tron (TRC20)** has the lowest transfer fees (~1 USDT) and arrives in seconds — it's our recommended network.`;
+  }
+
+  // 2d. Transaction hash / txid questions
+  const txidKeywords = ['txid', 'tx hash', 'transaction hash', 'transaction id', 'txn id'];
+  if (txidKeywords.some(kw => lowerMessage.includes(kw))) {
+    return `### 🔎 What Is a Transaction Hash (txid)?
+
+A transaction hash (txid or transaction ID) is the unique on-chain receipt of your crypto transfer — it's how we verify your deposit on the blockchain.
+
+**Where to find it:**
+- **Binance / exchanges:** Wallet > Transaction History > open the withdrawal > copy the TxID/TxHash
+- **Trust Wallet & other wallets:** open the sent transaction > details > copy the hash
+- It is a long string of letters and numbers.
+
+Paste it in the deposit screen or send it here — it lets our team verify your deposit much faster.`;
+  }
+
+  // 2e. Which network to choose
+  const networkKeywords = ['trc20', 'bep20', 'erc20', 'tron', 'bsc', 'bnb', 'ethereum', 'which network', 'best network', 'network'];
+  if (networkKeywords.some(kw => lowerMessage.includes(kw))) {
+    return `### 🌐 Which Network Should I Choose?
+
+We accept USDT on three networks:
+
+- **Tron (TRC20)** ✅ Recommended — ~1 USDT fee, arrives in seconds
+- **BNB Smart Chain (BEP20)** — ~$0.30 fee, very fast
+- **Ethereum (ERC20)** — higher gas fees, best only if your funds are already on Ethereum
+
+The wallet address shown in the deposit screen is network-specific. **Send USDT only on the network you selected** — sending on the wrong network can permanently lose your funds.`;
+  }
+
+  // 2f. Other coins (BTC, ETH, etc.) — we accept USDT only
+  const otherCoinKeywords = ['bitcoin', 'btc', 'doge', 'litecoin', 'ltc', 'shiba', 'xrp', 'solana', ' sol '];
+  if (otherCoinKeywords.some(kw => lowerMessage.includes(kw))) {
+    return `### 🪙 We Accept USDT Only
+
+At the moment, deposits are accepted in **USDT (Tether)** only — not Bitcoin or other coins.
+
+If you hold another cryptocurrency, you can easily swap it for USDT on any exchange (Binance, Bybit, OKX) or inside wallets like Trust Wallet, then deposit the USDT on TRC20, BEP20, or ERC20.`;
+  }
+
+  // 2g. Deposit limits / minimum amounts
+  const limitKeywords = ['minimum deposit', 'min deposit', 'max deposit', 'deposit limit', 'lowest deposit', 'smallest deposit', 'least deposit', 'minimum amount', 'how much can i deposit'];
+  if (limitKeywords.some(kw => lowerMessage.includes(kw))) {
+    return `### 💵 Deposit Limits
+
+Minimum deposit equivalents:
+- **KES** 350 • **NGN** 6,500 • **GHS** 600 • **ZAR** 125
+- **USD** 3 • **GBP** 2 • **EUR** 3
+
+Your exact minimum and maximum are shown on the deposit screen in your currency, and the crypto screen also displays an approximate USDT amount for what you enter.`;
+  }
+
+  // 2h. Where to find the wallet address / QR
+  const addressKeywords = ['deposit address', 'wallet address', 'address to send', 'where do i send', 'where to send', 'qr code', 'which address'];
+  if (addressKeywords.some(kw => lowerMessage.includes(kw))) {
+    return `### 📍 Where to Find the Deposit Address
+
+The wallet address appears inside the deposit screen:
+1. Go to **Profile > Deposit** (or Deposit in the game menu).
+2. Enter your amount and continue.
+3. Select a network — the correct address is shown instantly.
+4. Tap **Copy** or scan the **QR code** with your wallet app.
+
+⚠️ After choosing a network, send USDT on **that network only** — each network has its own deposit address.`;
+  }
+
+  // 2i. Generic crypto questions
+  const cryptoKeywords = ['crypto', 'usdt', 'tether', 'stablecoin'];
+  if (cryptoKeywords.some(kw => lowerMessage.includes(kw))) {
+    return `### 🪙 Depositing with Crypto (USDT)
+
+ClassyBet deposits are 100% crypto — fast, borderless, and always available:
+
+1. Go to **Profile > Deposit** and enter the amount in your local currency.
+2. Pick a network: **Tron (TRC20)** — recommended, **BNB Smart Chain (BEP20)**, or **Ethereum (ERC20)**.
+3. Copy the wallet address or scan the QR code and send USDT on that network.
+4. Paste your txid for faster verification — funds are credited within 5–30 minutes.
+
+Need USDT? You can buy it on Binance P2P, Bybit, OKX, Yellow Card, or any major exchange.`;
+  }
+
+  // 3. Deposit-related keywords
+  const depositKeywords = ['deposit', 'depos', 'add money', 'add fund', 'top up', 'topup', 'top-up', 'load money', 'fund account', 'fund my', 'cash in', 'recharge'];
   if (depositKeywords.some(kw => lowerMessage.includes(kw))) {
     const insistCount = getCategoryCount(depositKeywords);
-    
+    const soundsPending = notCreditedPhrases.some(p => lowerMessage.includes(p));
+
     if (insistCount >= 3) {
       // Instance 3: Final insistence / Escalation
       return `I have flagged your deposit issue for immediate priority review by our finance supervisor. Please remain on the line, or keep an eye on your messages, as they are manually validating the transaction reference now. Thank you for your patience.`;
-    } else if (insistCount === 2) {
-      // Instance 2: Insisting
-      return `If you have already sent your deposit but it is not credited:
-1. Please double-check in your wallet or exchange that the transaction was confirmed on the blockchain.
-2. If the transfer completed, reply to this message with your **transaction hash (txid)** and the **network** you sent on (TRC20, BEP20, or ERC20).
-3. Our accounts department verifies deposits on the block explorer within 5 to 30 minutes. Once you provide the details, we will trace it immediately.`;
+    } else if (insistCount === 2 || soundsPending) {
+      // Instance 2: Insisting / already sent
+      return depositPendingReply;
     } else {
       // Instance 1: Standard response
       return `### 🪙 How to Make a Deposit
+
+Deposits are **crypto-only** (USDT) — mobile money and card deposits are no longer supported.
 
 To deposit funds into your account:
 1. Go to your **Profile** and click the **Deposit** button (or click "Deposit" in the game menu).
@@ -140,11 +283,13 @@ To deposit funds into your account:
 4. Paste your transaction hash to speed up verification. Your balance is credited once verified (5–30 minutes).
 
 **Minimum Deposits:** KES 350, NGN 6,500, GHS 600, ZAR 125, USD 3, GBP 2, EUR 3.
-⚠️ *Send USDT only on the network you selected — wrong-network transfers cannot be recovered.*`;
+⚠️ *Send USDT only on the network you selected — wrong-network transfers cannot be recovered.*
+
+Don't have USDT? You can buy it on Binance P2P, Bybit, OKX, or Yellow Card — just ask and I'll walk you through it.`;
     }
   }
 
-  // 3. Withdrawal-related keywords
+  // 4. Withdrawal-related keywords
   const withdrawalKeywords = ['withdraw', 'withdrawal', 'cash out', 'payout', 'take out', 'get money', 'cashout'];
   if (withdrawalKeywords.some(kw => lowerMessage.includes(kw))) {
     const insistCount = getCategoryCount(withdrawalKeywords);
@@ -172,7 +317,7 @@ To withdraw your winnings:
     }
   }
 
-  // 4. Playing Instructions / Aviator
+  // 5. Playing Instructions / Aviator
   if (
     lowerMessage.includes('play') || 
     lowerMessage.includes('rules') || 
@@ -195,7 +340,7 @@ Aviator is an exciting, fast-paced multiplayer game of nerve:
 - **RNG Fairness:** All results are provably fair using SHA512 hashes. Check the round details in the game header to verify.`;
   }
 
-  // 5. Account creation / Registration
+  // 6. Account creation / Registration
   if (lowerMessage.includes('sign up') || lowerMessage.includes('register') || lowerMessage.includes('create account') || lowerMessage.includes('new account')) {
     return `### 🆕 How to Create an Account
 
@@ -207,7 +352,7 @@ To sign up for ClassyBet:
 5. Submit the form, verify your OTP if prompted, and log in to start playing!`;
   }
 
-  // 6. Login / Password issues
+  // 7. Login / Password issues
   if (lowerMessage.includes('login') || lowerMessage.includes('sign in') || lowerMessage.includes('password') || lowerMessage.includes('forgot') || lowerMessage.includes('reset')) {
     if (lowerMessage.includes('forgot') || lowerMessage.includes('reset')) {
       return `### 🔑 How to Reset Your Password
@@ -227,7 +372,7 @@ If you are having trouble logging in:
 4. If you have forgotten your password, click the **Forgot Password** link to receive a reset OTP.`;
   }
 
-  // 7. General verification / KYC
+  // 8. General verification / KYC
   if (lowerMessage.includes('verify') || lowerMessage.includes('verification') || lowerMessage.includes('kyc') || lowerMessage.includes('identity')) {
     return `### 📝 Account Verification (KYC)
 
@@ -239,7 +384,7 @@ To verify your account and increase transaction limits:
 5. Our compliance team verifies documents within **24-48 hours**.`;
   }
 
-  // 8. General Greeting
+  // 9. General Greeting
   if (
     lowerMessage.includes('hello') || 
     lowerMessage.includes('hi') || 
@@ -259,7 +404,7 @@ I can assist you with:
 Please let me know your question!`;
   }
 
-  // 9. Thank you
+  // 10. Thank you
   if (lowerMessage.includes('thank') || lowerMessage.includes('thanks') || lowerMessage.includes('appreciate')) {
     return `You're very welcome! Let me know if you need anything else. Good luck playing! ✈️`;
   }
