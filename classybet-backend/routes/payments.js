@@ -12,6 +12,40 @@ const { validateDepositAmount, validateWithdrawalAmount, formatCurrency, convert
 
 const router = express.Router();
 
+// ==================== CRYPTO DEPOSIT CONFIG ====================
+// Static operator deposit addresses. Override via env vars.
+const CRYPTO_NETWORKS = [
+  {
+    id: 'trc20',
+    label: 'Tron (TRC20)',
+    token: 'USDT',
+    address: process.env.CRYPTO_USDT_TRC20 || 'THv2KRPRJFeSxkptFw5A4XUwWAZfCTfNyR',
+    explorer: 'https://tronscan.org/#/transaction/',
+    feeHint: '~1 USDT network fee',
+    recommended: true
+  },
+  {
+    id: 'bep20',
+    label: 'BNB Smart Chain (BEP20)',
+    token: 'USDT',
+    address: process.env.CRYPTO_USDT_BEP20 || '0xEA976d5e41084B613Cd8970F79bCc5D414f99621',
+    explorer: 'https://bscscan.com/tx/',
+    feeHint: '~$0.30 network fee',
+    recommended: false
+  },
+  {
+    id: 'erc20',
+    label: 'Ethereum (ERC20)',
+    token: 'USDT',
+    address: process.env.CRYPTO_USDT_ERC20 || '0xEA976d5e41084B613Cd8970F79bCc5D414f99621',
+    explorer: 'https://etherscan.io/tx/',
+    feeHint: 'Higher gas fees',
+    recommended: false
+  }
+];
+
+const getCryptoNetwork = (id) => CRYPTO_NETWORKS.find(n => n.id === id);
+
 // Helper function to emit real-time balance updates via Socket.io
 const emitBalanceUpdate = (req, username, newBalance) => {
   try {
@@ -153,7 +187,7 @@ router.post('/confirm-deposit',
   authenticateToken,
   async (req, res) => {
     try {
-      const { transactionId, mpesaReceiptNumber } = req.body;
+      const { transactionId, mpesaReceiptNumber, txHash } = req.body;
 
       // Check if user is admin
       const admin = await User.findById(req.userId);
@@ -187,7 +221,13 @@ router.post('/confirm-deposit',
       transaction.mpesaReceiptNumber = mpesaReceiptNumber;
       transaction.processedBy = admin._id;
       transaction.processedAt = new Date();
+      if (txHash) {
+        transaction.metadata = { ...(transaction.metadata || {}), confirmedTxHash: txHash };
+      }
       await transaction.save();
+
+      // Check and process activation fee if applicable (crypto activation fees)
+      await processActivationFeeIfPresent(transaction, user);
 
       // Emit balance update via socket
       emitBalanceUpdate(req, user.username, user.balance);
@@ -301,22 +341,24 @@ router.post('/deposit-tab-click', authenticateToken, async (req, res) => {
 router.get('/deposit-info', authenticateToken, async (req, res) => {
   try {
     res.json({
-      paybillNumber: process.env.PAYBILL_NUMBER,
-      accountNumber: process.env.ACCOUNT_NUMBER,
+      paymentMethod: 'crypto',
+      networks: CRYPTO_NETWORKS.map(n => ({
+        id: n.id,
+        label: n.label,
+        token: n.token,
+        address: n.address,
+        feeHint: n.feeHint
+      })),
       instructions: [
-        '1. Go to M-PESA on your phone',
-        '2. Select Lipa na M-PESA',
-        '3. Select Pay Bill',
-        `4. Enter Business Number: ${process.env.PAYBILL_NUMBER}`,
-        `5. Enter Account Number: ${process.env.ACCOUNT_NUMBER}`,
-        '6. Enter the amount you want to deposit',
-        '7. Enter your M-PESA PIN',
-        '8. Confirm the payment',
-        '9. Wait for SMS confirmation',
-        '10. Your balance will be updated within 5 minutes'
+        '1. Go to Deposit and enter the amount in your local currency',
+        '2. Choose a network: Tron (TRC20), BNB Smart Chain (BEP20), or Ethereum (ERC20)',
+        '3. Copy the wallet address or scan the QR code',
+        '4. Send USDT on the selected network only — wrong-network funds cannot be recovered',
+        '5. Paste your transaction hash (txid) to speed up verification',
+        '6. Your balance will be credited within 5–30 minutes after verification'
       ],
-      minDeposit: 10,
-      maxDeposit: 50000
+      minDeposit: null,
+      maxDeposit: null
     });
   } catch (error) {
     console.error('Deposit info error:', error);
@@ -356,6 +398,157 @@ router.get('/limits', authenticateToken, async (req, res) => {
     res.status(500).json({ error: 'Failed to get limits information' });
   }
 });
+
+// ==================== CRYPTO DEPOSIT ENDPOINTS ====================
+
+// Get crypto deposit options (networks, addresses, limits)
+router.get('/crypto-options', authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    const { getDepositLimits } = require('../utils/currencyConfig');
+    const ExchangeRateService = require('../services/ExchangeRateService');
+    const depositLimits = getDepositLimits(user.currency);
+
+    res.json({
+      success: true,
+      currency: user.currency,
+      unitsPerUsd: ExchangeRateService.getRate(user.currency) || null,
+      networks: CRYPTO_NETWORKS.map(n => ({
+        id: n.id,
+        label: n.label,
+        token: n.token,
+        address: n.address,
+        explorer: n.explorer,
+        feeHint: n.feeHint,
+        recommended: n.recommended
+      })),
+      limits: {
+        min: depositLimits.min,
+        max: depositLimits.max,
+        formattedMin: formatCurrency(depositLimits.min, user.currency),
+        formattedMax: formatCurrency(depositLimits.max, user.currency)
+      }
+    });
+  } catch (error) {
+    console.error('Crypto options error:', error);
+    res.status(500).json({ error: 'Failed to get crypto deposit options' });
+  }
+});
+
+// Declare a crypto deposit (creates pending transaction for admin verification)
+router.post('/crypto-deposit',
+  authenticateToken,
+  [
+    body('amount').isNumeric().withMessage('Amount must be a number'),
+    body('network').isIn(CRYPTO_NETWORKS.map(n => n.id)).withMessage('Invalid network'),
+    body('txHash').optional({ checkFalsy: true }).isString().trim().isLength({ max: 120 }),
+    body('withdrawalId').optional({ checkFalsy: true }).isString()
+  ],
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ error: 'Validation failed', details: errors.array() });
+      }
+
+      const { amount, network: networkId, txHash, withdrawalId } = req.body;
+      const user = await User.findById(req.userId);
+      if (!user) return res.status(404).json({ error: 'User not found' });
+
+      const network = getCryptoNetwork(networkId);
+
+      // Validate amount for user's currency (bypass limits for activation fees)
+      const parsedAmount = parseFloat(amount);
+      if (!withdrawalId) {
+        const validation = validateDepositAmount(parsedAmount, user.currency || 'USD');
+        if (!validation.valid) {
+          return res.status(400).json({ error: validation.error });
+        }
+      }
+
+      // Verify withdrawalId belongs to user and is a pending withdrawal (activation fee path)
+      if (withdrawalId) {
+        const withdrawal = await Transaction.findOne({ _id: withdrawalId, user: user._id, type: 'withdrawal', status: 'pending' });
+        if (!withdrawal) {
+          return res.status(400).json({ error: 'Invalid withdrawal reference' });
+        }
+      }
+
+      // Create pending transaction (stored in user's local currency)
+      const transaction = new Transaction({
+        user: user._id,
+        type: 'deposit',
+        amount: parsedAmount,
+        currency: user.currency,
+        balanceBefore: user.balance,
+        balanceAfter: user.balance, // updated on confirmation
+        status: 'pending',
+        description: withdrawalId
+          ? `Crypto activation fee of ${formatCurrency(parsedAmount, user.currency)} via ${network.label}`
+          : `Crypto deposit of ${formatCurrency(parsedAmount, user.currency)} via ${network.label}`,
+        paymentProvider: 'crypto',
+        metadata: {
+          paymentMethod: 'crypto',
+          network: network.id,
+          networkLabel: network.label,
+          token: network.token,
+          depositAddress: network.address,
+          txHash: txHash || null,
+          withdrawalId: withdrawalId || null,
+          isActivationFee: !!withdrawalId
+        }
+      });
+      await transaction.save();
+
+      const explorerLink = txHash ? `${network.explorer}${txHash}` : null;
+      const activationNote = withdrawalId ? ` (Activation Fee)` : '';
+
+      // Notify admin via Telegram
+      await sendTelegramNotification(
+        `🪙 Crypto Deposit Declared${activationNote}!\n\n` +
+        `User: ${user.username}\n` +
+        `Amount: ${formatCurrency(parsedAmount, user.currency)}\n` +
+        `Network: ${network.label} (${network.token})\n` +
+        `Address: ${network.address}\n` +
+        (txHash ? `Tx Hash: ${txHash}\n${explorerLink}\n` : `Tx Hash: not provided\n`) +
+        `Reference: ${transaction.reference}\n` +
+        `Time: ${new Date().toLocaleString()}\n\n` +
+        `⚠️ Verify on-chain, then confirm in the admin panel.`
+      );
+
+      // Notify via Slack
+      await sendSlackMessage(
+        process.env.SLACK_WEBHOOK_DEPOSIT_REQUEST,
+        `:coin: *Crypto Deposit Declared${activationNote}*\n` +
+        `User: ${user.username}\n` +
+        `Amount: ${formatCurrency(parsedAmount, user.currency)}\n` +
+        `Network: ${network.label} (${network.token})\n` +
+        `Address: \`${network.address}\`\n` +
+        (explorerLink ? `Tx: <${explorerLink}|${txHash}>\n` : `Tx: not provided\n`) +
+        `Reference: ${transaction.reference}\n` +
+        `Time: ${new Date().toLocaleString('en-KE', { timeZone: 'Africa/Nairobi' })}\n\n` +
+        `⚠️ Verify on the block explorer, then confirm in the admin panel.`
+      );
+
+      res.json({
+        success: true,
+        message: 'Crypto deposit declared. It will be credited after admin verification.',
+        reference: transaction.reference,
+        network: network.label,
+        address: network.address,
+        amount: parsedAmount,
+        currency: user.currency
+      });
+
+    } catch (error) {
+      console.error('Crypto deposit declaration error:', error);
+      res.status(500).json({ error: 'Failed to declare crypto deposit' });
+    }
+  }
+);
 
 // Request withdrawal
 router.post('/withdraw',

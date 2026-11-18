@@ -1155,9 +1155,10 @@
                             <h2 class="section-title">Deposit</h2>
                         </div>
 
-                        <h4 style="margin-bottom: 0.5rem; color: #30fcbe;">💳 Deposit Funds</h4>
+                        <h4 style="margin-bottom: 0.5rem; color: #30fcbe;">🪙 Deposit with Crypto</h4>
                         <p style="color: #ccc; margin-bottom: 1.5rem; font-size: 0.95rem;">
-                            Choose from multiple payment methods: Cards, Bank Transfer, USSD, Mobile Money, and more!
+                            Fund your account with USDT — fast, secure and available worldwide. Enter the amount in your
+                            local currency and pick a network.
                         </p>
 
                         <div id="deposit-error" class="error" style="display: none;"></div>
@@ -1165,7 +1166,7 @@
                             style="display: none; color: #30fcbe; padding: 10px; border: 1px solid #30fcbe; border-radius: 8px; margin-bottom: 1rem; text-align: center; background: rgba(48, 252, 190, 0.1);">
                         </div>
 
-                        <form id="deposit-form" onsubmit="handleFlutterwaveDeposit(event)">
+                        <form id="deposit-form" onsubmit="handleCryptoDeposit(event)">
                             <div class="form-group">
                                 <label for="deposit-amount">Amount (<span id="currency-code">KES</span>)</label>
                                 <input type="number" id="deposit-amount" class="form-control" min="0.01" max="99999999"
@@ -1177,34 +1178,30 @@
                                 <small style="color: #999; font-size: 0.8rem; margin-top: 0.25rem; display: block;"
                                     id="deposit-note">
                                     <i class="fas fa-info-circle"></i> Minimum deposit may vary based on your selected
-                                    currency and payment method.
+                                    currency.
                                 </small>
                             </div>
                             <div style="display: flex; gap: 0.75rem; margin-top: 15px; align-items: stretch;">
                                 <button type="submit" class="btn btn-primary"
                                     style="flex: 1; padding: 14px 24px; font-size: 15px;">
-                                    <i class="fas fa-wallet"></i> DEPOSIT
-                                </button>
-                                <button type="button" onclick="openCryptoModal()" class="btn btn-crypto-small"
-                                    style="padding: 10px 16px; font-size: 13px; flex: 0.6;">
-                                    <i class="fas fa-coins"></i> USE CRYPTO
+                                    <i class="fas fa-coins"></i> CONTINUE TO DEPOSIT
                                 </button>
                             </div>
 
                             <div
                                 style="margin-top: 1.5rem; padding: 1.25rem; background: rgba(48, 252, 190, 0.08); border: 1px solid rgba(48, 252, 190, 0.2); border-radius: 12px;">
                                 <h5 style="color: #30fcbe; margin-bottom: 0.75rem; font-size: 1rem;">
-                                    <i class="fas fa-info-circle"></i> Available Payment Methods
+                                    <i class="fas fa-info-circle"></i> Supported Networks (USDT)
                                 </h5>
                                 <ul style="color: #ccc; font-size: 0.9rem; padding-left: 1.5rem; margin: 0;">
-                                    <li>💳 Credit/Debit Cards (Visa, Mastercard, Verve)</li>
-                                    <li>🏦 Bank Transfer & EFT</li>
-                                    <li>📱 Mobile Money (M-Pesa, MTN, Vodafone, etc.)</li>
-                                    <li>🔐 Secure & Instant Processing</li>
+                                    <li>🔴 Tron (TRC20) — lowest fees, recommended</li>
+                                    <li>🟡 BNB Smart Chain (BEP20)</li>
+                                    <li>🔵 Ethereum (ERC20)</li>
+                                    <li>⚡ Credited within 5–30 minutes after verification</li>
                                 </ul>
                                 <p style="color: #999; font-size: 0.85rem; margin-top: 0.75rem; margin-bottom: 0;">
-                                    <i class="fas fa-shield-alt"></i> Powered by Flutterwave - Payment methods vary by
-                                    country
+                                    <i class="fas fa-shield-alt"></i> 100% crypto deposits — no banks, no cards, no
+                                    frozen funds
                                 </p>
                             </div>
                         </form>
@@ -1597,302 +1594,7 @@
         </div>
     </div>
 
-    <!-- Crypto Payment Modal -->
-    <!-- Crypto Payment Modal (Hidden by default) -->
-    <div id="crypto-modal-overlay"
-        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); z-index: 11000; align-items: center; justify-content: center; animation: fadeIn 0.3s ease;">
-        <div
-            style="background: linear-gradient(135deg, rgba(20, 25, 40, 0.95), rgba(15, 20, 35, 0.95)); border: 1px solid rgba(255, 193, 7, 0.3); border-radius: 16px; max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);">
-            <!-- Crypto Modal Header -->
-            <div
-                style="border-bottom: 1px solid rgba(255, 193, 7, 0.2); padding: 1.5rem 2rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; background: rgba(20, 25, 40, 0.95);">
-                <h3 style="margin: 0; color: #ffc107; display: flex; align-items: center; gap: 0.75rem;">
-                    <i class="fas fa-coins"></i> Deposit via Crypto
-                </h3>
-                <button onclick="closeCryptoModal()"
-                    style="background: none; border: none; color: #999; font-size: 1.5rem; cursor: pointer; padding: 0; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">×</button>
-            </div>
-
-            <!-- Crypto Modal Body -->
-            <div style="padding: 2rem;">
-                <!-- Amount Display -->
-                <div
-                    style="background: rgba(255, 193, 7, 0.08); border: 1px solid rgba(255, 193, 7, 0.2); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; text-align: center;">
-                    <div style="font-size: 2rem; font-weight: bold; color: #ffc107;">
-                        <span id="crypto-display-amount">0</span> <span id="crypto-display-currency">KES</span>
-                    </div>
-                </div>
-
-                <!-- USDT Address -->
-                <div
-                    style="background: rgba(48, 252, 190, 0.08); border: 1px solid rgba(48, 252, 190, 0.2); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem;">
-                    <p style="color: #ccc; margin: 0 0 0.75rem 0; font-size: 0.9rem; font-weight: 600;">
-                        <i class="fas fa-wallet" style="color: #30fcbe; margin-right: 0.5rem;"></i>Send USDT to
-                    </p>
-                    <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
-                        <code
-                            style="flex: 1; min-width: 200px; background: rgba(0, 0, 0, 0.3); padding: 1rem; border-radius: 8px; border: 1px solid rgba(48, 252, 190, 0.2); color: #30fcbe; font-size: 0.85rem; word-break: break-all; font-family: 'Courier New', monospace;">
-                        0x5f9af3c006d73346e117776b023534af418bbb48
-                    </code>
-                        <button onclick="copyCryptoAddress()"
-                            style="background: rgba(48, 252, 190, 0.2); border: 1px solid #30fcbe; color: #30fcbe; padding: 0.75rem 1rem; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s; white-space: nowrap;">
-                            <i class="fas fa-copy"></i> Copy
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Steps -->
-                <div
-                    style="background: rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem;">
-                    <h4 style="color: #30fcbe; margin: 0 0 1rem 0; font-size: 1rem;">
-                        <i class="fas fa-list-ol"></i> How to Deposit
-                    </h4>
-                    <ol style="color: #ccc; margin: 0; padding-left: 1.5rem; line-height: 1.8;">
-                        <li style="margin-bottom: 0.75rem;">Open your crypto wallet (Metamask, Trust Wallet, Binance,
-                            Bybit, etc.)</li>
-                        <li style="margin-bottom: 0.75rem;">Send exactly <strong id="crypto-amount-bold"
-                                style="color: #ffc107;">0</strong> worth of USDT to the address above</li>
-                        <li style="margin-bottom: 0.75rem;">Wait for blockchain confirmation (1-5 minutes)</li>
-                        <li>Click I've Sent Funds, We'll verify and credit your account</li>
-                    </ol>
-                </div>
-
-                <!-- Important Notice -->
-                <div
-                    style="background: rgba(255, 152, 0, 0.08); border: 1px solid rgba(255, 152, 0, 0.2); border-radius: 12px; padding: 1rem; margin-bottom: 1.5rem;">
-                    <p style="color: #ffa726; margin: 0; font-size: 0.9rem;">
-                        <i class="fas fa-exclamation-circle"></i> <strong>Important:</strong> Use USDT on Ethereum
-                        (ERC20) network for lower fees. Always verify the address before sending.
-                    </p>
-                </div>
-
-                <!-- Network Info -->
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
-                    <div
-                        style="background: rgba(48, 252, 190, 0.08); border-radius: 8px; padding: 1rem; text-align: center;">
-                        <p style="color: #999; margin: 0 0 0.5rem 0; font-size: 0.85rem;">Accepted Network</p>
-                        <p style="color: #30fcbe; margin: 0; font-size: 1.1rem; font-weight: bold;">Ethereum (ERC20)</p>
-                    </div>
-                    <div
-                        style="background: rgba(48, 252, 190, 0.08); border-radius: 8px; padding: 1rem; text-align: center;">
-                        <p style="color: #999; margin: 0 0 0.5rem 0; font-size: 0.85rem;">Supported Token</p>
-                        <p style="color: #30fcbe; margin: 0; font-size: 1.1rem; font-weight: bold;">USDT (Tether)</p>
-                    </div>
-                </div>
-
-                <!-- Buttons -->
-                <div style="display: flex; gap: 0.75rem;">
-                    <button onclick="closeCryptoModal()"
-                        style="flex: 1; padding: 0.75rem; border: 1px solid #666; background: transparent; color: #ccc; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s;">
-                        CLOSE
-                    </button>
-                    <button onclick="copyFullInstructions()"
-                        style="flex: 1; padding: 0.75rem; background: linear-gradient(135deg, #30fcbe, #28d1a0); color: #000; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s;">
-                        <i class="fas fa-check-circle"></i> I'VE SENT FUNDS
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Add this JavaScript at the end of your HTML file before closing </body> -->
-    <script>
-        // ===== CRYPTO MODAL FUNCTIONS =====
-        function getDepositAmount() {
-            const amountInput = document.getElementById('deposit-amount');
-            return amountInput ? parseFloat(amountInput.value) || 0 : 0;
-        }
-
-        function getCurrencyCode() {
-            const currencySpan = document.getElementById('deposit-currency-code');
-            return currencySpan ? currencySpan.textContent : 'KES';
-        }
-
-        function openCryptoModal() {
-            const amount = getDepositAmount();
-            const currency = getCurrencyCode();
-
-            if (!amount || amount <= 0) {
-                alert('Please enter a valid deposit amount first');
-                return;
-            }
-
-            // Update all display fields with the entered amount
-            document.getElementById('crypto-display-amount').textContent = amount.toLocaleString();
-            document.getElementById('crypto-display-currency').textContent = currency;
-            document.getElementById('crypto-amount-bold').textContent = amount.toLocaleString() + ' ' + currency;
-
-            // Show the crypto modal overlay
-            const overlay = document.getElementById('crypto-modal-overlay');
-            overlay.style.display = 'flex';
-
-            // Prevent body scrolling
-            document.body.style.overflow = 'hidden';
-        }
-
-        function closeCryptoModal() {
-            const overlay = document.getElementById('crypto-modal-overlay');
-            overlay.style.display = 'none';
-            document.body.style.overflow = 'auto';
-        }
-
-        function copyCryptoAddress() {
-            const address = '0x5f9af3c006d73346e117776b023534af418bbb48';
-            navigator.clipboard.writeText(address).then(() => {
-                const btn = event.target.closest('button');
-                const originalText = btn.innerHTML;
-                btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
-                btn.style.background = 'rgba(48, 252, 190, 0.3)';
-                setTimeout(() => {
-                    btn.innerHTML = originalText;
-                    btn.style.background = 'rgba(48, 252, 190, 0.2)';
-                }, 2000);
-            }).catch(() => {
-                alert('Failed to copy address');
-            });
-        }
-
-        function copyFullInstructions() {
-            const amount = getDepositAmount();
-            const currency = getCurrencyCode();
-            const userData = localStorage.getItem('userData');
-            const username = userData ? JSON.parse(userData).username : 'YourUsername';
-
-            const instructions = `ClassyBet Crypto Deposit - ${new Date().toLocaleString()}
-
-Amount: ${amount} ${currency}
-Address: 0x5f9af3c006d73346e117776b023534af418bbb48
-Network: Ethereum (ERC20)
-Token: USDT
-Username: ${username}
-
-Instructions:
-1. Open your crypto wallet (Metamask, Trust Wallet, Binance, Bybit, etc.)
-2. Send USDT on Ethereum network to the address above
-3. Include your username as a memo/note
-4. Wait for blockchain confirmation (1-5 minutes)
-
-Support: support@classybetaviator.com`;
-
-            navigator.clipboard.writeText(instructions).then(async () => {
-                // Notify backend about pending crypto deposit
-                try {
-                    await fetch(`${API_BASE}/api/support/chat`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {}) },
-                        body: JSON.stringify({
-                            message: `🔔 CRYPTO DEPOSIT INITIATED\nUser: ${username}\nAmount: ${amount} ${currency}\nWallet: 0x5f9af3c006d73346e117776b023534af418bbb48\nNetwork: Ethereum ERC20 (USDT)\nTime: ${new Date().toLocaleString()}`,
-                            page: 'profile', url: window.location.href
-                        })
-                    });
-                } catch (e) { console.log('Support notify failed (non-critical)', e); }
-
-                alert('Instructions copied! Share with support to verify your deposit.');
-                closeCryptoModal();
-            }).catch(() => {
-                alert('Failed to copy instructions');
-            });
-        }
-
-        // Close modal when clicking outside the modal content
-        document.addEventListener('DOMContentLoaded', function () {
-            const overlay = document.getElementById('crypto-modal-overlay');
-            if (overlay) {
-                overlay.addEventListener('click', function (event) {
-                    // Only close if clicking on the overlay background, not the modal content
-                    if (event.target === overlay) {
-                        closeCryptoModal();
-                    }
-                });
-            }
-        });
-
-        // Close modal with Escape key
-        document.addEventListener('keydown', function (event) {
-            if (event.key === 'Escape') {
-                closeCryptoModal();
-            }
-        });
-    </script>
-
-    <!-- Add this CSS for styling the crypto button -->
-    <style>
-        .btn-crypto {
-            background: linear-gradient(135deg, rgba(255, 193, 7, 0.8), rgba(255, 152, 0, 0.8)) !important;
-            color: #000 !important;
-            border: 1px solid rgba(255, 193, 7, 0.5) !important;
-            transition: all 0.3s ease !important;
-        }
-
-        .btn-crypto-small {
-            background: linear-gradient(135deg, rgba(255, 193, 7, 0.8), rgba(255, 152, 0, 0.8)) !important;
-            color: #000 !important;
-            border: 1px solid rgba(255, 193, 7, 0.5) !important;
-            transition: all 0.3s ease !important;
-            border-radius: 8px !important;
-            font-weight: 600 !important;
-            cursor: pointer !important;
-            white-space: nowrap !important;
-        }
-
-        .btn-crypto-small:hover {
-            background: linear-gradient(135deg, rgba(255, 193, 7, 1), rgba(255, 152, 0, 1)) !important;
-            box-shadow: 0 6px 16px rgba(255, 193, 7, 0.25) !important;
-            transform: translateY(-1px) !important;
-        }
-
-        .btn-crypto:hover {
-            background: linear-gradient(135deg, rgba(255, 193, 7, 1), rgba(255, 152, 0, 1)) !important;
-            box-shadow: 0 8px 20px rgba(255, 193, 7, 0.3) !important;
-            transform: translateY(-2px) !important;
-        }
-
-        #crypto-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 11000;
-            animation: fadeIn 0.3s ease;
-        }
-
-        #crypto-modal.modal {
-            display: flex !important;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-            }
-
-            to {
-                opacity: 1;
-            }
-        }
-
-        @media (max-width: 600px) {
-            #crypto-modal .modal-content {
-                width: 95% !important;
-                max-width: 100% !important;
-            }
-
-            #crypto-modal-overlay>div {
-                width: 95% !important;
-            }
-
-            .btn-crypto {
-                padding: 0.75rem 1rem !important;
-            }
-        }
-    </style>
-
-
-    <script>
+<script>
         const API_BASE = (() => {
             const { hostname, protocol } = window.location;
             const isLocalHost = hostname === 'localhost' || hostname === '127.0.0.1';
@@ -1932,7 +1634,6 @@ Support: support@classybetaviator.com`;
         // Check if already logged in
         if (authToken) {
             loadUserProfile();
-            checkFlutterwaveRedirect();
         } else {
             showLoginForm();
             // Check for referral code after showing login
@@ -2015,11 +1716,11 @@ Support: support@classybetaviator.com`;
             }
         });
 
-        // Flutterwave Deposit form handler
-        async function handleFlutterwaveDeposit(event) {
+        // Crypto Deposit form handler
+        function handleCryptoDeposit(event) {
             event.preventDefault();
 
-            const amount = document.getElementById('deposit-amount').value;
+            const amount = parseFloat(document.getElementById('deposit-amount').value);
             const errorDiv = document.getElementById('deposit-error');
             const successDiv = document.getElementById('deposit-success');
 
@@ -2027,10 +1728,18 @@ Support: support@classybetaviator.com`;
             errorDiv.style.display = 'none';
             successDiv.style.display = 'none';
 
-            try {
-                await initiateFlutterwaveDeposit(parseFloat(amount));
-            } catch (error) {
-                errorDiv.textContent = error.message;
+            const minDep = (typeof window.dynamicMinDeposit === 'number') ? window.dynamicMinDeposit : 5;
+            const maxDep = (typeof window.dynamicMaxDeposit === 'number') ? window.dynamicMaxDeposit : 10000;
+            if (isNaN(amount) || amount < minDep || amount > maxDep) {
+                errorDiv.textContent = `Amount must be between ${minDep} and ${maxDep}`;
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            if (typeof window.openCryptoDepositModal === 'function') {
+                window.openCryptoDepositModal({ presetAmount: amount });
+            } else {
+                errorDiv.textContent = 'Deposit system not loaded. Please refresh the page.';
                 errorDiv.style.display = 'block';
             }
         }
@@ -2527,179 +2236,27 @@ Support: support@classybetaviator.com`;
             document.getElementById('reactivation-modal').style.display = 'none';
         }
 
-        async function payActivationFee() {
+        function payActivationFee() {
             if (!pendingResolutionTx || !pendingResolutionAmount) return;
 
             const fee = pendingResolutionAmount * 0.2;
-            const btn = document.getElementById('activate-btn');
 
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Initializing...';
-
-            try {
-                // Initialize Flutterwave deposit with special metadata
-                const response = await fetch(`${API_BASE}/api/payments/flw-deposit-initialize`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${authToken}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        amount: fee,
-                        withdrawalId: pendingResolutionTx
-                    })
-                });
-
-                const data = await response.json();
-
-                if (response.ok && data.success) {
-                    if (data.data.widgetParams) {
-                        btn.disabled = false;
-                        btn.innerHTML = '<i class="fas fa-rocket"></i> Activate Now';
-                        _openActivationFlutterwaveWidget(data.data.reference, data.data.widgetParams);
-                        return;
-                    }
-
-                    if (data.data.payment_link) {
-                        console.log('💳 Redirecting to Flutterwave hosted link for activation fee:', data.data.payment_link);
-                        window.location.href = data.data.payment_link;
-                        return;
-                    }
-                }
-
-                alert(data.error || 'Failed to initialize payment');
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-rocket"></i> Activate Now';
-            } catch (error) {
-                console.error('Activation payment error:', error);
-                alert('Connection error. Please try again.');
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-rocket"></i> Activate Now';
-            }
-        }
-
-        function _openActivationFlutterwaveWidget(reference, widgetParams) {
-            if (typeof FlutterwaveCheckout === 'undefined') {
-                const script = document.createElement('script');
-                script.src = 'https://checkout.flutterwave.com/v3.js';
-                script.onload = () => {
-                    _openActivationFlutterwaveWidget(reference, widgetParams);
-                };
-                script.onerror = () => {
-                    alert('Failed to load Flutterwave checkout. Please check your internet connection or try again.');
-                };
-                document.head.appendChild(script);
+            if (typeof window.openCryptoDepositModal !== 'function') {
+                alert('Deposit system not loaded. Please refresh the page.');
                 return;
             }
 
-            FlutterwaveCheckout({
-                ...widgetParams,
-                callback: async function (response) {
-                    console.log('✅ Activation fee FLW callback:', response);
-                    if (response.status === 'successful' || response.status === 'completed') {
-                        closeReactivationModal();
-
-                        try {
-                            const verifyResp = await fetch(`${API_BASE}/api/payments/flw-deposit-verify`, {
-                                method: 'POST',
-                                headers: {
-                                    'Authorization': `Bearer ${authToken}`,
-                                    'Content-Type': 'application/json'
-                                },
-                                body: JSON.stringify({
-                                    reference: reference,
-                                    transaction_id: response.transaction_id || parseInt(response.id) || undefined
-                                })
-                            });
-
-                            const verifyData = await verifyResp.json();
-                            if (verifyResp.ok && verifyData.success) {
-                                alert('Success! Your activation fee has been processed, your account reactivated, and your withdrawal approved.');
-                            } else {
-                                alert('Payment received! Your account will be reactivated shortly.');
-                            }
-                        } catch (err) {
-                            console.error('Activation verification error:', err);
-                            alert('Payment completed! Refreshing your profile...');
-                        } finally {
-                            if (authToken) {
-                                loadUserProfile();
-                            }
-                        }
-                    } else {
-                        alert('Activation payment was not completed. Please try again.');
-                    }
-                },
-                onclose: function () {
-                    const btn = document.getElementById('activate-btn');
-                    if (btn) {
-                        btn.disabled = false;
-                        btn.innerHTML = '<i class="fas fa-rocket"></i> Activate Now';
-                    }
+            closeReactivationModal();
+            window.openCryptoDepositModal({
+                presetAmount: Math.round(fee * 100) / 100,
+                lockAmount: true,
+                withdrawalId: pendingResolutionTx,
+                onSuccess: function () {
                     if (authToken) {
                         loadUserProfile();
                     }
                 }
             });
-        }
-
-        async function checkFlutterwaveRedirect() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const status = urlParams.get('status');
-            const txRef = urlParams.get('tx_ref');
-            const transactionId = urlParams.get('transaction_id') || urlParams.get('id');
-
-            if (status && txRef) {
-                // Clear the query params from URL without refreshing the page
-                const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
-                window.history.replaceState({ path: newUrl }, '', newUrl);
-
-                if (status === 'successful' || status === 'completed') {
-                    closeReactivationModal();
-
-                    // Show activation button as verifying
-                    const btn = document.getElementById('activate-btn');
-                    if (btn) {
-                        btn.disabled = true;
-                        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying...';
-                    }
-
-                    try {
-                        const response = await fetch(`${API_BASE}/api/payments/flw-deposit-verify`, {
-                            method: 'POST',
-                            headers: {
-                                'Authorization': `Bearer ${authToken}`,
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({
-                                reference: txRef,
-                                transaction_id: parseInt(transactionId) || undefined
-                            })
-                        });
-
-                        const data = await response.json();
-
-                        if (response.ok && data.success) {
-                            alert('Success! Your activation fee has been processed, your account reactivated, and your withdrawal approved.');
-                            if (authToken) {
-                                loadUserProfile();
-                            }
-                        } else {
-                            alert('Verification failed: ' + (data.error || 'Unknown error'));
-                        }
-                    } catch (error) {
-                        console.error('Verification error:', error);
-                        alert('Connection error during verification. Your payment was successful, please check your profile or refresh the page.');
-                    } finally {
-                        if (btn) {
-                            btn.disabled = false;
-                            btn.innerHTML = '<i class="fas fa-rocket"></i> Activate Now';
-                        }
-                    }
-                } else {
-                    alert('Reactivation payment failed or was cancelled.');
-                }
-            }
         }
 
         function showProfileSection() {
@@ -3689,8 +3246,7 @@ Support: support@classybetaviator.com`;
 
     <!-- Currency Utils -->
     <script src="js/currency-utils.js"></script>
-    <script src="https://checkout.flutterwave.com/v3.js"></script>
-    <script src="js/flutterwave-payment.js"></script>
+    <script src="js/crypto-deposit.js"></script>
 </body>
 
 </html>

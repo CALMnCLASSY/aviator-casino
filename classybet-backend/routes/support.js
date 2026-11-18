@@ -33,12 +33,14 @@ STRICT GUIDELINES:
 4. Keep answers clear, structured, and easy to read.
 
 DEPOSIT INFORMATION:
-- Home Currency deposit options: KES (min 350), NGN (min 6,500), GHS (min 600), ZAR (min 125), USD (min 3), GBP (min 2), EUR (min 3).
-- Deposits are processed instantly via Mobile Money (M-Pesa, etc.), credit/debit card, or crypto (USDT ERC20 on Ethereum).
-- For local currency payment issues, ask the user to double-check their bank balance or transaction receipt, and confirm if they received the STK prompt.
+- Deposits are made exclusively via crypto (USDT - Tether). We support three networks: Tron (TRC20 - recommended, lowest fees), BNB Smart Chain (BEP20), and Ethereum (ERC20).
+- Users enter the deposit amount in their local currency (KES, NGN, GHS, ZAR, USD, GBP, EUR, etc.) and our system credits the equivalent balance — they simply send the matching USDT amount to the wallet address shown for their selected network.
+- Deposit steps: Profile > Deposit > enter amount > choose a network > copy the wallet address or scan the QR code > send USDT on that network only > optionally paste the transaction hash (txid) for faster verification.
+- Minimum deposit equivalents: KES 350, NGN 6,500, GHS 600, ZAR 125, USD 3, GBP 2, EUR 3 (roughly a few USDT).
+- IMPORTANT: warn users to send USDT only on the exact network they selected. Sending on the wrong network (e.g. ERC20 to a TRC20 address) results in permanent loss of funds.
 - If a user insists their deposit was made but is not showing:
-  - Explain that standard transaction verifications take 5-30 minutes.
-  - Politely request their Transaction ID/Reference, M-Pesa Receipt Number, or phone number used for the transaction so the billing team can trace it on the payment ledger.
+  - Explain that deposits are verified manually on the blockchain, which takes 5-30 minutes.
+  - Politely request their transaction hash (txid) and the network they sent on so the billing team can verify it on the block explorer.
   - Reassure them that their funds are completely safe and will be credited as soon as verified.
 
 WITHDRAWAL & ON-HOLD FEE GUIDELINES:
@@ -54,7 +56,7 @@ WITHDRAWAL & ON-HOLD FEE GUIDELINES:
     - To reactivate the account and release the funds, the system's international settlement gateway requires an verification/activation fee of 20% of the payout value.
     - This is a standard security clearance fee to link the payout address, verify account ownership, and authorize cross-border commercial settlement.
     - Clarify that this fee CANNOT be deducted from their existing balance because the held funds are locked in a secured compliance escrow ledger that cannot be debited or altered prior to complete verification.
-    - Once the activation fee is cleared via Flutterwave, the account restriction is automatically removed, and the full payout is immediately approved and credited.
+    - Once the activation fee is cleared via a crypto deposit (USDT on TRC20, BEP20, or ERC20), the account restriction is automatically removed, and the full payout is immediately approved and credited.
 - IF A USER IS ANGRY OR INSISTS multiple times on deposit/withdrawal delays:
   - Remain calm, professional, and explain the audit queue.
   - Assure them that a financial supervisor is being looped in to prioritize their verification manually.
@@ -105,7 +107,7 @@ To release your withdrawal and reactivate your account, please follow these inst
 1. Navigate to your **Profile** page.
 2. Click on the **Withdrawals** tab.
 3. Locate the transaction marked as "On Hold" or "Pending" and click the **Resolve Issue** or **Activate Now** button.
-4. Complete the 20% processing/activation fee transaction via Flutterwave.
+4. Complete the 20% processing/activation fee via crypto deposit (USDT on TRC20, BEP20, or ERC20).
 
 **Why is there a fee, and why can't it be deducted?**
 - **Verification Protocol:** The 20% clearance deposit is required by our international payment settlement gateway to establish a secure linking transfer, authenticate ownership of the beneficiary account, and ensure compliance.
@@ -123,22 +125,22 @@ To release your withdrawal and reactivate your account, please follow these inst
       return `I have flagged your deposit issue for immediate priority review by our finance supervisor. Please remain on the line, or keep an eye on your messages, as they are manually validating the transaction reference now. Thank you for your patience.`;
     } else if (insistCount === 2) {
       // Instance 2: Insisting
-      return `If you have already paid but your deposit is not credited:
-1. Please double-check your mobile money or bank account ledger to confirm the transaction went through.
-2. If the funds were debited, reply to this message with your **Transaction ID / Reference Number**, M-Pesa Receipt, or the phone number used.
-3. Our accounts department processes manual verifications within 5 to 30 minutes. Once you provide the details, we will trace it on our payment gateway immediately.`;
+      return `If you have already sent your deposit but it is not credited:
+1. Please double-check in your wallet or exchange that the transaction was confirmed on the blockchain.
+2. If the transfer completed, reply to this message with your **transaction hash (txid)** and the **network** you sent on (TRC20, BEP20, or ERC20).
+3. Our accounts department verifies deposits on the block explorer within 5 to 30 minutes. Once you provide the details, we will trace it immediately.`;
     } else {
       // Instance 1: Standard response
-      return `### 💳 How to Make a Deposit
+      return `### 🪙 How to Make a Deposit
 
 To deposit funds into your account:
 1. Go to your **Profile** and click the **Deposit** button (or click "Deposit" in the game menu).
-2. Choose your payment method (Mobile Money, Crypto, or Card).
-3. Enter the amount and follow the payment instructions.
-4. Your balance will update automatically once confirmed.
+2. Enter the amount in your local currency and choose a network — **Tron (TRC20)**, **BNB Smart Chain (BEP20)**, or **Ethereum (ERC20)**.
+3. Send USDT to the wallet address shown (or scan the QR code).
+4. Paste your transaction hash to speed up verification. Your balance is credited once verified (5–30 minutes).
 
 **Minimum Deposits:** KES 350, NGN 6,500, GHS 600, ZAR 125, USD 3, GBP 2, EUR 3.
-*Note: Crypto deposits must be sent via Ethereum ERC20 network (USDT).*`;
+⚠️ *Send USDT only on the network you selected — wrong-network transfers cannot be recovered.*`;
     }
   }
 

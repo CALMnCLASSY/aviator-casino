@@ -751,13 +751,39 @@
                 return;
             }
 
+            const explorerBase = {
+                trc20: 'https://tronscan.org/#/transaction/',
+                bep20: 'https://bscscan.com/tx/',
+                erc20: 'https://etherscan.io/tx/'
+            };
+
             data.transactions.forEach(tx => {
+                const meta = tx.metadata || {};
+                const isCrypto = tx.paymentProvider === 'crypto' || meta.paymentMethod === 'crypto';
+                const cur = tx.currency || 'KES';
+
+                let cryptoInfo = '';
+                if (isCrypto) {
+                    const netLabel = meta.networkLabel || meta.network || 'crypto';
+                    cryptoInfo += `<div style="font-size:0.78rem; margin-bottom:6px;"><span style="background:rgba(255,193,7,0.15);color:#ffc107;padding:2px 8px;border-radius:8px;font-weight:600;">🪙 ${netLabel}</span>${meta.isActivationFee ? ' <span style="color:#fb024c;font-weight:600;">ACTIVATION FEE</span>' : ''}</div>`;
+                    if (meta.depositAddress) {
+                        cryptoInfo += `<div style="font-size:0.72rem;color:#666;word-break:break-all;margin-bottom:4px;">To: ${meta.depositAddress}</div>`;
+                    }
+                    if (meta.txHash) {
+                        const base = explorerBase[meta.network] || '';
+                        cryptoInfo += `<div style="font-size:0.72rem;margin-bottom:4px;">Tx: ${base ? `<a href="${base}${meta.txHash}" target="_blank" style="color:#30fcbe;">${meta.txHash}</a>` : `<span style="color:#30fcbe;word-break:break-all;">${meta.txHash}</span>`}</div>`;
+                    } else {
+                        cryptoInfo += `<div style="font-size:0.72rem;color:#ffa726;margin-bottom:4px;">⚠️ No tx hash provided — verify by amount/time on explorer</div>`;
+                    }
+                }
+
                 const item = `
                     <div style="background:rgba(255,255,255,0.05); padding:10px; margin-bottom:10px; border-radius:6px; font-size:0.9rem;">
                         <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
                             <strong>${tx.user ? tx.user.username : 'Unknown'}</strong>
-                            <span class="text-green">KES ${tx.amount}</span>
+                            <span class="text-green">${cur} ${tx.amount}</span>
                         </div>
+                        ${cryptoInfo}
                         <div style="font-size:0.8rem; color:#888; margin-bottom:8px;">
                             ${tx.reference || 'No Ref'} • ${new Date(tx.createdAt).toLocaleTimeString()}
                         </div>
@@ -1118,10 +1144,11 @@
             let endpoint = '';
             let body = { transactionId: ref };
 
-            // Prompt for receipt number
-            const receipt = prompt("Enter M-PESA Receipt Number / Reference:");
+            // Prompt for transaction hash / reference
+            const receipt = prompt("Enter transaction hash / reference (e.g. blockchain txid):");
             if (!receipt) return; // Cancelled
             body.mpesaReceiptNumber = receipt;
+            body.txHash = receipt;
 
             if (action === 'deposit-confirm') {
                 endpoint = `${API_PAYMENTS}/confirm-deposit`;

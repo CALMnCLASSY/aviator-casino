@@ -419,19 +419,6 @@ class AviatorGame {
             // Show deposit modal
             const depositModal = document.getElementById('deposit-modal');
             if (depositModal) {
-                // Pre-fill phone number if available
-                const userData = localStorage.getItem('userData');
-                if (userData) {
-                    try {
-                        const user = JSON.parse(userData);
-                        const phoneInput = document.getElementById('deposit-phone');
-                        if (phoneInput && user.phone) {
-                            phoneInput.value = user.phone;
-                        }
-                    } catch (error) {
-                        console.error('Error parsing user data:', error);
-                    }
-                }
                 depositModal.style.display = 'flex';
             }
         } catch (error) {
@@ -2310,10 +2297,6 @@ class AviatorGame {
             depositBtn.addEventListener('click', () => {
                 const depositModal = document.getElementById('deposit-modal');
                 if (depositModal) {
-                    const instructionsSection = depositModal.querySelector('.deposit-instructions');
-                    if (instructionsSection) {
-                        instructionsSection.style.display = 'none';
-                    }
                     depositModal.style.display = 'flex';
                 }
             });
@@ -3670,63 +3653,7 @@ function isDemo() {
 
 // Authentication is now handled through the index page
 
-// Deposit form
-document.getElementById('deposit-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-
-    const amount = parseFloat(document.getElementById('deposit-amount').value);
-    let phoneNumber = document.getElementById('deposit-phone').value;
-    const instructionsSection = document.querySelector('#deposit-modal .deposit-instructions');
-
-    // Validate amount using dynamic limits (fetched from /api/payments/limits and stored on window)
-    // Fallback to USD defaults ($5 min / $10,000 max) if limits haven't been loaded yet
-    const _depositMin = (typeof window.dynamicMinDeposit === 'number') ? window.dynamicMinDeposit : 5;
-    const _depositMax = (typeof window.dynamicMaxDeposit === 'number') ? window.dynamicMaxDeposit : 10000;
-    const _depositUser = (window.classyBetAPI && window.classyBetAPI.user) ? window.classyBetAPI.user : null;
-    const _depositCurrency = (_depositUser && _depositUser.currency) ? _depositUser.currency : 'USD';
-    const _depositSymbol = (typeof window.getCurrencySymbol === 'function') ? window.getCurrencySymbol(_depositCurrency) : _depositCurrency;
-    if (isNaN(amount) || amount < _depositMin || amount > _depositMax) {
-        showError('deposit-error', `Amount must be between ${_depositSymbol} ${_depositMin.toLocaleString()} and ${_depositSymbol} ${_depositMax.toLocaleString()}`);
-        return;
-    }
-
-    // Format and validate phone number
-    phoneNumber = phoneNumber.replace(/\D/g, ''); // Remove non-digits
-    if (phoneNumber.startsWith('0')) {
-        phoneNumber = '254' + phoneNumber.substring(1);
-    } else if (phoneNumber.startsWith('+')) {
-        phoneNumber = phoneNumber.substring(1);
-    }
-
-    // Validate phone number format (international - 7 to 15 digits)
-    if (phoneNumber.length < 7 || phoneNumber.length > 15) {
-        showError('deposit-error', 'Invalid phone number. Enter your phone number with country code (e.g. 2547XXXXXXXX, 44XXXXXXXXXX)');
-        return;
-    }
-
-    if (instructionsSection) {
-        instructionsSection.style.display = 'block';
-    }
-
-    const result = await classyBetAPI.depositSTK(amount, phoneNumber);
-
-    // Keep local API instance in sync with latest user data after deposit attempt
-    const latestUserData = localStorage.getItem('userData');
-    if (latestUserData) {
-        try {
-            classyBetAPI.user = JSON.parse(latestUserData);
-        } catch (error) {
-            console.error('Failed to parse user data after deposit attempt:', error);
-        }
-    }
-
-    if (result.success) {
-        showSuccess('deposit-success', `STK Push sent! Transaction ID: ${result.transactionId}`);
-        document.getElementById('deposit-form').reset();
-    } else {
-        showError('deposit-error', result.error);
-    }
-});
+// Deposits are handled by js/crypto-deposit.js (crypto-only).
 
 // Navigation button events (with null checks since navigation was removed)
 const loginBtn = document.getElementById('login-btn');
@@ -3748,8 +3675,6 @@ if (depositBtn) {
 
         if (token && userData) {
             try {
-                const user = JSON.parse(userData);
-
                 // Track deposit tab click
                 await fetch(`${API_BASE}/api/payments/deposit-tab-click`, {
                     method: 'POST',
@@ -3760,13 +3685,6 @@ if (depositBtn) {
                 }).catch(err => console.log('Deposit tab tracking failed:', err));
 
                 showModal('deposit-modal');
-                // Pre-fill phone number
-                if (user.phone) {
-                    const phoneInput = document.getElementById('deposit-phone');
-                    if (phoneInput) {
-                        phoneInput.value = user.phone;
-                    }
-                }
             } catch (error) {
                 console.error('Error opening deposit modal:', error);
                 showModal('deposit-modal');
@@ -3816,12 +3734,6 @@ if (logoutBtn) {
 // Modal utility functions
 function showModal(modalId) {
     document.getElementById(modalId).style.display = 'block';
-    if (modalId === 'deposit-modal') {
-        const instructionsSection = document.querySelector('#deposit-modal .deposit-instructions');
-        if (instructionsSection) {
-            instructionsSection.style.display = 'none';
-        }
-    }
 }
 
 function closeModal(modalId) {
@@ -3830,13 +3742,6 @@ function closeModal(modalId) {
     // Clear error messages
     const errorElements = document.querySelectorAll('.error-message, .success-message');
     errorElements.forEach(el => el.style.display = 'none');
-
-    if (modalId === 'deposit-modal') {
-        const instructionsSection = document.querySelector('#deposit-modal .deposit-instructions');
-        if (instructionsSection) {
-            instructionsSection.style.display = 'none';
-        }
-    }
 }
 
 function switchModal(fromModal, toModal) {

@@ -22,10 +22,22 @@ ADMIN_EMAIL=admin@classybetaviator.com
 ADMIN_PASSWORD=your-secure-password
 FRONTEND_URL=https://classybetaviator.com
 CLIENT_URL=https://classybetaviator.com
-FLUTTERWAVE_PUBLIC_KEY=FLWPUBK-...
-FLUTTERWAVE_SECRET_KEY=FLWSECK-...
-FLUTTERWAVE_ENCRYPTION_KEY=...
+FLUTTERWAVE_PUBLIC_KEY=FLWPUBK-...       # legacy - deposits are crypto-only now
+FLUTTERWAVE_SECRET_KEY=FLWSECK-...       # legacy - deposits are crypto-only now
+FLUTTERWAVE_ENCRYPTION_KEY=...           # legacy - deposits are crypto-only now
+
+# Crypto deposit addresses (USDT). These are the wallet addresses shown to users
+# on the deposit screen. They have built-in defaults but should be set explicitly
+# so they can be rotated without a redeploy of the code.
+CRYPTO_USDT_TRC20=THv2KRPRJFeSxkptFw5A4XUwWAZfCTfNyR
+CRYPTO_USDT_BEP20=0xEA976d5e41084B613Cd8970F79bCc5D414f99621
+CRYPTO_USDT_ERC20=0xEA976d5e41084B613Cd8970F79bCc5D414f99621
 ```
+
+> **Deposits are crypto-only.** Users declare deposits (amount in their local
+> currency + network + optional tx hash); an admin verifies the transfer on the
+> block explorer and confirms it in the admin panel (`/confirm-deposit`).
+> Withdrawals still support mobile money, bank transfer, and crypto payouts.
 
 ---
 
